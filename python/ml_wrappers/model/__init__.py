@@ -4,6 +4,6 @@
 
 """Common infrastructure, class hierarchy and utilities for model explanations."""
 
-from .model_summary import ModelSummary
+from .model_wrapper import _wrap_model, wrap_model, WrappedPytorchModel
 
-__all__ = ["ModelSummary"]
+__all__ = ['_wrap_model', 'wrap_model', 'WrappedPytorchModel']
