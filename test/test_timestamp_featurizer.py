@@ -7,14 +7,13 @@ import logging
 import pandas as pd
 import pytest
 from common_utils import create_timeseries_data
-from constants import DatasetConstants, owner_email_tools_and_ux
+from constants import DatasetConstants
 from ml_wrappers.dataset import CustomTimestampFeaturizer
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
 
 test_logger = logging.getLogger(__name__)
 
 
-@pytest.mark.owner(email=owner_email_tools_and_ux)
 @pytest.mark.usefixtures('clean_dir')
 class TestTimestampFeaturizer(object):
 
