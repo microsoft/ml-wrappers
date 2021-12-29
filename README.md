@@ -1,14 +1,34 @@
-# Project
+# Machine Learning Wrappers
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+## Overview and Motivation
+Responsible AI tools should be able to work with a broad spectrum of machine learning models and datasets. Much of this functionality is based on the ability to call predict or predict_proba on a model and get back the predicted values or probabilities in a specific format.
 
-As the maintainer of this project, please make a few updates:
+However, there are many different models outside of scikit-learn and even within scikit-learn which have unusual outputs or require the input in a specific format.  Some, like pytorch, don’t even have the predict/predict_proba function specification.
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+We initially started adding wrappers in the https://github.com/interpretml/interpret-community repository but found that they are needed by other teams as well, including https://github.com/fairlearn/fairlearn and https://github.com/microsoft/responsible-ai-toolbox, hence the code has been moved to this repository.  Anyone is welcome to use or contribute to these model and dataset wrappers.
+
+These wrappers handle a variety of frameworks, including pytorch, tensorflow, keras wrappers on tensorflow, variations on scikit-learn models (such as the SVC classification model that doesn’t have a predict_proba function), lightgbm and xgboost, as well as certain strange pipelines we have encountered from customers and internal users in the past.
+
+The dataset wrapper handles a variety of different dataset types and converts them to a common numpy or scipy sparse format for internal code to handle in one simple way.  Hence, the code doesn’t have to worry about whether the current input is pandas or some other format, it doesn’t have to include if/else branches everywhere in the code.
+
+The dataset wrapper simply converts the input to the common format, and after the common code finishes running, we convert the representation back to the original format, which can be handled by the original model.
+
+For more information about common format from the wrappers, please see the [Wrapper Specifications](https://github.com/microsoft/ml-wrappers/tree/main/docs/WrapperSpecifications.md) documentation.
+
+## Installation
+
+To install the package, simply run:
+
+```
+pip install ml-wrappers
+```
+
+## Code example
+
+```python
+from ml_wrappers import wrap_model, DatasetWrapper
+wrapped_model = wrap_model(model, DatasetWrapper(input), model_task='regression')
+```
 
 ## Contributing
 
