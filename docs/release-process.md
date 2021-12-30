@@ -22,13 +22,13 @@ In release title, enter either "Patch release v0.*.*" or "Release v0.*.*".
 
 In the release notes, enter the same release notes as in the PR above for all changes that have been made to the package.
 
-## pypi release
+## PyPI release
 
-For a guide on the pypi release process, please see:
+For a guide on the PyPI release process, please see:
 
 https://packaging.python.org/tutorials/packaging-projects/
 
-### pypi file
+### PyPI file
 
 Create a .pypirc file in the users home directory, it should look similar to:
 
@@ -49,7 +49,7 @@ username: interpret-community
 password: PASSWORD_REMOVED
 ```
 
-Note interpret-community pypi user is currently used to publish ml-wrappers to pypi but this may change in the future.
+Note interpret-community PyPI user is currently used to publish ml-wrappers to PyPI but this may change in the future.
 
 ### Clean repo
 
@@ -65,7 +65,7 @@ Generate the wheel file.  First activate your release environment, this can be a
 ```
 conda activate my_env
 ```
-Then update setuptools and wheel, always make sure you have the latest version installed before releasing to pypi:
+Then update setuptools and wheel, always make sure you have the latest version installed before releasing to PyPI:
 ```
 pip install --upgrade setuptools wheel
 ```
@@ -85,7 +85,7 @@ dist/
   ml-wrappers-0.0.1.tar.gz
 ```
 
-Upgrade twine before uploading to pypi:
+Upgrade twine before uploading to PyPI:
 ```
 pip install --upgrade twine
 ```
@@ -95,20 +95,20 @@ Note: you may need to specify --user on some environments:
 pip install --user --upgrade twine
 ```
 
-Run twine upload to the pypi test repository:
+Run twine upload to the PyPI test repository:
 ```
 twine upload --repository pypitest dist/*
 ```
 The twine install location may not be on PATH by default; either add it or call twine using its full path.
 
-Validate that the page looks correct on the pypi release page.
+Validate that the page looks correct on the PyPI release page.
 
 OPTIONAL:
 You can install and validate the package locally:
 
 pip install --index-url https://test.pypi.org/simple/ --no-deps ml-wrappers
 
-Run twine upload to the pypi repository:
+Run twine upload to the PyPI repository:
 ```
 twine upload --repository pypi dist/*
 ```
