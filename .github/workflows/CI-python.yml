@@ -22,11 +22,6 @@ jobs:
       with:
         auto-update-conda: true
         python-version: ${{ matrix.pythonVersion }}
-    - name: Lint with flake8
-      shell: bash -l {0}
-      run: |
-        conda install flake8
-        flake8 . --max-line-length=119 --count --max-complexity=20 --exclude=.git/,__pycache__/,dist/ --show-source --statistics
     - name: Install package
       shell: bash -l {0}
       run: |
