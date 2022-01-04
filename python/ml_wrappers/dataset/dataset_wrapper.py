@@ -13,12 +13,7 @@ from scipy.sparse import issparse
 
 from ..common.constants import Defaults
 from .timestamp_featurizer import CustomTimestampFeaturizer
-try:
-    from interpret_community.common.explanation_utils import (
-        _generate_augmented_data, _summarize_data)
-    interpret_installed = True
-except BaseException:
-    interpret_installed = False
+from .dataset_utils import _generate_augmented_data, _summarize_data
 
 with warnings.catch_warnings():
     warnings.filterwarnings('ignore', 'Starting from version 2.2.1', UserWarning)
@@ -383,8 +378,6 @@ class DatasetWrapper(object):
 
     def compute_summary(self, nclusters=10, use_gpu=False, **kwargs):
         """Summarizes the dataset if it hasn't been summarized yet."""
-        if not interpret_installed:
-            raise RuntimeError('interpret-community is required to compute dataset summary in DatasetWrapper')
         if self._summary_computed:
             return
         self._summary_dataset = _summarize_data(self._dataset, nclusters, use_gpu)
@@ -397,8 +390,6 @@ class DatasetWrapper(object):
         :param max_augment_data_size: number of times we stack permuted x to augment.
         :type max_augment_data_size: int
         """
-        if not interpret_installed:
-            raise RuntimeError('interpret-community is required to augment data in DatasetWrapper')
         self._dataset = _generate_augmented_data(self._dataset, max_num_of_augmentations=max_num_of_augmentations)
 
     def take_subset(self, explain_subset):
