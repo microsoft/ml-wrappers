@@ -13,13 +13,7 @@ from scipy.sparse import issparse
 
 from ..common.constants import Defaults
 from .timestamp_featurizer import CustomTimestampFeaturizer
-
-try:
-    from interpret_community.common.explanation_utils import (
-        _generate_augmented_data, _summarize_data)
-    interpret_installed = True
-except BaseException:
-    interpret_installed = False
+from .dataset_utils import _generate_augmented_data, _summarize_data
 
 with warnings.catch_warnings():
     warnings.filterwarnings('ignore', 'Starting from version 2.2.1', UserWarning)
@@ -35,7 +29,7 @@ class DatasetWrapper(object):
 
     :param dataset: A matrix of feature vector examples (# examples x # features) for
         initializing the explainer.
-    :type dataset: numpy.array or pandas.DataFrame or scipy.sparse.csr_matrix
+    :type dataset: numpy.array or pandas.DataFrame or panads.Series orscipy.sparse.csr_matrix
     """
 
     def __init__(self, dataset, clear_references=False):
@@ -43,10 +37,15 @@ class DatasetWrapper(object):
 
         :param dataset: A matrix of feature vector examples (# examples x # features) for
             initializing the explainer.
-        :type dataset: numpy.array or pandas.DataFrame or scipy.sparse.csr_matrix
+        :type dataset: numpy.array or pandas.DataFrame or panads.Series or scipy.sparse.csr_matrix
         :param clear_references: A memory optimization that clears all references after use in explainers.
         :type clear_references: bool
         """
+        if (not isinstance(dataset, pd.DataFrame) and not isinstance(dataset, pd.Series) and
+                not isinstance(dataset, np.ndarray) and not issparse(dataset)):
+            raise TypeError("Got type {0} which is not not supported in DatasetWrapper".format(
+                type(dataset))
+            )
         self._features = None
         self._original_dataset_with_type = dataset
         self._dataset_is_df = isinstance(dataset, pd.DataFrame)
@@ -384,8 +383,6 @@ class DatasetWrapper(object):
 
     def compute_summary(self, nclusters=10, use_gpu=False, **kwargs):
         """Summarizes the dataset if it hasn't been summarized yet."""
-        if not interpret_installed:
-            raise RuntimeError('interpret-community is required to compute dataset summary in DatasetWrapper')
         if self._summary_computed:
             return
         self._summary_dataset = _summarize_data(self._dataset, nclusters, use_gpu)
@@ -398,8 +395,6 @@ class DatasetWrapper(object):
         :param max_augment_data_size: number of times we stack permuted x to augment.
         :type max_augment_data_size: int
         """
-        if not interpret_installed:
-            raise RuntimeError('interpret-community is required to augment data in DatasetWrapper')
         self._dataset = _generate_augmented_data(self._dataset, max_num_of_augmentations=max_num_of_augmentations)
 
     def take_subset(self, explain_subset):
