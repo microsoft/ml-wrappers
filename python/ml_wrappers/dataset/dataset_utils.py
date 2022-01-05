@@ -5,7 +5,6 @@
 """Defines helpful utilities for the DatasetWrapper."""
 
 import logging
-import warnings
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
@@ -14,9 +13,9 @@ from sklearn.utils import shuffle
 from sklearn.utils.sparsefuncs import csc_median_axis_0
 
 from ..common.gpu_kmeans import kmeans
+from ..common.warnings_suppressor import shap_warnings_suppressor
 
-with warnings.catch_warnings():
-    warnings.filterwarnings('ignore', 'Starting from version 2.2.1', UserWarning)
+with shap_warnings_suppressor():
     try:
         import shap
         shap_installed = True
