@@ -29,6 +29,7 @@ CLASSIFIERS = [
     'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
     'Topic :: Scientific/Engineering :: Artificial Intelligence',
     'Operating System :: Microsoft :: Windows',
     'Operating System :: MacOS',
@@ -47,9 +48,7 @@ with open(README_FILE, 'r', encoding='utf-8') as f:
 
 setup(
     name=name,  # noqa: F821
-
     version=version,  # noqa: F821
-
     description='Machine Learning Wrappers SDK for Python',
     long_description=README,
     long_description_content_type='text/markdown',
@@ -57,12 +56,8 @@ setup(
     author_email='ilmat@microsoft.com',
     license='MIT License',
     url='https://github.com/microsoft/ml-wrappers',
-
     classifiers=CLASSIFIERS,
-
     packages=find_packages(exclude=["*.tests"]),
-
     install_requires=DEPENDENCIES,
-
     zip_safe=False
 )
