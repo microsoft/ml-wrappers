@@ -12,8 +12,8 @@ import pandas as pd
 from scipy.sparse import issparse
 
 from ..common.constants import Defaults
-from .timestamp_featurizer import CustomTimestampFeaturizer
 from .dataset_utils import _generate_augmented_data, _summarize_data
+from .timestamp_featurizer import CustomTimestampFeaturizer
 
 with warnings.catch_warnings():
     warnings.filterwarnings('ignore', 'Starting from version 2.2.1', UserWarning)
