@@ -7,9 +7,8 @@
 import numpy as np
 import pandas as pd
 import pytest
-from scipy.sparse import csr_matrix
-
 from ml_wrappers.dataset.dataset_wrapper import DatasetWrapper
+from scipy.sparse import csr_matrix
 
 
 class TestDatasetWrapper:

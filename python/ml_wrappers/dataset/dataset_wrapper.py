@@ -12,8 +12,8 @@ import pandas as pd
 from scipy.sparse import issparse
 
 from ..common.constants import Defaults
-from .timestamp_featurizer import CustomTimestampFeaturizer
 from .dataset_utils import _generate_augmented_data, _summarize_data
+from .timestamp_featurizer import CustomTimestampFeaturizer
 
 with warnings.catch_warnings():
     warnings.filterwarnings('ignore', 'Starting from version 2.2.1', UserWarning)
@@ -462,7 +462,7 @@ class DatasetWrapper(object):
         k_upper_bound = 2000
         k_list = []
         k = min(num_rows / 2, k_upper_bound)
-        for i in range(int(ceil(log(num_rows, 2) - 7))):
+        for _ in range(int(ceil(log(num_rows, 2) - 7))):
             k_list.append(int(k))
             k /= 2
         prev_highest_score = -1
