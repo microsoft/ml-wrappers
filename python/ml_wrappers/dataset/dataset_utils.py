@@ -12,6 +12,7 @@ from scipy.sparse import csr_matrix, issparse
 from scipy.sparse import vstack as sparse_vstack
 from sklearn.utils import shuffle
 from sklearn.utils.sparsefuncs import csc_median_axis_0
+
 from ..common.gpu_kmeans import kmeans
 
 with warnings.catch_warnings():
