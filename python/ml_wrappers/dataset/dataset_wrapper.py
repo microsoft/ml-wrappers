@@ -29,7 +29,8 @@ class DatasetWrapper(object):
 
     :param dataset: A matrix of feature vector examples (# examples x # features) for
         initializing the explainer.
-    :type dataset: numpy.array or pandas.DataFrame or panads.Series orscipy.sparse.csr_matrix
+    :type dataset: numpy.array or pandas.DataFrame or panads.Series
+        or scipy.sparse.csr_matrix or shap.DenseData or torch.Tensor
     """
 
     def __init__(self, dataset, clear_references=False):
@@ -38,11 +39,14 @@ class DatasetWrapper(object):
         :param dataset: A matrix of feature vector examples (# examples x # features) for
             initializing the explainer.
         :type dataset: numpy.array or pandas.DataFrame or panads.Series or scipy.sparse.csr_matrix
+            or shap.DenseData or torch.Tensor
         :param clear_references: A memory optimization that clears all references after use in explainers.
         :type clear_references: bool
         """
         if (not isinstance(dataset, pd.DataFrame) and not isinstance(dataset, pd.Series) and
-                not isinstance(dataset, np.ndarray) and not issparse(dataset)):
+                not isinstance(dataset, np.ndarray) and not issparse(dataset) and
+                not str(type(dataset)).endswith(".DenseData'>") and
+                not str(type(dataset)).endswith("torch.Tensor'>")):
             raise TypeError("Got type {0} which is not not supported in DatasetWrapper".format(
                 type(dataset))
             )
