@@ -34,4 +34,4 @@ jobs:
       run: |
         # pytest
         pip install pytest
-        pytest .tests/ -s -v
+        pytest tests/ -s -v
