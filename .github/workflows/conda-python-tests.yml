@@ -1,4 +1,4 @@
-name: Conda Python Tests
+name: Conda package Tests
 
 on:
   push:
@@ -7,14 +7,13 @@ on:
     branches: [main]
 
 jobs:
-  ci-python:
+  conda-python-tests:
+    runs-on: ${{ matrix.operatingSystem }}
     strategy:
       matrix:
         packageDirectory: ["ml_wrappers"]
         operatingSystem: [ubuntu-latest, macos-latest, windows-latest]
-        pythonVersion: [3.6, 3.7, 3.8, 3.9, '3.10']
-
-    runs-on: ${{ matrix.operatingSystem }}
+        pythonVersion: [3.6, 3.7, 3.8, 3.9]
 
     steps:
     - uses: actions/checkout@v2
@@ -31,4 +30,3 @@ jobs:
       run: |
         conda install pytest
         pytest ./tests -s -v
-
