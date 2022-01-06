@@ -7,8 +7,14 @@
 import numpy as np
 import pandas as pd
 import pytest
+from ml_wrappers.dataset.dataset_utils import _summarize_data
 from ml_wrappers.dataset.dataset_wrapper import DatasetWrapper
 from scipy.sparse import csr_matrix
+
+try:
+    import torch
+except ImportError:
+    pass
 
 
 class TestDatasetWrapper:
@@ -25,6 +31,12 @@ class TestDatasetWrapper:
         sparse_matrix = csr_matrix((3, 4),
                                    dtype=np.int8)
         DatasetWrapper(dataset=sparse_matrix)
+
+        background = _summarize_data(test_dataframe.values)
+        DatasetWrapper(dataset=background)
+
+        torch_input = torch.rand(100, 3)
+        DatasetWrapper(dataset=torch_input)
 
     def test_unsupported_types(self):
         test_dataframe = pd.DataFrame(data=[[1, 2, 3]], columns=['c1,', 'c2', 'c3'])
