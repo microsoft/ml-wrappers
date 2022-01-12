@@ -147,7 +147,7 @@ class WrappedPytorchModel(object):
         """Predict the output using the wrapped PyTorch model.
 
         :param dataset: The dataset to predict on.
-        :type dataset: interpret_community.dataset.dataset_wrapper.DatasetWrapper
+        :type dataset: ml_wrappers.DatasetWrapper
         """
         # Convert the data to pytorch Variable
         if isinstance(dataset, pd.DataFrame):
@@ -164,7 +164,7 @@ class WrappedPytorchModel(object):
         """Predict the class using the wrapped PyTorch model.
 
         :param dataset: The dataset to predict on.
-        :type dataset: interpret_community.dataset.dataset_wrapper.DatasetWrapper
+        :type dataset: ml_wrappers.DatasetWrapper
         """
         # Convert the data to pytorch Variable
         if isinstance(dataset, pd.DataFrame):
@@ -186,7 +186,7 @@ class WrappedPytorchModel(object):
         """Predict the output probability using the wrapped PyTorch model.
 
         :param dataset: The dataset to predict_proba on.
-        :type dataset: interpret_community.dataset.dataset_wrapper.DatasetWrapper
+        :type dataset: ml_wrappers.DatasetWrapper
         """
         return self.predict(dataset)
 
@@ -239,7 +239,7 @@ class WrappedClassificationModel(BaseWrappedModel):
         """Predict the output using the wrapped classification model.
 
         :param dataset: The dataset to predict on.
-        :type dataset: interpret_community.dataset.dataset_wrapper.DatasetWrapper
+        :type dataset: ml_wrappers.DatasetWrapper
         """
         is_sequential = str(type(self._model)).endswith("tensorflow.python.keras.engine.sequential.Sequential'>")
         if is_sequential or isinstance(self._model, WrappedPytorchModel):
@@ -262,7 +262,7 @@ class WrappedClassificationModel(BaseWrappedModel):
         """Predict the output probability using the wrapped model.
 
         :param dataset: The dataset to predict_proba on.
-        :type dataset: interpret_community.dataset.dataset_wrapper.DatasetWrapper
+        :type dataset: ml_wrappers.DatasetWrapper
         """
         proba_preds = self._eval_function(dataset)
         if isinstance(proba_preds, pd.DataFrame):
@@ -282,7 +282,7 @@ class WrappedRegressionModel(BaseWrappedModel):
         """Predict the output using the wrapped regression model.
 
         :param dataset: The dataset to predict on.
-        :type dataset: interpret_community.dataset.dataset_wrapper.DatasetWrapper
+        :type dataset: ml_wrappers.DatasetWrapper
         """
         preds = self._eval_function(dataset)
         if isinstance(preds, pd.DataFrame):
@@ -311,7 +311,7 @@ class WrappedClassificationWithoutProbaModel(object):
         """Predict the output using the wrapped regression model.
 
         :param dataset: The dataset to predict on.
-        :type dataset: interpret_community.dataset.dataset_wrapper.DatasetWrapper
+        :type dataset: ml_wrappers.DatasetWrapper
         """
         return self._model.predict(dataset)
 
@@ -319,7 +319,7 @@ class WrappedClassificationWithoutProbaModel(object):
         """Predict the output probability using the wrapped model.
 
         :param dataset: The dataset to predict_proba on.
-        :type dataset: interpret_community.dataset.dataset_wrapper.DatasetWrapper
+        :type dataset: ml_wrappers.DatasetWrapper
         """
         predictions = self.predict(dataset)
         # Generate trivial boolean array for predictions
@@ -336,7 +336,7 @@ def wrap_model(model, examples, model_task):
     :param model: The model to evaluate on the examples.
     :type model: model with a predict or predict_proba function.
     :param examples: The model evaluation examples.
-    :type examples: interpret_community.dataset.dataset_wrapper.DatasetWrapper
+    :type examples: ml_wrappers.DatasetWrapper
     :param model_task: Optional parameter to specify whether the model is a classification or regression model.
         In most cases, the type of the model can be inferred based on the shape of the output, where a classifier
         has a predict_proba method and outputs a 2 dimensional array, while a regressor has a predict method and
@@ -354,7 +354,7 @@ def _wrap_model(model, examples, model_task, is_function):
     :param model: The model or function to evaluate on the examples.
     :type model: function or model with a predict or predict_proba function
     :param examples: The model evaluation examples.
-    :type examples: interpret_community.dataset.dataset_wrapper.DatasetWrapper
+    :type examples: ml_wrappers.DatasetWrapper
     :param model_task: Optional parameter to specify whether the model is a classification or regression model.
         In most cases, the type of the model can be inferred based on the shape of the output, where a classifier
         has a predict_proba method and outputs a 2 dimensional array, while a regressor has a predict method and
@@ -399,7 +399,7 @@ def _eval_model(model, examples, model_task):
     :param model: The model to evaluate on the examples.
     :type model: model with a predict or predict_proba function
     :param examples: The model evaluation examples.
-    :type examples: interpret_community.dataset.dataset_wrapper.DatasetWrapper
+    :type examples: ml_wrappers.DatasetWrapper
     :param model_task: Optional parameter to specify whether the model is a classification or regression model.
         In most cases, the type of the model can be inferred based on the shape of the output, where a classifier
         has a predict_proba method and outputs a 2 dimensional array, while a regressor has a predict method and
@@ -434,7 +434,7 @@ def _eval_function(function, examples, model_task, wrapped=False):
     :param function: The prediction function to evaluate on the examples.
     :type function: function
     :param examples: The model evaluation examples.
-    :type examples: interpret_community.dataset.dataset_wrapper.DatasetWrapper
+    :type examples: ml_wrappers.DatasetWrapper
     :param model_task: Optional parameter to specify whether the model is a classification or regression model.
         In most cases, the type of the model can be inferred based on the shape of the output, where a classifier
         has a predict_proba method and outputs a 2 dimensional array, while a regressor has a predict method and
