@@ -311,7 +311,7 @@ class DatasetWrapper(object):
         """Featurizes the timestamp columns.
 
         :return: The transformation steps to featurize the timestamp columns.
-        :rtype: interpret_community.dataset.dataset_wrapper.DatasetWrapper
+        :rtype: ml_wrappers.DatasetWrapper
         """
         if self._timestamp_featurized:
             return self._timestamp_featurizer
