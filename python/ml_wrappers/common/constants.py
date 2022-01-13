@@ -148,6 +148,7 @@ class SKLearn(object):
     EXAMPLES = 'examples'
     LABELS = 'labels'
     PREDICTIONS = 'predictions'
+    PREDICT = 'predict'
     PREDICT_PROBA = 'predict_proba'
 
 
