@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sklearn import ensemble, linear_model, svm
 from sklearn.base import TransformerMixin
-from sklearn.datasets import (fetch_20newsgroups, load_boston,
+from sklearn.datasets import (fetch_20newsgroups, fetch_california_housing,
                               load_breast_cancer, load_iris)
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
@@ -21,7 +21,7 @@ except ImportError:
     pass
 
 try:
-    from xgboost import XGBClassifier
+    from xgboost import XGBClassifier, XGBRegressor
 except ImportError:
     pass
 
@@ -153,6 +153,13 @@ def create_xgboost_classifier(X, y):
     return model
 
 
+def create_xgboost_regressor(X, y):
+    xgb = XGBRegressor(learning_rate=0.1, max_depth=3, n_estimators=100,
+                       n_jobs=1, random_state=777)
+    model = xgb.fit(X, y)
+    return model
+
+
 def create_sklearn_svm_classifier(X, y, probability=True):
     clf = svm.SVC(gamma=0.001, C=100., probability=probability, random_state=777)
     model = clf.fit(X, y)
@@ -250,13 +257,24 @@ def create_keras_regressor(X, y):
     return model
 
 
-def create_scikit_keras_model_func(feature_number):
+def create_scikit_keras_model_func(feature_number, num_classes=None):
     def common_scikit_keras_model():
         model = Sequential()
         model.add(Dense(12, input_dim=feature_number, activation='relu'))
         model.add(Dense(8, activation='relu'))
-        model.add(Dense(1))
-        model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mse'])
+        if num_classes is None:
+            model.add(Dense(1))
+            model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mse'])
+        elif num_classes == 2:
+            model.add(Dense(2))
+            model.compile(loss=keras.losses.binary_crossentropy,
+                          optimizer=keras.optimizers.Adadelta(),
+                          metrics=['accuracy'])
+        else:
+            model.add(Dense(num_classes, activation=Activation('softmax')))
+            model.compile(loss=keras.losses.categorical_crossentropy,
+                          optimizer=keras.optimizers.Adadelta(),
+                          metrics=['accuracy'])
         return model
     return common_scikit_keras_model
 
@@ -271,17 +289,28 @@ def create_scikit_keras_regressor(X, y):
     return model
 
 
-def create_scikit_keras_classifier(X, y):
+def create_scikit_keras_binary_classifier(X, y):
     # create simple (dummy) Keras DNN model for classification
     batch_size = 500
     epochs = 10
-    model_func = create_scikit_keras_model_func(X.shape[1])
+    model_func = create_scikit_keras_model_func(X.shape[1], num_classes=2)
     model = KerasClassifier(build_fn=model_func, nb_epoch=epochs, batch_size=batch_size, verbose=1)
     model.fit(X, y)
     return model
 
 
-def _common_pytorch_generator(numCols, numClasses=None):
+def create_scikit_keras_multiclass_classifier(X, y):
+    # create simple (dummy) Keras DNN model for classification
+    batch_size = 500
+    epochs = 10
+    num_classes = len(np.unique(y))
+    model_func = create_scikit_keras_model_func(X.shape[1], num_classes=num_classes)
+    model = KerasClassifier(build_fn=model_func, nb_epoch=epochs, batch_size=batch_size, verbose=1)
+    model.fit(X, y)
+    return model
+
+
+def _common_pytorch_generator(numCols, num_classes=None):
     class Net(nn.Module):
         def __init__(self):
             super(Net, self).__init__()
@@ -290,14 +319,14 @@ def _common_pytorch_generator(numCols, numClasses=None):
             self.norm = nn.LayerNorm(numCols)
             self.fc1 = nn.Linear(numCols, 100)
             self.fc2 = nn.Dropout(p=0.2)
-            if numClasses is None:
+            if num_classes is None:
                 self.fc3 = nn.Linear(100, 3)
                 self.output = nn.Linear(3, 1)
-            elif numClasses == 2:
+            elif num_classes == 2:
                 self.fc3 = nn.Linear(100, 2)
                 self.output = nn.Sigmoid()
             else:
-                self.fc3 = nn.Linear(100, numClasses)
+                self.fc3 = nn.Linear(100, num_classes)
                 self.output = nn.Softmax()
 
         def forward(self, X):
@@ -358,7 +387,7 @@ def create_pytorch_classifier(X, y):
     torch_X = torch.Tensor(X).float()
     torch_y = torch.Tensor(y).long()
     # Create network structure
-    net = _common_pytorch_generator(X.shape[1], numClasses=2)
+    net = _common_pytorch_generator(X.shape[1], num_classes=2)
     # Train the model
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=0.01)
@@ -412,13 +441,13 @@ def create_keras_multiclass_classifier(X, y):
 
 def create_pytorch_multiclass_classifier(X, y):
     # Get unique number of classes
-    numClasses = np.unique(y).shape[0]
+    num_classes = np.unique(y).shape[0]
     # create simple (dummy) Pytorch DNN model for multiclass classification
     epochs = 12
     torch_X = torch.Tensor(X).float()
     torch_y = torch.Tensor(y).long()
     # Create network structure
-    net = _common_pytorch_generator(X.shape[1], numClasses=numClasses)
+    net = _common_pytorch_generator(X.shape[1], num_classes=num_classes)
     # Train the model
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=0.01)
@@ -458,13 +487,13 @@ def create_energy_data():
     return x_train, x_test, y_train, y_validation, feature_names
 
 
-def create_boston_data():
-    # Import Boston housing dataset
-    boston = load_boston()
+def create_housing_data():
+    # Import California housing dataset
+    housing = fetch_california_housing()
     # Split data into train and test
-    x_train, x_test, y_train, y_validation = train_test_split(boston.data, boston.target,
+    x_train, x_test, y_train, y_validation = train_test_split(housing.data, housing.target,
                                                               test_size=0.2, random_state=7)
-    return x_train, x_test, y_train, y_validation, boston.feature_names
+    return x_train, x_test, y_train, y_validation, housing.feature_names
 
 
 def create_cancer_data():
