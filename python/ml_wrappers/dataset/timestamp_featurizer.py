@@ -32,7 +32,7 @@ class CustomTimestampFeaturizer(BaseEstimator, TransformerMixin):
         """Fits the CustomTimestampFeaturizer.
 
         :param X: The dataset containing timestamp columns to featurize.
-        :type X: numpy.array or pandas.DataFrame or scipy.sparse.csr_matrix
+        :type X: numpy.ndarray or pandas.DataFrame or scipy.sparse.csr_matrix
         """
         # If the data was previously successfully summarized, then there are no
         # timestamp columns as it must be numeric.
@@ -57,9 +57,9 @@ class CustomTimestampFeaturizer(BaseEstimator, TransformerMixin):
         since min timestamp in the training dataset.
 
         :param X: The dataset containing timestamp columns to featurize.
-        :type X: numpy.array or pandas.DataFrame or scipy.sparse.csr_matrix
+        :type X: numpy.ndarray or pandas.DataFrame or scipy.sparse.csr_matrix
         :return: The transformed dataset.
-        :rtype: numpy.array or scipy.sparse.csr_matrix
+        :rtype: numpy.ndarray or scipy.sparse.csr_matrix
         """
         tmp_dataset = X
         if len(self._time_col_names) > 0:

@@ -30,11 +30,11 @@ def _generate_augmented_data(x, max_num_of_augmentations=np.inf):
     """Augment x by appending x with itself shuffled columnwise many times.
 
     :param x: data that has to be augmented, array or sparse matrix of 2 dimensions
-    :type x: numpy.array or scipy.sparse.csr_matrix
+    :type x: numpy.ndarray or scipy.sparse.csr_matrix
     :param max_augment_data_size: number of times we stack permuted x to augment.
     :type max_augment_data_size: int
     :return: augmented data with roughly number of rows that are equal to number of columns
-    :rtype: numpy.array or scipy.sparse.csr_matrix
+    :rtype: numpy.ndarray or scipy.sparse.csr_matrix
     """
     x_augmented = x
     vstack = sparse_vstack if issparse(x) else np.vstack
@@ -54,7 +54,7 @@ def _summarize_data(X, k=10, use_gpu=False, to_round_values=True):
     median for dense columns.
 
     :param X: Matrix of data samples to summarize (# samples x # features).
-    :type X: numpy.array or pandas.DataFrame or scipy.sparse.csr_matrix
+    :type X: numpy.ndarray or pandas.DataFrame or scipy.sparse.csr_matrix
     :param k: Number of cluster centroids to use for approximation.
     :type k: int
     :param to_round_values: When using kmeans, for each element of every cluster centroid to match the nearest value
@@ -62,7 +62,7 @@ def _summarize_data(X, k=10, use_gpu=False, to_round_values=True):
         always get a valid value.  Ignored for sparse data sample.
     :type to_round_values: bool
     :return: summarized numpy array or csr_matrix object.
-    :rtype: numpy.array or scipy.sparse.csr_matrix or DenseData
+    :rtype: numpy.ndarray or scipy.sparse.csr_matrix or DenseData
     """
     is_sparse = issparse(X)
     if not str(type(X)).endswith(".DenseData'>"):

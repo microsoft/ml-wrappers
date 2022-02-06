@@ -29,7 +29,7 @@ class DatasetWrapper(object):
 
     :param dataset: A matrix of feature vector examples (# examples x # features) for
         initializing the explainer.
-    :type dataset: numpy.array or pandas.DataFrame or panads.Series
+    :type dataset: numpy.ndarray or pandas.DataFrame or panads.Series
         or scipy.sparse.csr_matrix or shap.DenseData or torch.Tensor
     """
 
@@ -38,7 +38,7 @@ class DatasetWrapper(object):
 
         :param dataset: A matrix of feature vector examples (# examples x # features) for
             initializing the explainer.
-        :type dataset: numpy.array or pandas.DataFrame or panads.Series or scipy.sparse.csr_matrix
+        :type dataset: numpy.ndarray or pandas.DataFrame or panads.Series or scipy.sparse.csr_matrix
             or shap.DenseData or torch.Tensor
         :param clear_references: A memory optimization that clears all references after use in explainers.
         :type clear_references: bool
@@ -78,7 +78,7 @@ class DatasetWrapper(object):
         """Get the dataset.
 
         :return: The underlying dataset.
-        :rtype: numpy.array or scipy.sparse.csr_matrix
+        :rtype: numpy.ndarray or scipy.sparse.csr_matrix
         """
         return self._dataset
 
@@ -87,7 +87,7 @@ class DatasetWrapper(object):
         """Get the dataset in the original type, pandas DataFrame or Series.
 
         :return: The underlying dataset.
-        :rtype: numpy.array or pandas.DataFrame or pandas.Series or scipy.sparse matrix
+        :rtype: numpy.ndarray or pandas.DataFrame or pandas.Series or scipy.sparse matrix
         """
         wrapper_func = self.typed_wrapper_func
         return wrapper_func(self._dataset)
@@ -96,12 +96,12 @@ class DatasetWrapper(object):
         """Get a wrapper function to convert the dataset to the original type, pandas DataFrame or Series.
 
         :param dataset: The dataset to convert to original type.
-        :type dataset: numpy.array or scipy.sparse.csr_matrix
+        :type dataset: numpy.ndarray or scipy.sparse.csr_matrix
         :param keep_index_as_feature: Whether to keep the index as a feature when converting back.
             Off by default to convert it back to index.
         :type keep_index_as_feature: bool
         :return: A wrapper function for a given dataset to convert to original type.
-        :rtype: numpy.array or scipy.sparse.csr_matrix or pandas.DataFrame or pandas.Series
+        :rtype: numpy.ndarray or scipy.sparse.csr_matrix or pandas.DataFrame or pandas.Series
         """
         if self._dataset_is_df:
             if len(dataset.shape) == 1:
@@ -130,7 +130,7 @@ class DatasetWrapper(object):
         Note: if the original dataset was a pandas dataframe, this will return the numpy version.
 
         :return: The original dataset.
-        :rtype: numpy.array or scipy.sparse matrix
+        :rtype: numpy.ndarray or scipy.sparse matrix
         """
         return self._original_dataset
 
@@ -139,7 +139,7 @@ class DatasetWrapper(object):
         """Get the original typed dataset which could be a numpy array or pandas DataFrame or pandas Series.
 
         :return: The original dataset.
-        :rtype: numpy.array or pandas.DataFrame or pandas.Series or scipy.sparse matrix
+        :rtype: numpy.ndarray or pandas.DataFrame or pandas.Series or scipy.sparse matrix
         """
         return self._original_dataset_with_type
 
@@ -165,7 +165,7 @@ class DatasetWrapper(object):
         """Get the summary dataset without any subsetting.
 
         :return: The original dataset or None if summary was not computed.
-        :rtype: numpy.array or scipy.sparse.csr_matrix
+        :rtype: numpy.ndarray or scipy.sparse.csr_matrix
         """
         return self._summary_dataset
 

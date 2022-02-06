@@ -47,7 +47,7 @@ class _FunctionWrapper(object):
         """Wraps a function that reshapes the input dataset to be 2D from 1D.
 
         :param dataset: The model evaluation examples.
-        :type dataset: numpy.array
+        :type dataset: numpy.ndarray
         :return: A wrapped function.
         :rtype: function
         """
@@ -59,7 +59,7 @@ class _FunctionWrapper(object):
         """Wraps a function that flattens the input dataset from 2D to 1D.
 
         :param dataset: The model evaluation examples.
-        :type dataset: numpy.array
+        :type dataset: numpy.ndarray
         :return: A wrapped function.
         :rtype: function
         """
@@ -69,7 +69,7 @@ class _FunctionWrapper(object):
         """Wraps a function that creates two columns, [1-p, p], from 2D array of one column evaluation result.
 
         :param dataset: The model evaluation examples.
-        :type dataset: numpy.array
+        :type dataset: numpy.ndarray
         :return: A wrapped function.
         :rtype: function
         """
@@ -80,7 +80,7 @@ class _FunctionWrapper(object):
         """Wraps a function that creates two columns, [1-p, p], from evaluation result that is a 1D array.
 
         :param dataset: The model evaluation examples.
-        :type dataset: numpy.array
+        :type dataset: numpy.ndarray
         :return: A wrapped function.
         :rtype: function
         """
@@ -91,7 +91,7 @@ class _FunctionWrapper(object):
         """Wraps a function that creates one column in rare edge case scenario for multiclass one-class result.
 
         :param dataset: The model evaluation examples.
-        :type dataset: numpy.array
+        :type dataset: numpy.ndarray
         :return: A wrapped function.
         :rtype: function
         """
@@ -105,7 +105,7 @@ def _convert_to_two_cols(function, examples):
     :param function: The prediction function to evaluate on the examples.
     :type function: function
     :param examples: The model evaluation examples.
-    :type examples: numpy.array or list
+    :type examples: numpy.ndarray or list
     :return: The function chosen from given model and classification domain.
     :rtype: (function, str)
     """
