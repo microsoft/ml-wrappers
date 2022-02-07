@@ -29,10 +29,19 @@ class TestModelWrapper(object):
             create_sklearn_logistic_regressor, iris)
         train_classification_model_pandas(
             create_sklearn_logistic_regressor, iris)
+        train_classification_model_numpy(
+            create_sklearn_logistic_regressor, iris,
+            use_dataset_wrapper=False)
+        train_classification_model_pandas(
+            create_sklearn_logistic_regressor, iris,
+            use_dataset_wrapper=False)
 
     def test_wrap_pytorch_classification_model(self, iris):
         train_classification_model_numpy(
             create_pytorch_multiclass_classifier, iris)
+        train_classification_model_numpy(
+            create_pytorch_multiclass_classifier, iris,
+            use_dataset_wrapper=False)
 
     def test_wrap_xgboost_classification_model(self, iris):
         train_classification_model_numpy(create_xgboost_classifier, iris)
@@ -55,6 +64,12 @@ class TestModelWrapper(object):
             create_sklearn_linear_regressor, housing)
         train_regression_model_pandas(
             create_sklearn_linear_regressor, housing)
+        train_regression_model_numpy(
+            create_sklearn_linear_regressor, housing,
+            use_dataset_wrapper=False)
+        train_regression_model_pandas(
+            create_sklearn_linear_regressor, housing,
+            use_dataset_wrapper=False)
 
     def test_wrap_pytorch_regression_model(self, housing):
         train_regression_model_numpy(
@@ -77,43 +92,63 @@ class TestModelWrapper(object):
         train_regression_model_pandas(create_scikit_keras_regressor, housing)
 
 
-def train_classification_model_numpy(model_initializer, dataset):
+def train_classification_model_numpy(model_initializer, dataset,
+                                     use_dataset_wrapper=True):
     X_train = dataset[DatasetConstants.X_TRAIN]
     X_test = dataset[DatasetConstants.X_TEST]
     y_train = dataset[DatasetConstants.Y_TRAIN]
     model = model_initializer(X_train, y_train)
-    wrapped_model = wrap_model(model, DatasetWrapper(X_test), model_task='classification')
+    if use_dataset_wrapper:
+        X_test_wrapped = DatasetWrapper(X_test)
+    else:
+        X_test_wrapped = X_test
+    wrapped_model = wrap_model(model, X_test_wrapped, model_task='classification')
     validate_wrapped_classification_model(wrapped_model, X_test)
 
 
-def train_classification_model_pandas(model_initializer, dataset):
+def train_classification_model_pandas(model_initializer, dataset,
+                                      use_dataset_wrapper=True):
     X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
                            columns=dataset[DatasetConstants.FEATURES])
     X_test = pd.DataFrame(data=dataset[DatasetConstants.X_TEST],
                           columns=dataset[DatasetConstants.FEATURES])
     y_train = dataset[DatasetConstants.Y_TRAIN]
     model = model_initializer(X_train, y_train)
-    wrapped_model = wrap_model(model, DatasetWrapper(X_test), model_task='classification')
+    if use_dataset_wrapper:
+        X_test_wrapped = DatasetWrapper(X_test)
+    else:
+        X_test_wrapped = X_test
+    wrapped_model = wrap_model(model, X_test_wrapped, model_task='classification')
     validate_wrapped_classification_model(wrapped_model, X_test)
 
 
-def train_regression_model_numpy(model_initializer, dataset):
+def train_regression_model_numpy(model_initializer, dataset,
+                                 use_dataset_wrapper=True):
     X_train = dataset[DatasetConstants.X_TRAIN]
     X_test = dataset[DatasetConstants.X_TEST]
     y_train = dataset[DatasetConstants.Y_TRAIN]
     model = model_initializer(X_train, y_train)
-    wrapped_model = wrap_model(model, DatasetWrapper(X_test), model_task='regression')
+    if use_dataset_wrapper:
+        X_test_wrapped = DatasetWrapper(X_test)
+    else:
+        X_test_wrapped = X_test
+    wrapped_model = wrap_model(model, X_test_wrapped, model_task='regression')
     validate_wrapped_regression_model(wrapped_model, X_test)
 
 
-def train_regression_model_pandas(model_initializer, dataset):
+def train_regression_model_pandas(model_initializer, dataset,
+                                  use_dataset_wrapper=True):
     X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
                            columns=dataset[DatasetConstants.FEATURES])
     X_test = pd.DataFrame(data=dataset[DatasetConstants.X_TEST],
                           columns=dataset[DatasetConstants.FEATURES])
     y_train = dataset[DatasetConstants.Y_TRAIN]
     model = model_initializer(X_train, y_train)
-    wrapped_model = wrap_model(model, DatasetWrapper(X_test), model_task='regression')
+    if use_dataset_wrapper:
+        X_test_wrapped = DatasetWrapper(X_test)
+    else:
+        X_test_wrapped = X_test
+    wrapped_model = wrap_model(model, X_test_wrapped, model_task='regression')
     validate_wrapped_regression_model(wrapped_model, X_test)
 
 

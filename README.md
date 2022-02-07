@@ -23,11 +23,24 @@ To install the package, simply run:
 pip install ml-wrappers
 ```
 
-## Code example
+## Code example of wrap_model
 
 ```python
-from ml_wrappers import wrap_model, DatasetWrapper
-wrapped_model = wrap_model(model, DatasetWrapper(input), model_task='regression')
+from ml_wrappers import wrap_model
+wrapped_model = wrap_model(model, input, model_task='regression')
+# Use wrapped model in any common code
+```
+
+## Code example of DatasetWrapper
+
+```python
+from ml_wrappers import DatasetWrapper
+wrapped_dataset = DatasetWrappper(input)
+numpy_or_scipy = wrapped_dataset.dataset
+# Perform some operations on common converted numpy or scipy dataset
+...
+# Get back the original dataset type after modifications
+modified_input = wrapped_dataset.typed_dataset(numpy_or_scipy)
 ```
 
 ## Contributing
