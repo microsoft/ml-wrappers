@@ -25,13 +25,7 @@ SAMPLED_STRING_ROWS = 10
 
 
 class DatasetWrapper(object):
-    """A wrapper around a dataset to make dataset operations more uniform across explainers.
-
-    :param dataset: A matrix of feature vector examples (# examples x # features) for
-        initializing the explainer.
-    :type dataset: numpy.ndarray or pandas.DataFrame or panads.Series
-        or scipy.sparse.csr_matrix or shap.DenseData or torch.Tensor
-    """
+    """A wrapper around a dataset to make dataset operations more uniform across explainers."""
 
     def __init__(self, dataset, clear_references=False):
         """Initialize the dataset wrapper.
