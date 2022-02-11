@@ -12,6 +12,7 @@ import pandas as pd
 from sklearn.linear_model import SGDClassifier
 
 from ..common.constants import ModelTask, SKLearn
+from ..dataset.dataset_wrapper import DatasetWrapper
 
 with warnings.catch_warnings():
     warnings.filterwarnings('ignore', 'Starting from version 2.2.1', UserWarning)
@@ -336,7 +337,11 @@ def wrap_model(model, examples, model_task):
     :param model: The model to evaluate on the examples.
     :type model: model with a predict or predict_proba function.
     :param examples: The model evaluation examples.
-    :type examples: ml_wrappers.DatasetWrapper
+        Note the examples will be wrapped in a DatasetWrapper, if not
+        wrapped when input.
+    :type examples: ml_wrappers.DatasetWrapper or numpy.ndarray
+        or pandas.DataFrame or panads.Series or scipy.sparse.csr_matrix
+        or shap.DenseData or torch.Tensor
     :param model_task: Optional parameter to specify whether the model is a classification or regression model.
         In most cases, the type of the model can be inferred based on the shape of the output, where a classifier
         has a predict_proba method and outputs a 2 dimensional array, while a regressor has a predict method and
@@ -354,7 +359,11 @@ def _wrap_model(model, examples, model_task, is_function):
     :param model: The model or function to evaluate on the examples.
     :type model: function or model with a predict or predict_proba function
     :param examples: The model evaluation examples.
-    :type examples: ml_wrappers.DatasetWrapper
+        Note the examples will be wrapped in a DatasetWrapper, if not
+        wrapped when input.
+    :type examples: ml_wrappers.DatasetWrapper or numpy.ndarray
+        or pandas.DataFrame or panads.Series or scipy.sparse.csr_matrix
+        or shap.DenseData or torch.Tensor
     :param model_task: Optional parameter to specify whether the model is a classification or regression model.
         In most cases, the type of the model can be inferred based on the shape of the output, where a classifier
         has a predict_proba method and outputs a 2 dimensional array, while a regressor has a predict method and
@@ -363,6 +372,8 @@ def _wrap_model(model, examples, model_task, is_function):
     :return: The function chosen from given model and chosen domain, or model wrapping the function and chosen domain.
     :rtype: (function, str) or (model, str)
     """
+    if not isinstance(examples, DatasetWrapper):
+        examples = DatasetWrapper(examples)
     if is_function:
         return _eval_function(model, examples, model_task)
     else:
