@@ -4,6 +4,7 @@
 
 """Tests for wrap_model function"""
 
+import pandas as pd
 import pytest
 from common_utils import (create_keras_classifier, create_keras_regressor,
                           create_lightgbm_classifier,
@@ -13,12 +14,21 @@ from common_utils import (create_keras_classifier, create_keras_regressor,
                           create_scikit_keras_multiclass_classifier,
                           create_scikit_keras_regressor,
                           create_sklearn_linear_regressor,
-                          create_sklearn_logistic_regressor,
+                          create_sklearn_logistic_regressor, create_tf_model,
                           create_xgboost_classifier, create_xgboost_regressor)
+from constants import DatasetConstants
+from ml_wrappers import wrap_model
+from ml_wrappers.dataset.dataset_wrapper import DatasetWrapper
 from train_wrapper_utils import (train_classification_model_numpy,
                                  train_classification_model_pandas,
                                  train_regression_model_numpy,
                                  train_regression_model_pandas)
+from wrapper_validator import validate_wrapped_regression_model
+
+try:
+    import tensorflow as tf
+except ImportError:
+    pass
 
 
 @pytest.mark.usefixtures('clean_dir')
@@ -89,3 +99,20 @@ class TestModelWrapper(object):
     def test_wrap_scikit_keras_regression_model(self, housing):
         train_regression_model_numpy(create_scikit_keras_regressor, housing)
         train_regression_model_pandas(create_scikit_keras_regressor, housing)
+
+    def test_batch_dataset(self, housing):
+        X_train = housing[DatasetConstants.X_TRAIN]
+        X_test = housing[DatasetConstants.X_TEST]
+        y_train = housing[DatasetConstants.Y_TRAIN]
+        y_test = housing[DatasetConstants.Y_TEST]
+        features = housing[DatasetConstants.FEATURES]
+        X_train_df = pd.DataFrame(X_train, columns=list(features))
+        X_test_df = pd.DataFrame(X_test, columns=list(features))
+        inp = (dict(X_train_df), y_train)
+        inp_ds = tf.data.Dataset.from_tensor_slices(inp).batch(32)
+        val = (dict(X_test_df), y_test)
+        val_ds = tf.data.Dataset.from_tensor_slices(val).batch(32)
+        model = create_tf_model(inp_ds, val_ds, features)
+        wrapped_dataset = DatasetWrapper(val_ds)
+        wrapped_model = wrap_model(model, wrapped_dataset, model_task='regression')
+        validate_wrapped_regression_model(wrapped_model, val_ds)

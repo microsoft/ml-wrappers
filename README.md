@@ -13,6 +13,16 @@ The dataset wrapper handles a variety of different dataset types and converts th
 
 The dataset wrapper simply converts the input to the common format, and after the common code finishes running, we convert the representation back to the original format, which can be handled by the original model.
 
+Currently supported data types include:
+
+- numpy.ndarray
+- pandas.DataFrame
+- panads.Series
+- scipy.sparse.csr_matrix
+- shap.DenseData
+- torch.Tensor
+- tensorflow.python.data.ops.dataset_ops.BatchDataset
+
 For more information about common format from the wrappers, please see the [Wrapper Specifications](https://github.com/microsoft/ml-wrappers/tree/main/docs/WrapperSpecifications.md) documentation.
 
 ## Installation

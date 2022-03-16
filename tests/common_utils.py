@@ -27,7 +27,8 @@ except ImportError:
 
 try:
     from tensorflow import keras
-    from tensorflow.keras.layers import Activation, Dense, Dropout
+    from tensorflow.keras import Input, Model
+    from tensorflow.keras.layers import Activation, Dense, Dropout, concatenate
     from tensorflow.keras.models import Sequential
     from tensorflow.keras.wrappers.scikit_learn import (KerasClassifier,
                                                         KerasRegressor)
@@ -365,6 +366,35 @@ def create_pytorch_regressor(X, y):
     return _train_pytorch_model(epochs, criterion, optimizer, net, torch_X, torch_y)
 
 
+def create_tf_model(inp_ds, val_ds, feature_names):
+    """Create a simple TF model for regression.
+
+    :param inp_ds: input data set.
+    :type inp_ds: BatchDataset
+    :param val_ds: validation data set.
+    :type val_ds: BatchDataset
+    :param feature_names: list of feature names.
+    :type feature_names: list
+    :return: a TF model.
+    :rtype: tf.keras.Model
+    """
+    inputs = {col: Input(name=col, shape=(1,),
+                         dtype='float32') for col in list(feature_names)}
+
+    x = concatenate([inputs[col] for col in list(feature_names)])
+    x = Dense(20, activation='relu', name='hidden1')(x)
+    out = Dense(1)(x)
+
+    model = Model(inputs=inputs, outputs=out)
+
+    model.compile(optimizer='adam',
+                  loss='mse',
+                  metrics=['mae', 'mse'])
+
+    model.fit(inp_ds, epochs=5, validation_data=val_ds)
+    return model
+
+
 def create_keras_classifier(X, y):
     # create simple (dummy) Keras DNN model for binary classification
     batch_size = 128
@@ -632,6 +662,35 @@ def create_timeseries_data(sample_cnt_per_grain,
     X = pd.concat(data).set_index([time_column_name] + list(grains_dict.keys()))
     y = X.pop(target_column_name).values
     return X, y
+
+
+def assert_sparse_equal(actual, expected):
+    """Assert that two sparse matrices are equal.
+
+    :param actual: The actual sparse matrix.
+    :type actual: scipy.sparse.csr_matrix
+    :param expected: The expected sparse matrix.
+    :type expected: scipy.sparse.csr_matrix
+    """
+    assert actual.shape == expected.shape
+    assert actual.dtype == expected.dtype
+    assert np.array_equal(actual.indptr, expected.indptr)
+    assert np.array_equal(actual.indices, expected.indices)
+    assert np.array_equal(actual.data, expected.data)
+
+
+def assert_batch_equal(actual, expected):
+    """Assert that two batch datasets are equal.
+
+    :param actual: The actual batch dataset.
+    :type actual: BatchDataset
+    :param expected: The expected batch dataset.
+    :type expected: BatchDataset
+    """
+    zipped_batches = zip(actual, expected)
+    for ((c_data, c_label), (data, label)) in zipped_batches:
+        assert np.array_equal(c_data, data)
+        assert np.array_equal(c_label, label)
 
 
 def _get_all_combinations(input_dict):

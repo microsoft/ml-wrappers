@@ -12,14 +12,22 @@ import pandas as pd
 from scipy.sparse import issparse
 
 from ..common.constants import Defaults
-from .dataset_utils import _generate_augmented_data, _summarize_data
+from .dataset_utils import (_convert_batch_dataset_to_numpy,
+                            _generate_augmented_data, _summarize_data)
 from .timestamp_featurizer import CustomTimestampFeaturizer
 
 with warnings.catch_warnings():
     warnings.filterwarnings('ignore', 'Starting from version 2.2.1', UserWarning)
 
+
 module_logger = logging.getLogger(__name__)
 module_logger.setLevel(logging.INFO)
+
+
+try:
+    import tensorflow as tf
+except ImportError:
+    module_logger.debug('Could not import tensorflow, required if using a Tensorflow model')
 
 SAMPLED_STRING_ROWS = 10
 
@@ -33,14 +41,15 @@ class DatasetWrapper(object):
         :param dataset: A matrix of feature vector examples (# examples x # features) for
             initializing the explainer.
         :type dataset: numpy.ndarray or pandas.DataFrame or panads.Series or scipy.sparse.csr_matrix
-            or shap.DenseData or torch.Tensor
+            or shap.DenseData or torch.Tensor or tensorflow.python.data.ops.dataset_ops.BatchDataset
         :param clear_references: A memory optimization that clears all references after use in explainers.
         :type clear_references: bool
         """
         if (not isinstance(dataset, pd.DataFrame) and not isinstance(dataset, pd.Series) and
                 not isinstance(dataset, np.ndarray) and not issparse(dataset) and
                 not str(type(dataset)).endswith(".DenseData'>") and
-                not str(type(dataset)).endswith("torch.Tensor'>")):
+                not str(type(dataset)).endswith("torch.Tensor'>") and
+                not str(type(dataset)).endswith("BatchDataset'>")):
             raise TypeError("Got type {0} which is not not supported in DatasetWrapper".format(
                 type(dataset))
             )
@@ -48,12 +57,17 @@ class DatasetWrapper(object):
         self._original_dataset_with_type = dataset
         self._dataset_is_df = isinstance(dataset, pd.DataFrame)
         self._dataset_is_series = isinstance(dataset, pd.Series)
+        self._dataset_is_batch = str(type(dataset)).endswith("BatchDataset'>")
         self._default_index_cols = ['index']
         self._default_index = True
         if self._dataset_is_df:
             self._features = dataset.columns.values.tolist()
         if self._dataset_is_df or self._dataset_is_series:
             dataset = dataset.values
+        elif self._dataset_is_batch:
+            dataset, features, size = _convert_batch_dataset_to_numpy(dataset)
+            self._features = features
+            self._batch_size = size
         self._dataset = dataset
         self._original_dataset = dataset
         self._summary_dataset = None
@@ -114,6 +128,14 @@ class DatasetWrapper(object):
             return dataframe.astype(output_types)
         elif self._dataset_is_series:
             return pd.Series(dataset)
+        elif self._dataset_is_batch:
+            if len(dataset.shape) == 1:
+                dataset = dataset.reshape(1, dataset.shape[0])
+            df = pd.DataFrame(dataset, columns=self._features)
+            tensor_slices = (dict(df), None)
+            tf_dataset = tf.data.Dataset.from_tensor_slices(tensor_slices)
+            batch_dataset = tf_dataset.batch(self._batch_size)
+            return batch_dataset
         else:
             return dataset
 

@@ -82,3 +82,29 @@ def _summarize_data(X, k=10, use_gpu=False, to_round_values=True):
                     raise RuntimeError('shap is required to compute dataset summary in DatasetWrapper')
                 return shap.kmeans(X, k, to_round_values)
     return X
+
+
+def _convert_batch_dataset_to_numpy(batch_dataset):
+    """Convert a TensorFlow batch dataset to a numpy array.
+
+    :param batch_dataset: batch dataset to convert
+    :type batch_dataset: BatchDataset
+    :return: data, feature names and batch size
+    :rtype: numpy.ndarray, list, int
+    """
+    batches = []
+    set_keys = False
+    features = []
+    batch_size = 0
+    for data, _ in batch_dataset:
+        columns = []
+        for column in data.values():
+            columns.append(np.array(column))
+        if not set_keys:
+            for key in data.keys():
+                features.append(key)
+            batch_size = columns[0].shape[0]
+            set_keys = True
+        batches.append(np.stack(columns, axis=1))
+    converted_data = np.vstack(batches)
+    return converted_data, features, batch_size
