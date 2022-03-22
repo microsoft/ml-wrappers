@@ -41,7 +41,7 @@ try:
 except ImportError:
     pass
 
-from datasets import retrieve_dataset
+from datasets_utils import retrieve_dataset
 from pandas import read_csv
 
 LIGHTGBM_METHOD = 'mimic.lightgbm'

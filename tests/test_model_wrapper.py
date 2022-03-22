@@ -18,8 +18,9 @@ from common_utils import (create_keras_classifier, create_keras_regressor,
                           create_xgboost_classifier, create_xgboost_regressor)
 from constants import DatasetConstants
 from ml_wrappers import wrap_model
-from ml_wrappers.common.constants import SKLearn
 from ml_wrappers.dataset.dataset_wrapper import DatasetWrapper
+from wrapper_validator import (validate_wrapped_classification_model,
+                               validate_wrapped_regression_model)
 
 
 @pytest.mark.usefixtures('clean_dir')
@@ -150,25 +151,3 @@ def train_regression_model_pandas(model_initializer, dataset,
         X_test_wrapped = X_test
     wrapped_model = wrap_model(model, X_test_wrapped, model_task='regression')
     validate_wrapped_regression_model(wrapped_model, X_test)
-
-
-def validate_wrapped_classification_model(wrapped_model, X_test):
-    # validate wrapped model has predict and predict_proba functions
-    assert hasattr(wrapped_model, SKLearn.PREDICT)
-    assert hasattr(wrapped_model, SKLearn.PREDICT_PROBA)
-    # validate we can call the model on the dataset
-    predictions = wrapped_model.predict(X_test)
-    probabilities = wrapped_model.predict_proba(X_test)
-    # validate predictions and probabilities have correct shape
-    assert len(predictions.shape) == 1
-    assert len(probabilities.shape) == 2
-
-
-def validate_wrapped_regression_model(wrapped_model, X_test):
-    # validate wrapped model has predict function and NO predict_proba function
-    assert hasattr(wrapped_model, SKLearn.PREDICT)
-    assert not hasattr(wrapped_model, SKLearn.PREDICT_PROBA)
-    # validate we can call the model on the dataset
-    predictions = wrapped_model.predict(X_test)
-    # validate predictions have correct shape
-    assert len(predictions.shape) == 1
