@@ -2,7 +2,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # ---------------------------------------------------------
 
-"""Defines constants for interpret community."""
+"""Defines constants for ml-wrappers."""
 
 from enum import Enum
 
@@ -167,15 +167,24 @@ class Scipy(object):
 
 
 class ModelTask(str, Enum):
-    """Provide model task constants. Can be 'classification', 'regression', or 'unknown'.
+    """Provide model task constants.
 
-    By default the model domain is inferred if 'unknown', but this can be overridden if you specify
-    'classification' or 'regression'.
+    For tabular data, can be 'classification', 'regression', or 'unknown'.
+    For text data, can be 'text_classification', 'sentiment_analysis',
+    'question_answering', 'entailment', 'summarizations' or 'unknown'.
+
+    By default the model domain is inferred if 'unknown', but this can
+    be overridden if you specify 'classification' or 'regression'.
     """
 
-    Classification = 'classification'
-    Regression = 'regression'
-    Unknown = 'unknown'
+    CLASSIFICATION = 'classification'
+    REGRESSION = 'regression'
+    TEXT_CLASSIFICATION = 'text_classification'
+    SENTIMENT_ANALYSIS = 'sentiment_analysis'
+    QUESTION_ANSWERING = 'question_answering'
+    ENTAILMENT = 'entailment'
+    SUMMARIZATIONS = 'summarizations'
+    UNKNOWN = 'unknown'
 
 
 class LightGBMParams(object):
@@ -298,3 +307,10 @@ class ResetIndex(str, Enum):
     Ignore = 'ignore'
     Reset = 'reset'
     ResetTeacher = 'reset_teacher'
+
+
+text_model_tasks = {ModelTask.TEXT_CLASSIFICATION,
+                    ModelTask.SENTIMENT_ANALYSIS,
+                    ModelTask.QUESTION_ANSWERING,
+                    ModelTask.ENTAILMENT,
+                    ModelTask.SUMMARIZATIONS}
