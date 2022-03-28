@@ -11,8 +11,9 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import SGDClassifier
 
-from ..common.constants import ModelTask, SKLearn
+from ..common.constants import ModelTask, SKLearn, text_model_tasks
 from ..dataset.dataset_wrapper import DatasetWrapper
+from .text_model_wrapper import _is_transformers_pipeline, _wrap_text_model
 
 with warnings.catch_warnings():
     warnings.filterwarnings('ignore', 'Starting from version 2.2.1', UserWarning)
@@ -125,14 +126,14 @@ def _convert_to_two_cols(function, examples):
     if convert_to_two_cols:
         # Create two cols, [1-p, p], from evaluation result
         if is_2d_result:
-            return (wrapper._function_2D_two_cols_wrapper_2D_result, ModelTask.Classification)
+            return (wrapper._function_2D_two_cols_wrapper_2D_result, ModelTask.CLASSIFICATION)
         else:
-            return (wrapper._function_2D_two_cols_wrapper_1D_result, ModelTask.Classification)
+            return (wrapper._function_2D_two_cols_wrapper_1D_result, ModelTask.CLASSIFICATION)
     else:
         if is_2d_result:
-            return (function, ModelTask.Classification)
+            return (function, ModelTask.CLASSIFICATION)
         else:
-            return (wrapper._function_2D_one_col_wrapper, ModelTask.Classification)
+            return (wrapper._function_2D_one_col_wrapper, ModelTask.CLASSIFICATION)
 
 
 class WrappedPytorchModel(object):
@@ -234,7 +235,7 @@ class WrappedClassificationModel(BaseWrappedModel):
 
     def __init__(self, model, eval_function, examples=None):
         """Initialize the WrappedClassificationModel with the model and evaluation function."""
-        super(WrappedClassificationModel, self).__init__(model, eval_function, examples, ModelTask.Classification)
+        super(WrappedClassificationModel, self).__init__(model, eval_function, examples, ModelTask.CLASSIFICATION)
 
     def predict(self, dataset):
         """Predict the output using the wrapped classification model.
@@ -277,7 +278,7 @@ class WrappedRegressionModel(BaseWrappedModel):
 
     def __init__(self, model, eval_function, examples=None):
         """Initialize the WrappedRegressionModel with the model and evaluation function."""
-        super(WrappedRegressionModel, self).__init__(model, eval_function, examples, ModelTask.Regression)
+        super(WrappedRegressionModel, self).__init__(model, eval_function, examples, ModelTask.REGRESSION)
 
     def predict(self, dataset):
         """Predict the output using the wrapped regression model.
@@ -331,7 +332,7 @@ class WrappedClassificationWithoutProbaModel(object):
         return probabilities
 
 
-def wrap_model(model, examples, model_task):
+def wrap_model(model, examples, model_task=ModelTask.UNKNOWN):
     """If needed, wraps the model in a common API based on model task and prediction function contract.
 
     :param model: The model to evaluate on the examples.
@@ -350,6 +351,12 @@ def wrap_model(model, examples, model_task):
     :return: The wrapper model.
     :rtype: model
     """
+    if model_task == ModelTask.UNKNOWN and _is_transformers_pipeline(model):
+        # TODO: can we also dynamically figure out the task if it was
+        # originally unknown for text scenarios?
+        raise ValueError("ModelTask must be specified for text-based models")
+    if model_task in text_model_tasks:
+        return _wrap_text_model(model, examples, model_task, False)[0]
     return _wrap_model(model, examples, model_task, False)[0]
 
 
@@ -387,7 +394,7 @@ def _wrap_model(model, examples, model_task, is_function):
         if _classifier_without_proba(model):
             model = WrappedClassificationWithoutProbaModel(model)
         eval_function, eval_ml_domain = _eval_model(model, examples, model_task)
-        if eval_ml_domain == ModelTask.Classification:
+        if eval_ml_domain == ModelTask.CLASSIFICATION:
             return WrappedClassificationModel(model, eval_function, examples), eval_ml_domain
         else:
             return WrappedRegressionModel(model, eval_function, examples), eval_ml_domain
@@ -422,18 +429,18 @@ def _eval_model(model, examples, model_task):
     # TODO: Add more model types here
     is_sequential = str(type(model)).endswith("tensorflow.python.keras.engine.sequential.Sequential'>")
     if is_sequential or isinstance(model, WrappedPytorchModel):
-        if model_task == ModelTask.Regression:
-            return _eval_function(model.predict, examples, ModelTask.Regression)
+        if model_task == ModelTask.REGRESSION:
+            return _eval_function(model.predict, examples, ModelTask.REGRESSION)
         result = model.predict_proba(examples.typed_wrapper_func(examples.dataset[0:1]))
-        if result.shape[1] == 1 and model_task == ModelTask.Unknown:
+        if result.shape[1] == 1 and model_task == ModelTask.UNKNOWN:
             raise Exception("Please specify model_task to disambiguate model type since "
                             "result of calling function is 2D array of one column.")
         else:
-            return _eval_function(model.predict_proba, examples, ModelTask.Classification)
+            return _eval_function(model.predict_proba, examples, ModelTask.CLASSIFICATION)
     else:
         has_predict_proba = hasattr(model, SKLearn.PREDICT_PROBA)
         # Note: Allow user to override default to use predict method for regressor
-        if has_predict_proba and model_task != ModelTask.Regression:
+        if has_predict_proba and model_task != ModelTask.REGRESSION:
             return _eval_function(model.predict_proba, examples, model_task)
         else:
             return _eval_function(model.predict, examples, model_task)
@@ -477,29 +484,29 @@ def _eval_function(function, examples, model_task, wrapped=False):
         # and they did not specify classifier or regressor, throw exception
         # to force the user to disambiguate the results.
         if result.shape[1] == 1:
-            if model_task == ModelTask.Unknown:
+            if model_task == ModelTask.UNKNOWN:
                 if isinstance(result, pd.DataFrame):
-                    return (function, ModelTask.Regression)
+                    return (function, ModelTask.REGRESSION)
                 raise Exception("Please specify model_task to disambiguate model type since "
                                 "result of calling function is 2D array of one column.")
-            elif model_task == ModelTask.Classification:
+            elif model_task == ModelTask.CLASSIFICATION:
                 return _convert_to_two_cols(function, examples_dataset)
             else:
-                # model_task == ModelTask.Regression
+                # model_task == ModelTask.REGRESSION
                 # In case user specified a regressor but we have a 2D output with one column,
                 # we want to flatten the function to 1D
                 wrapper = _FunctionWrapper(function)
                 return (wrapper._function_flatten, model_task)
         else:
-            if model_task == ModelTask.Unknown or model_task == ModelTask.Classification:
-                return (function, ModelTask.Classification)
+            if model_task == ModelTask.UNKNOWN or model_task == ModelTask.CLASSIFICATION:
+                return (function, ModelTask.CLASSIFICATION)
             else:
                 raise Exception("Invalid shape for prediction: "
                                 "Regression function cannot output 2D array with multiple columns")
     elif len(result.shape) == 1:
-        if model_task == ModelTask.Unknown:
-            return (function, ModelTask.Regression)
-        elif model_task == ModelTask.Classification:
+        if model_task == ModelTask.UNKNOWN:
+            return (function, ModelTask.REGRESSION)
+        elif model_task == ModelTask.CLASSIFICATION:
             return _convert_to_two_cols(function, examples_dataset)
         return (function, model_task)
     elif len(result.shape) == 0:

@@ -1,3 +1,6 @@
 lightgbm
 xgboost
 tensorflow
+shap
+transformers
+datasets
