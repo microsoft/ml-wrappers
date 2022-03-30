@@ -13,6 +13,8 @@ from sklearn.linear_model import SGDClassifier
 
 from ..common.constants import ModelTask, SKLearn, text_model_tasks
 from ..dataset.dataset_wrapper import DatasetWrapper
+from .pytorch_wrapper import WrappedPytorchModel
+from .tensorflow_wrapper import WrappedTensorflowModel, is_sequential
 from .text_model_wrapper import _is_transformers_pipeline, _wrap_text_model
 
 with warnings.catch_warnings():
@@ -24,7 +26,6 @@ module_logger.setLevel(logging.INFO)
 
 
 try:
-    import torch
     import torch.nn as nn
 except ImportError:
     module_logger.debug('Could not import torch, required if using a PyTorch model')
@@ -136,63 +137,6 @@ def _convert_to_two_cols(function, examples):
             return (wrapper._function_2D_one_col_wrapper, ModelTask.CLASSIFICATION)
 
 
-class WrappedPytorchModel(object):
-    """A class for wrapping a PyTorch model in the scikit-learn specification."""
-
-    def __init__(self, model):
-        """Initialize the PytorchModelWrapper with the model and evaluation function."""
-        self._model = model
-        # Set eval automatically for user for batchnorm and dropout layers
-        self._model.eval()
-
-    def predict(self, dataset):
-        """Predict the output using the wrapped PyTorch model.
-
-        :param dataset: The dataset to predict on.
-        :type dataset: ml_wrappers.DatasetWrapper
-        """
-        # Convert the data to pytorch Variable
-        if isinstance(dataset, pd.DataFrame):
-            dataset = dataset.values
-        wrapped_dataset = torch.Tensor(dataset)
-        with torch.no_grad():
-            result = self._model(wrapped_dataset).numpy()
-        # Reshape to 2D if output is 1D and input has one row
-        if len(dataset.shape) == 1:
-            result = result.reshape(1, -1)
-        return result
-
-    def predict_classes(self, dataset):
-        """Predict the class using the wrapped PyTorch model.
-
-        :param dataset: The dataset to predict on.
-        :type dataset: ml_wrappers.DatasetWrapper
-        """
-        # Convert the data to pytorch Variable
-        if isinstance(dataset, pd.DataFrame):
-            dataset = dataset.values
-        wrapped_dataset = torch.Tensor(dataset)
-        with torch.no_grad():
-            result = self._model(wrapped_dataset)
-        result_len = len(result.shape)
-        if result_len == 1 or (result_len > 1 and result.shape[1] == 1):
-            result = np.where(result.numpy() > 0.5, 1, 0)
-        else:
-            result = torch.max(result, 1)[1].numpy()
-        # Reshape to 2D if output is 1D and input has one row
-        if len(dataset.shape) == 1:
-            result = result.reshape(1, -1)
-        return result
-
-    def predict_proba(self, dataset):
-        """Predict the output probability using the wrapped PyTorch model.
-
-        :param dataset: The dataset to predict_proba on.
-        :type dataset: ml_wrappers.DatasetWrapper
-        """
-        return self.predict(dataset)
-
-
 class BaseWrappedModel(object):
     """A base class for WrappedClassificationModel and WrappedRegressionModel."""
 
@@ -243,8 +187,10 @@ class WrappedClassificationModel(BaseWrappedModel):
         :param dataset: The dataset to predict on.
         :type dataset: ml_wrappers.DatasetWrapper
         """
-        is_sequential = str(type(self._model)).endswith("tensorflow.python.keras.engine.sequential.Sequential'>")
-        if is_sequential or isinstance(self._model, WrappedPytorchModel):
+        is_tf_seq = is_sequential(self._model)
+        is_wrapped_pytroch = isinstance(self._model, WrappedPytorchModel)
+        is_wrapped_tf = isinstance(self._model, WrappedTensorflowModel)
+        if is_tf_seq or is_wrapped_pytroch or is_wrapped_tf:
             return self._model.predict_classes(dataset).flatten()
         preds = self._model.predict(dataset)
         if isinstance(preds, pd.DataFrame):
@@ -391,6 +337,8 @@ def _wrap_model(model, examples, model_task, is_function):
                 model = WrappedPytorchModel(model)
         except (NameError, AttributeError):
             module_logger.debug('Could not import torch, required if using a pytorch model')
+        if is_sequential(model):
+            model = WrappedTensorflowModel(model)
         if _classifier_without_proba(model):
             model = WrappedClassificationWithoutProbaModel(model)
         eval_function, eval_ml_domain = _eval_model(model, examples, model_task)
@@ -427,8 +375,10 @@ def _eval_model(model, examples, model_task):
     :rtype: (function, str)
     """
     # TODO: Add more model types here
-    is_sequential = str(type(model)).endswith("tensorflow.python.keras.engine.sequential.Sequential'>")
-    if is_sequential or isinstance(model, WrappedPytorchModel):
+    is_tf_seq = is_sequential(model)
+    is_wrapped_pytroch = isinstance(model, WrappedPytorchModel)
+    is_wrapped_tf = isinstance(model, WrappedTensorflowModel)
+    if is_tf_seq or is_wrapped_pytroch or is_wrapped_tf:
         if model_task == ModelTask.REGRESSION:
             return _eval_function(model.predict, examples, ModelTask.REGRESSION)
         result = model.predict_proba(examples.typed_wrapper_func(examples.dataset[0:1]))
