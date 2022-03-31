@@ -23,7 +23,7 @@ from wrapper_validator import (validate_wrapped_classification_model,
                                validate_wrapped_regression_model)
 
 
-@pytest.mark.usefixtures('clean_dir')
+@pytest.mark.usefixtures('_clean_dir')
 class TestModelWrapper(object):
     def test_wrap_sklearn_logistic_regression_model(self, iris):
         train_classification_model_numpy(
