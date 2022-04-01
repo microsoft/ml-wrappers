@@ -16,7 +16,7 @@ from train_wrapper_utils import (train_classification_model_numpy,
 from wrapper_validator import validate_wrapped_tf_model
 
 
-@pytest.mark.usefixtures('clean_dir')
+@pytest.mark.usefixtures('_clean_dir')
 class TestTensorflowModelWrapper(object):
     def test_wrap_keras_classification_model(self, iris):
         wrapped_init = wrapped_tensorflow_model_initializer(

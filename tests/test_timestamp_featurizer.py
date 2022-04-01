@@ -14,7 +14,7 @@ from pandas.api.types import is_datetime64_any_dtype as is_datetime
 test_logger = logging.getLogger(__name__)
 
 
-@pytest.mark.usefixtures('clean_dir')
+@pytest.mark.usefixtures('_clean_dir')
 class TestTimestampFeaturizer(object):
 
     def test_working(self):
@@ -31,7 +31,7 @@ class TestTimestampFeaturizer(object):
         # Assert the result is the same as the original passed in data (no featurization was done)
         assert(result.equals(x_test))
 
-    @pytest.mark.parametrize("sample_cnt_per_grain,grains_dict", [
+    @pytest.mark.parametrize(("sample_cnt_per_grain", "grains_dict"), [
         (240, {}),
         (20, {'fruit': ['apple', 'grape'], 'store': [100, 200, 50]})])
     def test_timestamp_featurization(self, sample_cnt_per_grain, grains_dict):

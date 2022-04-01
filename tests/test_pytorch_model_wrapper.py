@@ -14,7 +14,7 @@ from train_wrapper_utils import (train_classification_model_numpy,
 from wrapper_validator import validate_wrapped_pytorch_model
 
 
-@pytest.mark.usefixtures('clean_dir')
+@pytest.mark.usefixtures('_clean_dir')
 class TestPytorchModelWrapper(object):
     def test_wrap_pytorch_classification_model(self, iris):
         wrapped_init = wrapped_pytorch_model_initializer(

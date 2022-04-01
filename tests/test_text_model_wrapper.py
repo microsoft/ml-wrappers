@@ -12,7 +12,7 @@ from ml_wrappers.common.constants import ModelTask
 from wrapper_validator import validate_wrapped_classification_model
 
 
-@pytest.mark.usefixtures('clean_dir')
+@pytest.mark.usefixtures('_clean_dir')
 class TestTextModelWrapper(object):
     def test_wrap_transformers_model(self, iris):
         emotion_data = load_emotion_dataset()
