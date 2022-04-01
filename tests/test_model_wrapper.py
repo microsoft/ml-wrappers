@@ -21,7 +21,7 @@ from train_wrapper_utils import (train_classification_model_numpy,
                                  train_regression_model_pandas)
 
 
-@pytest.mark.usefixtures('clean_dir')
+@pytest.mark.usefixtures('_clean_dir')
 class TestModelWrapper(object):
     def test_wrap_sklearn_logistic_regression_model(self, iris):
         train_classification_model_numpy(

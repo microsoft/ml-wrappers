@@ -17,7 +17,7 @@ except ImportError:
     pass
 
 
-@pytest.mark.usefixtures('clean_dir')
+@pytest.mark.usefixtures('_clean_dir')
 class TestDatasetWrapper(object):
     def test_supported_types(self):
         test_dataframe = pd.DataFrame(data=[[1, 2, 3]], columns=['c1,', 'c2', 'c3'])

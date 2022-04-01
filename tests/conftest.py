@@ -16,7 +16,7 @@ test_logger.setLevel(logging.DEBUG)
 
 
 @pytest.fixture()
-def clean_dir():
+def _clean_dir():
     new_path = tempfile.mkdtemp()
     print("tmp test directory: " + new_path)
     os.chdir(new_path)
@@ -25,7 +25,7 @@ def clean_dir():
 @pytest.fixture(scope='session')
 def iris():
     x_train, x_test, y_train, y_test, features, classes = create_iris_data()
-    yield {
+    return {
         DatasetConstants.X_TRAIN: x_train,
         DatasetConstants.X_TEST: x_test,
         DatasetConstants.Y_TRAIN: y_train,
@@ -38,7 +38,7 @@ def iris():
 @pytest.fixture(scope='session')
 def housing():
     x_train, x_test, y_train, y_test, features = create_housing_data()
-    yield {
+    return {
         DatasetConstants.X_TRAIN: x_train,
         DatasetConstants.X_TEST: x_test,
         DatasetConstants.Y_TRAIN: y_train,
@@ -50,7 +50,7 @@ def housing():
 @pytest.fixture(scope='session')
 def titanic_simple():
     x_train, x_test, y_train, y_test, numeric, categorical = create_simple_titanic_data()
-    yield {
+    return {
         DatasetConstants.X_TRAIN: x_train,
         DatasetConstants.X_TEST: x_test,
         DatasetConstants.Y_TRAIN: y_train,
@@ -63,7 +63,7 @@ def titanic_simple():
 @pytest.fixture(scope='session')
 def titanic_complex():
     x_train, x_test, y_train, y_test = create_complex_titanic_data()
-    yield {
+    return {
         DatasetConstants.X_TRAIN: x_train,
         DatasetConstants.X_TEST: x_test,
         DatasetConstants.Y_TRAIN: y_train,
