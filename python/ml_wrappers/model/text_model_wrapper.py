@@ -5,6 +5,7 @@
 """Defines wrappers for text-based models."""
 
 import numpy as np
+from ml_wrappers.common.constants import ModelTask
 
 from ..common.warnings_suppressor import shap_warnings_suppressor
 
@@ -43,18 +44,20 @@ def _wrap_text_model(model, examples, model_task, is_function):
         model wrapping the function and chosen domain.
     :rtype: (function, str) or (model, str)
     """
+    _wrapped_model = model
     if _is_transformers_pipeline(model):
-        _wrapped_model = WrappedTransformersModel(model)
-    else:
-        _wrapped_model = model
+        if model_task == ModelTask.TEXT_CLASSIFICATION:
+            _wrapped_model = WrappedTextClassificationModel(model)
+        elif model_task == ModelTask.QUESTION_ANSWERING:
+            _wrapped_model = WrappedQuestionAnsweringModel(model)
     return _wrapped_model, model_task
 
 
-class WrappedTransformersModel(object):
+class WrappedTextClassificationModel(object):
     """A class for wrapping a Transformers model in the scikit-learn style."""
 
     def __init__(self, model):
-        """Initialize the WrappedTransformersModel with the model."""
+        """Initialize the WrappedTextClassificationModel."""
         self._model = model
         self._wrapped_model = models.TransformersPipeline(model)
 
@@ -81,3 +84,23 @@ class WrappedTransformersModel(object):
         :type dataset: ml_wrappers.DatasetWrapper
         """
         return self._wrapped_model(dataset)
+
+
+class WrappedQuestionAnsweringModel(object):
+    """A class for wrapping a Transformers model in the scikit-learn style."""
+
+    def __init__(self, model):
+        """Initialize the WrappedQuestionAnsweringModel."""
+        self._model = model
+
+    def predict(self, dataset):
+        """Predict the output using the wrapped Transformers model.
+
+        :param dataset: The dataset to predict on.
+        :type dataset: ml_wrappers.DatasetWrapper
+        """
+        output = []
+        for context, question in zip(dataset['context'], dataset['questions']):
+            answer = self._model({'context': context, 'question': question})
+            output.append(answer['answer'])
+        return output
