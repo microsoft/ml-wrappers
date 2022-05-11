@@ -184,6 +184,7 @@ class ModelTask(str, Enum):
     QUESTION_ANSWERING = 'question_answering'
     ENTAILMENT = 'entailment'
     SUMMARIZATIONS = 'summarizations'
+    IMAGE_CLASSIFICATION = 'image_classification'
     UNKNOWN = 'unknown'
 
 
@@ -314,3 +315,6 @@ text_model_tasks = {ModelTask.TEXT_CLASSIFICATION,
                     ModelTask.QUESTION_ANSWERING,
                     ModelTask.ENTAILMENT,
                     ModelTask.SUMMARIZATIONS}
+
+
+image_model_tasks = {ModelTask.IMAGE_CLASSIFICATION}
