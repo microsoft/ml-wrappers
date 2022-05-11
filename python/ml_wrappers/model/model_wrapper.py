@@ -11,8 +11,10 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import SGDClassifier
 
-from ..common.constants import ModelTask, SKLearn, text_model_tasks
+from ..common.constants import (ModelTask, SKLearn, image_model_tasks,
+                                text_model_tasks)
 from ..dataset.dataset_wrapper import DatasetWrapper
+from .image_model_wrapper import _wrap_image_model
 from .pytorch_wrapper import WrappedPytorchModel
 from .tensorflow_wrapper import WrappedTensorflowModel, is_sequential
 from .text_model_wrapper import _is_transformers_pipeline, _wrap_text_model
@@ -303,6 +305,8 @@ def wrap_model(model, examples, model_task=ModelTask.UNKNOWN):
         raise ValueError("ModelTask must be specified for text-based models")
     if model_task in text_model_tasks:
         return _wrap_text_model(model, examples, model_task, False)[0]
+    if model_task in image_model_tasks:
+        return _wrap_image_model(model, examples, model_task, False)[0]
     return _wrap_model(model, examples, model_task, False)[0]
 
 
