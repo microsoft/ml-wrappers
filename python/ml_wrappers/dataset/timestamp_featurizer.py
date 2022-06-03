@@ -14,25 +14,37 @@ from sklearn.base import BaseEstimator, TransformerMixin
 class CustomTimestampFeaturizer(BaseEstimator, TransformerMixin):
     """An estimator for featurizing timestamp columns to numeric data.
 
-    :param features: Feature column names.
+    :param features: Optional feature column names.
     :type features: list[str]
+    :param return_pandas: Whether to return the transformed dataset as a pandas DataFrame.
+    :type return_pandas: bool
+    :param modify_in_place: Whether to modify the original dataset in place.
+    :type modify_in_place: bool
     """
 
-    def __init__(self, features):
+    def __init__(self, features=None, return_pandas=False, modify_in_place=False):
         """Initialize the CustomTimestampFeaturizer.
 
-        :param features: Feature column names.
+        :param features: Optional feature column names.
         :type features: list[str]
+        :param return_pandas: Whether to return the transformed dataset as a pandas DataFrame.
+        :type return_pandas: bool
+        :param modify_in_place: Whether to modify the original dataset in place.
+        :type modify_in_place: bool
         """
-        self._features = features
+        self.features = features
+        self.return_pandas = return_pandas
+        self.modify_in_place = modify_in_place
         self._time_col_names = []
         return
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fits the CustomTimestampFeaturizer.
 
         :param X: The dataset containing timestamp columns to featurize.
         :type X: numpy.ndarray or pandas.DataFrame or scipy.sparse.csr_matrix
+        :param y: The target values.
+        :type y: Optional target values (None for unsupervised transformations).
         """
         # If the data was previously successfully summarized, then there are no
         # timestamp columns as it must be numeric.
@@ -42,7 +54,7 @@ class CustomTimestampFeaturizer(BaseEstimator, TransformerMixin):
         tmp_dataset = X
         # If numpy array, temporarily convert to pandas for easier and uniform timestamp handling
         if isinstance(X, np.ndarray):
-            tmp_dataset = pd.DataFrame(X, columns=self._features)
+            tmp_dataset = pd.DataFrame(X, columns=self.features)
         self._time_col_names = [column for column in tmp_dataset.columns if is_datetime(tmp_dataset[column])]
         # Calculate the min date for each column
         self._min = []
@@ -65,7 +77,10 @@ class CustomTimestampFeaturizer(BaseEstimator, TransformerMixin):
         if len(self._time_col_names) > 0:
             # Temporarily convert to pandas for easier and uniform timestamp handling
             if isinstance(X, np.ndarray):
-                tmp_dataset = pd.DataFrame(X, columns=self._features)
+                tmp_dataset = pd.DataFrame(X, columns=self.features)
+            elif not self.modify_in_place:
+                # If originally pandas, make a copy to avoid changing the original dataset
+                tmp_dataset = X.copy()
             # Get the year, day, month, hour, minute, second
             for idx, time_col_name in enumerate(self._time_col_names):
                 tmp_dataset[time_col_name + '_year'] = tmp_dataset[time_col_name].map(lambda x: x.year)
@@ -77,5 +92,6 @@ class CustomTimestampFeaturizer(BaseEstimator, TransformerMixin):
                 # Replace column itself with difference from min value, leave as same name
                 # to keep index so order of other columns remains the same for other transformations
                 tmp_dataset[time_col_name] = tmp_dataset[time_col_name].map(lambda x: x.timestamp() - self._min[idx])
-            X = tmp_dataset.values
-        return X
+            if not self.return_pandas:
+                tmp_dataset = tmp_dataset.values
+        return tmp_dataset

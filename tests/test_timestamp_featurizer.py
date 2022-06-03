@@ -47,3 +47,27 @@ class TestTimestampFeaturizer(object):
         assert([column for column in tmp_result.columns if is_datetime(tmp_result[column])] == [])
         # Assert we have the expected number of columns - 1 time columns * 6 featurized plus original
         assert(result.shape[1] == len(original_cols) + 6)
+
+    @pytest.mark.parametrize(("return_pandas"), [True, False])
+    def test_separate_fit_with_no_features(self, return_pandas):
+        sample_cnt_per_grain = 20
+        grains_dict = {'fruit': ['apple', 'grape'], 'store': [100, 200, 50]}
+        # create timeseries data
+        X, _ = create_timeseries_data(sample_cnt_per_grain, 'time', 'y', grains_dict)
+        original_cols = list(X.columns.values)
+        # featurize and validate the timestamp column as a separate fit call and fit_transform
+        # Note: in this case we don't pass the feature names to the constructor
+        ctf1 = CustomTimestampFeaturizer(return_pandas=return_pandas)
+        ctf2 = CustomTimestampFeaturizer(return_pandas=return_pandas)
+        ctf1.fit(X)
+        result1 = ctf1.transform(X)
+        result2 = ctf2.fit_transform(X)
+        for result in [result1, result2]:
+            if not return_pandas:
+                assert not isinstance(result, pd.DataFrame)
+                # Form a temporary dataframe for validation
+                result = pd.DataFrame(result)
+            # Assert there are no timestamp columns
+            assert([column for column in result.columns if is_datetime(result[column])] == [])
+            # Assert we have the expected number of columns - 1 time columns * 6 featurized plus original
+            assert(result.shape[1] == len(original_cols) + 6)
