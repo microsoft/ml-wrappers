@@ -73,8 +73,8 @@ jobs:
       - name: Upload a ml-wrappers build result
         uses: actions/upload-artifact@v2
         with:
-          name: ./python
-          path: ./python/dist/
+          name: ml_wrappers
+          path: python/dist/
 
       # publish to PyPI
       - name: Publish ml-wrappers package to Test PyPI
