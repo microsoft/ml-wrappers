@@ -2,5 +2,5 @@ lightgbm
 xgboost
 tensorflow
 shap
-transformers
+transformers==4.20.0
 datasets
