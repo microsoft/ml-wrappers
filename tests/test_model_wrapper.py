@@ -6,8 +6,9 @@
 
 import pandas as pd
 import pytest
-from common_utils import (create_keras_classifier, create_keras_regressor,
-                          create_lightgbm_classifier,
+from common_utils import (create_catboost_classifier,
+                          create_catboost_regressor, create_keras_classifier,
+                          create_keras_regressor, create_lightgbm_classifier,
                           create_lightgbm_regressor,
                           create_pytorch_multiclass_classifier,
                           create_pytorch_regressor,
@@ -56,6 +57,10 @@ class TestModelWrapper(object):
         train_classification_model_numpy(create_xgboost_classifier, iris)
         train_classification_model_pandas(create_xgboost_classifier, iris)
 
+    def test_wrap_catboost_classification_model(self, iris):
+        train_classification_model_numpy(create_catboost_classifier, iris)
+        train_classification_model_pandas(create_catboost_classifier, iris)
+
     def test_wrap_lightgbm_classification_model(self, iris):
         train_classification_model_numpy(create_lightgbm_classifier, iris)
         train_classification_model_pandas(create_lightgbm_classifier, iris)
@@ -87,6 +92,10 @@ class TestModelWrapper(object):
     def test_wrap_xgboost_regression_model(self, housing):
         train_regression_model_numpy(create_xgboost_regressor, housing)
         train_regression_model_pandas(create_xgboost_regressor, housing)
+
+    def test_wrap_catboost_regression_model(self, housing):
+        train_regression_model_numpy(create_catboost_regressor, housing)
+        train_regression_model_pandas(create_catboost_regressor, housing)
 
     def test_wrap_lightgbm_regression_model(self, housing):
         train_regression_model_numpy(create_lightgbm_regressor, housing)
