@@ -5,6 +5,7 @@
 # Defines common utilities for explanations
 import numpy as np
 import pandas as pd
+from catboost import CatBoostClassifier, CatBoostRegressor
 from sklearn import ensemble, linear_model, svm
 from sklearn.base import TransformerMixin
 from sklearn.datasets import (fetch_20newsgroups, fetch_california_housing,
@@ -157,6 +158,18 @@ def create_xgboost_classifier(X, y):
 def create_xgboost_regressor(X, y):
     xgb = XGBRegressor(learning_rate=0.1, max_depth=3, n_estimators=100,
                        n_jobs=1, random_state=777)
+    model = xgb.fit(X, y)
+    return model
+
+
+def create_catboost_classifier(X, y):
+    xgb = CatBoostClassifier(random_state=777, logging_level='Silent')
+    model = xgb.fit(X, y)
+    return model
+
+
+def create_catboost_regressor(X, y):
+    xgb = CatBoostRegressor(random_state=777, logging_level='Silent')
     model = xgb.fit(X, y)
     return model
 
