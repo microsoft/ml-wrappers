@@ -79,7 +79,7 @@ jobs:
       # publish to PyPI
       - name: Publish ml-wrappers package to Test PyPI
         if: ${{ github.event.inputs.releaseType == 'Test' }}
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN_ML_WRAPPERS }}
@@ -87,7 +87,7 @@ jobs:
           packages_dir: python/dist/
       - name: Publish ml-wrappers package to PyPI
         if: ${{ github.event.inputs.releaseType == 'Prod' }}
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN_ML_WRAPPERS }}
