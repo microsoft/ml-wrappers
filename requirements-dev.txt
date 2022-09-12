@@ -5,3 +5,5 @@ tensorflow
 shap
 transformers<4.20.0
 datasets
+raiutils
+fastai
