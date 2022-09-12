@@ -2,9 +2,44 @@
 # Licensed under the MIT License.
 
 import json
+import os
+import sys
+from zipfile import ZipFile
 
+import numpy as np
+import pandas as pd
 import shap
+
+try:
+    from fastai.data.transforms import Normalize
+    from fastai.learner import load_learner
+    from fastai.metrics import accuracy
+    from fastai.vision import models
+    from fastai.vision.augment import Resize
+    from fastai.vision.data import ImageDataLoaders, imagenet_stats
+    from fastai.vision.learner import vision_learner
+except SyntaxError:
+    # Skip for older versions of python due to breaking changes in fastai
+    pass
+from PIL import Image
+from raiutils.common.retries import retry_function
 from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
+
+try:
+    from urllib import urlretrieve
+except ImportError:
+    from urllib.request import urlretrieve
+
+
+EPOCHS = 10
+LEARNING_RATE = 1e-4
+IM_SIZE = 300
+BATCH_SIZE = 16
+IMAGE = 'image'
+LABEL = 'label'
+FRIDGE_MODEL_NAME = 'fridge_model'
+FRIDGE_MODEL_WINDOWS_NAME = 'fridge_model_windows'
+WIN = 'win'
 
 
 def load_imagenet_dataset():
@@ -22,6 +57,41 @@ def load_imagenet_labels():
     return class_names
 
 
+def load_fridge_dataset():
+    # create data folder if it doesnt exist.
+    os.makedirs("data", exist_ok=True)
+
+    # download data
+    download_url = "https://cvbp-secondary.z19.web.core.windows.net/datasets/image_classification/fridgeObjects.zip"
+    data_file = "./data/fridgeObjects.zip"
+    urlretrieve(download_url, filename=data_file)
+
+    # extract files
+    with ZipFile(data_file, "r") as zipfile:
+        zipfile.extractall(path="./data")
+    # delete zip file
+    os.remove(data_file)
+    # get all file names into a pandas dataframe with the labels
+    data = pd.DataFrame(columns=[IMAGE,
+                                 LABEL])
+    for folder in os.listdir("./data/fridgeObjects"):
+        for file in os.listdir("./data/fridgeObjects/" + folder):
+            image_path = "./data/fridgeObjects/" + folder + "/" + file
+            data = data.append({IMAGE: image_path,
+                                LABEL: folder},
+                               ignore_index=True)
+    return data
+
+
+def load_images(data):
+    images = []
+    for image_path in data[IMAGE]:
+        with Image.open(image_path) as im:
+            image = np.array(im)
+        images.append(image)
+    return np.array(images)
+
+
 class ResNetPipeline(object):
     def __init__(self):
         self.model = ResNet50(weights='imagenet')
@@ -34,3 +104,45 @@ class ResNetPipeline(object):
 
 def create_image_classification_pipeline():
     return ResNetPipeline()
+
+
+class FetchModel(object):
+    def __init__(self):
+        pass
+
+    def fetch(self):
+        if sys.platform.startswith(WIN):
+            model_name = FRIDGE_MODEL_WINDOWS_NAME
+        else:
+            model_name = FRIDGE_MODEL_NAME
+        url = ('https://publictestdatasets.blob.core.windows.net/models/' +
+               model_name)
+        urlretrieve(url, FRIDGE_MODEL_NAME)
+
+
+def train_fastai_image_classifier(df):
+    data = ImageDataLoaders.from_df(
+        df, valid_pct=0.2, seed=10, bs=BATCH_SIZE,
+        batch_tfms=[Resize(IM_SIZE), Normalize.from_stats(*imagenet_stats)])
+    model = vision_learner(data, models.resnet18, metrics=[accuracy])
+    model.unfreeze()
+    model.fit(EPOCHS, LEARNING_RATE)
+    return model
+
+
+def retrieve_or_train_fridge_model(df, force_train=False):
+    if force_train:
+        model = train_fastai_image_classifier(df)
+        # Save model to disk
+        model.export(FRIDGE_MODEL_NAME)
+    else:
+        fetcher = FetchModel()
+        action_name = "Dataset download"
+        err_msg = "Failed to download dataset"
+        max_retries = 4
+        retry_delay = 60
+        retry_function(fetcher.fetch, action_name, err_msg,
+                       max_retries=max_retries,
+                       retry_delay=retry_delay)
+        model = load_learner(FRIDGE_MODEL_NAME)
+    return model
