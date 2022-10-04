@@ -26,13 +26,13 @@ class ModelWrapperPredictions:
         :type y_pred: np.ndarray
         """
         if not isinstance(test_data, pd.DataFrame):
-            raise ConfigValidationException(
+            raise DataValidationException(
                 "Expecting a pandas dataframe for test_data")
         if not isinstance(y_pred, np.ndarray):
-            raise ConfigValidationException(
+            raise DataValidationException(
                 "Expecting a numpy array for y_pred")
         if len(test_data) != len(y_pred):
-            raise ConfigValidationException(
+            raise DataValidationException(
                 "The number of instances in test data "
                 "do not match with number of predictions")
         self._combined_data = test_data.copy()
@@ -60,7 +60,7 @@ class ModelWrapperPredictions:
         filtered_df = self._combined_data.query(queries_str)
 
         if len(filtered_df) == 0:
-            raise EmptyDataFrameException(
+            raise EmptyDataException(
                 "The query data was not found in the combined dataset")
 
         return filtered_df
@@ -75,7 +75,8 @@ class ModelWrapperPredictions:
         :rtype: np.ndarray
         """
         if not isinstance(query_test_data, pd.DataFrame):
-            raise Exception("Expecting a pandas dataframe for query_test_data")
+            raise DataValidationException(
+                "Expecting a pandas dataframe for query_test_data")
         prediction_output = []
         for _, row in query_test_data.iterrows():
             filtered_df = self._get_filtered_data(row)
@@ -131,6 +132,9 @@ class ModelWrapperPredictionsClassification(ModelWrapperPredictions):
             test_data, y_pred)
         self._num_classes = None
         if y_pred_proba is not None:
+            if not isinstance(y_pred_proba, np.ndarray):
+                raise DataValidationException(
+                    "Expecting a numpy array for y_pred_proba")
             for i in range(0, len(y_pred_proba[0])):
                 self._combined_data[
                     TARGET + '_' + str(i)] = y_pred_proba[:, i]
@@ -146,10 +150,10 @@ class ModelWrapperPredictionsClassification(ModelWrapperPredictions):
         :rtype: np.ndarray
         """
         if not isinstance(query_test_data, pd.DataFrame):
-            raise ConfigValidationException(
+            raise DataValidationException(
                 "Expecting a pandas dataframe for query_test_data")
         if self._num_classes is None:
-            raise ConfigValidationException(
+            raise DataValidationException(
                 "Model wrapper configured without prediction probabilities"
             )
         prediction_output = []
@@ -177,9 +181,8 @@ class ModelWrapperPredictionsClassification(ModelWrapperPredictions):
         return state
 
 
-class EmptyDataFrameException(Exception):
-    """An exception indicating that some an empty dataframe
-    is being used for prediction.
+class EmptyDataException(Exception):
+    """An exception indicating that some operation produced empty data.
 
     :param exception_message: A message describing the error.
     :type exception_message: str
@@ -187,10 +190,10 @@ class EmptyDataFrameException(Exception):
     _error_code = 'Empty data exception'
 
 
-class ConfigValidationException(Exception):
-    """An exception indicating that some user configuration is not valid.
+class DataValidationException(Exception):
+    """An exception indicating that some user supplied data is not valid.
 
     :param exception_message: A message describing the error.
     :type exception_message: str
     """
-    _error_code = 'Invalid config'
+    _error_code = 'Invalid data'

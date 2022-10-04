@@ -4,11 +4,15 @@
 
 """Tests for predictions model wrapper."""
 
+import pickle
+
 import numpy as np
 import pandas as pd
+import pytest
 from common_utils import create_lightgbm_classifier, create_lightgbm_regressor
 from constants import DatasetConstants
 from ml_wrappers.model.predictions_wrapper import (
+    DataValidationException, EmptyDataException,
     ModelWrapperPredictionsClassification, ModelWrapperPredictionsRegression)
 
 
@@ -23,6 +27,12 @@ class TestPredictionsWrapper:
         model_predict_proba_output = model.predict_proba(test_data)
         model_wrapper_predict_proba_output = model_wrapper.predict_proba(test_data)
         np.all(model_predict_proba_output == model_wrapper_predict_proba_output)
+
+    def verify_pickle_serialization(self, model, model_wrapper, test_data):
+        new_model_wrapper = pickle.loads(pickle.dumps(model_wrapper))
+        self.verify_predict_outputs(model, new_model_wrapper, test_data)
+        if hasattr(new_model_wrapper, "predict_proba"):
+            self.verify_predict_proba_outputs(model, new_model_wrapper, test_data)
 
     def test_prediction_wrapper_classification(self, iris):
         dataset = iris
@@ -41,6 +51,7 @@ class TestPredictionsWrapper:
 
         self.verify_predict_outputs(model, model_wrapper, X_test)
         self.verify_predict_proba_outputs(model, model_wrapper, X_test)
+        self.verify_pickle_serialization(model, model_wrapper, X_test)
 
     def test_prediction_wrapper_regression(self, housing):
         dataset = housing
@@ -57,3 +68,101 @@ class TestPredictionsWrapper:
             X_test, model_predict)
 
         self.verify_predict_outputs(model, model_wrapper, X_test)
+        assert not hasattr(model_wrapper, "predict_proba")
+        self.verify_pickle_serialization(model, model_wrapper, X_test)
+
+    def test_prediction_wrapper_unsupported_scenarios(self, iris):
+        dataset = iris
+        X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
+                               columns=dataset[DatasetConstants.FEATURES])
+        X_test = pd.DataFrame(data=dataset[DatasetConstants.X_TEST],
+                              columns=dataset[DatasetConstants.FEATURES])
+        y_train = dataset[DatasetConstants.Y_TRAIN]
+        model = create_lightgbm_classifier(X_train, y_train)
+
+        model_predict = model.predict(X_test)
+        model_predict_proba = model.predict_proba(X_test)
+
+        with pytest.raises(
+                DataValidationException,
+                match="Expecting a pandas dataframe for test_data"):
+            ModelWrapperPredictionsClassification(
+                X_test.values, model_predict, model_predict_proba
+            )
+
+        with pytest.raises(
+                DataValidationException,
+                match="Expecting a numpy array for y_pred"):
+            ModelWrapperPredictionsClassification(
+                X_test, model_predict.tolist(), model_predict_proba
+            )
+
+        with pytest.raises(
+                DataValidationException,
+                match="Expecting a numpy array for y_pred_proba"):
+            ModelWrapperPredictionsClassification(
+                X_test, model_predict, model_predict_proba.tolist()
+            )
+
+        with pytest.raises(
+                DataValidationException,
+                match="The number of instances in test data "
+                      "do not match with number of predictions"):
+            ModelWrapperPredictionsClassification(
+                X_test.iloc[0:len(X_test) - 1], model_predict, model_predict_proba
+            )
+
+    def test_prediction_wrapper_unsupported_predict_scenarios(self, iris):
+        dataset = iris
+        X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
+                               columns=dataset[DatasetConstants.FEATURES])
+        X_test = pd.DataFrame(data=dataset[DatasetConstants.X_TEST],
+                              columns=dataset[DatasetConstants.FEATURES])
+        y_train = dataset[DatasetConstants.Y_TRAIN]
+        model = create_lightgbm_classifier(X_train, y_train)
+
+        model_predict = model.predict(X_test)
+        model_predict_proba = model.predict_proba(X_test)
+
+        model_wrapper = ModelWrapperPredictionsClassification(
+            X_test, model_predict, model_predict_proba)
+        with pytest.raises(
+                DataValidationException,
+                match="Expecting a pandas dataframe for query_test_data"):
+            model_wrapper.predict(X_test.values)
+        with pytest.raises(
+                DataValidationException,
+                match="Expecting a pandas dataframe for query_test_data"):
+            model_wrapper.predict_proba(X_test.values)
+
+        model_wrapper_without_predict_proba = \
+            ModelWrapperPredictionsClassification(X_test, model_predict)
+        with pytest.raises(
+                DataValidationException,
+                match="Model wrapper configured without prediction probabilities"):
+            model_wrapper_without_predict_proba.predict_proba(X_test)
+
+    def test_prediction_wrapper_unseen_data_predict_scenarios(self, iris):
+        dataset = iris
+        X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
+                               columns=dataset[DatasetConstants.FEATURES])
+        X_test = pd.DataFrame(data=dataset[DatasetConstants.X_TEST],
+                              columns=dataset[DatasetConstants.FEATURES])
+        y_train = dataset[DatasetConstants.Y_TRAIN]
+        model = create_lightgbm_classifier(X_train, y_train)
+
+        model_predict = model.predict(X_test[0:len(X_test) - 1])
+        model_predict_proba = model.predict_proba(X_test[0:len(X_test) - 1])
+
+        model_wrapper = ModelWrapperPredictionsClassification(
+            X_test[0:len(X_test) - 1], model_predict, model_predict_proba)
+
+        with pytest.raises(
+                EmptyDataException,
+                match="The query data was not found in the combined dataset"):
+            model_wrapper.predict(X_test[len(X_test) - 1:len(X_test)])
+
+        with pytest.raises(
+                EmptyDataException,
+                match="The query data was not found in the combined dataset"):
+            model_wrapper.predict_proba(X_test[len(X_test) - 1:len(X_test)])
