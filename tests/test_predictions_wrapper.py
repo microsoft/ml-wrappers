@@ -13,7 +13,7 @@ from common_utils import create_lightgbm_classifier, create_lightgbm_regressor
 from constants import DatasetConstants
 from ml_wrappers.model.predictions_wrapper import (
     DataValidationException, EmptyDataException,
-    ModelWrapperPredictionsClassification, ModelWrapperPredictionsRegression)
+    PredictionsModelWrapperClassification, PredictionsModelWrapperRegression)
 
 
 class TestPredictionsWrapper:
@@ -46,7 +46,7 @@ class TestPredictionsWrapper:
         model_predict = model.predict(X_test)
         model_predict_proba = model.predict_proba(X_test)
 
-        model_wrapper = ModelWrapperPredictionsClassification(
+        model_wrapper = PredictionsModelWrapperClassification(
             X_test, model_predict, model_predict_proba)
 
         self.verify_predict_outputs(model, model_wrapper, X_test)
@@ -64,7 +64,7 @@ class TestPredictionsWrapper:
 
         model_predict = model.predict(X_test)
 
-        model_wrapper = ModelWrapperPredictionsRegression(
+        model_wrapper = PredictionsModelWrapperRegression(
             X_test, model_predict)
 
         self.verify_predict_outputs(model, model_wrapper, X_test)
@@ -86,21 +86,21 @@ class TestPredictionsWrapper:
         with pytest.raises(
                 DataValidationException,
                 match="Expecting a pandas dataframe for test_data"):
-            ModelWrapperPredictionsClassification(
+            PredictionsModelWrapperClassification(
                 X_test.values, model_predict, model_predict_proba
             )
 
         with pytest.raises(
                 DataValidationException,
                 match="Expecting a numpy array for y_pred"):
-            ModelWrapperPredictionsClassification(
+            PredictionsModelWrapperClassification(
                 X_test, model_predict.tolist(), model_predict_proba
             )
 
         with pytest.raises(
                 DataValidationException,
                 match="Expecting a numpy array for y_pred_proba"):
-            ModelWrapperPredictionsClassification(
+            PredictionsModelWrapperClassification(
                 X_test, model_predict, model_predict_proba.tolist()
             )
 
@@ -108,7 +108,7 @@ class TestPredictionsWrapper:
                 DataValidationException,
                 match="The number of instances in test data "
                       "do not match with number of predictions"):
-            ModelWrapperPredictionsClassification(
+            PredictionsModelWrapperClassification(
                 X_test.iloc[0:len(X_test) - 1], model_predict, model_predict_proba
             )
 
@@ -124,7 +124,7 @@ class TestPredictionsWrapper:
         model_predict = model.predict(X_test)
         model_predict_proba = model.predict_proba(X_test)
 
-        model_wrapper = ModelWrapperPredictionsClassification(
+        model_wrapper = PredictionsModelWrapperClassification(
             X_test, model_predict, model_predict_proba)
         with pytest.raises(
                 DataValidationException,
@@ -136,7 +136,7 @@ class TestPredictionsWrapper:
             model_wrapper.predict_proba(X_test.values)
 
         model_wrapper_without_predict_proba = \
-            ModelWrapperPredictionsClassification(X_test, model_predict)
+            PredictionsModelWrapperClassification(X_test, model_predict)
         with pytest.raises(
                 DataValidationException,
                 match="Model wrapper configured without prediction probabilities"):
@@ -154,7 +154,7 @@ class TestPredictionsWrapper:
         model_predict = model.predict(X_test[0:len(X_test) - 1])
         model_predict_proba = model.predict_proba(X_test[0:len(X_test) - 1])
 
-        model_wrapper = ModelWrapperPredictionsClassification(
+        model_wrapper = PredictionsModelWrapperClassification(
             X_test[0:len(X_test) - 1], model_predict, model_predict_proba)
 
         with pytest.raises(

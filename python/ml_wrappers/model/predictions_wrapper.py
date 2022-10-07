@@ -12,13 +12,13 @@ import pandas as pd
 TARGET = 'target'
 
 
-class ModelWrapperPredictions:
+class PredictionsModelWrapper:
     """Model wrapper to wrap the samples used to train the models
     and the predictions of the model. This wrapper is useful when
     it is not possible to load the model.
     """
     def __init__(self, test_data: pd.DataFrame, y_pred: np.ndarray):
-        """Creates an ModelWrapper object.
+        """Creates a PredictionsModelWrapper object.
 
         :param test_data: The data that was used to train the model.
         :type test_data: pd.DataFrame
@@ -85,41 +85,49 @@ class ModelWrapperPredictions:
         return np.array(prediction_output)
 
     def __setstate__(self, state):
-        """Set the state so that the wrapped model is
-        serializable via pickle."""
+        """Set the state of the class object so that the wrapped
+        model is serializable via pickle.
+
+        :param state: A dictionary of deserialized state.
+        :type state: Dict
+        """
         self._combined_data = state["_combined_data"]
 
     def __getstate__(self):
         """Return the state so that the wrapped model is
-        serializable via pickle."""
+        serializable via pickle.
+
+        :return: The state to be pickled.
+        :rtype: Dict
+        """
         state = {}
         state["_combined_data"] = self._combined_data
         return state
 
 
-class ModelWrapperPredictionsRegression(ModelWrapperPredictions):
+class PredictionsModelWrapperRegression(PredictionsModelWrapper):
     """Model wrapper to wrap the samples used to train the models
     and the predictions of the model for regression tasks.
     """
     def __init__(self, test_data: pd.DataFrame, y_pred: np.ndarray):
-        """Creates an ModelWrapperPredictionsRegression object.
+        """Creates a PredictionsModelWrapperRegression object.
 
         :param test_data: The data that was used to train the model.
         :type test_data: pd.DataFrame
         :param y_pred: Predictions of the model.
         :type y_pred: np.ndarray
         """
-        super(ModelWrapperPredictionsRegression, self).__init__(
+        super(PredictionsModelWrapperRegression, self).__init__(
             test_data, y_pred)
 
 
-class ModelWrapperPredictionsClassification(ModelWrapperPredictions):
+class PredictionsModelWrapperClassification(PredictionsModelWrapper):
     """Model wrapper to wrap the samples used to train the models
     and the predictions of the model for classification tasks.
     """
     def __init__(self, test_data: pd.DataFrame, y_pred: np.ndarray,
                  y_pred_proba: Optional[np.ndarray] = None):
-        """Creates an ModelWrapperPredictionsClassification object.
+        """Creates a PredictionsModelWrapperClassification object.
 
         :param test_data: The data that was used to train the model.
         :type test_data: pd.DataFrame
@@ -128,7 +136,7 @@ class ModelWrapperPredictionsClassification(ModelWrapperPredictions):
         :param y_pred_proba: Prediction probabilities of the model.
         :type y_pred_proba: np.ndarray
         """
-        super(ModelWrapperPredictionsClassification, self).__init__(
+        super(PredictionsModelWrapperClassification, self).__init__(
             test_data, y_pred)
         self._num_classes = None
         if y_pred_proba is not None:
@@ -168,14 +176,22 @@ class ModelWrapperPredictionsClassification(ModelWrapperPredictions):
         return np.array(prediction_output)
 
     def __setstate__(self, state):
-        """Set the state so that the wrapped model is
-        serializable via pickle."""
+        """Set the state of the class object so that the wrapped
+        model is serializable via pickle.
+
+        :param state: A dictionary of deserialized state.
+        :type state: Dict
+        """
         super().__setstate__(state)
         self._num_classes = state["_num_classes"]
 
     def __getstate__(self):
         """Return the state so that the wrapped model is
-        serializable via pickle."""
+        serializable via pickle.
+
+        :return: The state to be pickled.
+        :rtype: Dict
+        """
         state = super().__getstate__()
         state["_num_classes"] = self._num_classes
         return state
