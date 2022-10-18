@@ -39,16 +39,16 @@ class PredictionsModelWrapper:
         self._combined_data[TARGET] = y_pred
 
     def _get_filtered_data(
-            self, query_test_data_row: pd.Series) -> pd.DataFrame:
+            self, query_test_data_row: pd.DataFrame) -> pd.DataFrame:
         """Return the filtered data based on the query data.
 
         :param query_test_data_row: The query data instance.
-        :type query_test_data_row: pd.Series
+        :type query_test_data_row: pd.DataFrame
         :return: The filtered dataframe based on the values in query data.
         :rtype: pd.DataFrame
         """
         queries = []
-        for column_name, column_data in query_test_data_row.iteritems():
+        for column_name, column_data in query_test_data_row.squeeze().iteritems():
             if isinstance(column_data, str):
                 queries.append("`{}` == '{}'".format(
                     column_name, column_data))
@@ -78,8 +78,9 @@ class PredictionsModelWrapper:
             raise DataValidationException(
                 "Expecting a pandas dataframe for query_test_data")
         prediction_output = []
-        for _, row in query_test_data.iterrows():
-            filtered_df = self._get_filtered_data(row)
+        for index in range(0, len(query_test_data)):
+            filtered_df = self._get_filtered_data(
+                query_test_data[index:index + 1])
             prediction_output.append(filtered_df[TARGET].values[0])
 
         return np.array(prediction_output)
@@ -165,8 +166,9 @@ class PredictionsModelWrapperClassification(PredictionsModelWrapper):
                 "Model wrapper configured without prediction probabilities"
             )
         prediction_output = []
-        for _, row in query_test_data.iterrows():
-            filtered_df = self._get_filtered_data(row)
+        for index in range(0, len(query_test_data)):
+            filtered_df = self._get_filtered_data(
+                query_test_data[index:index + 1])
             classes_output = []
             for i in range(self._num_classes):
                 classes_output.append(
