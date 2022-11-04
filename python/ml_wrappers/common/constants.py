@@ -180,6 +180,7 @@ class ModelTask(str, Enum):
     CLASSIFICATION = 'classification'
     REGRESSION = 'regression'
     TEXT_CLASSIFICATION = 'text_classification'
+    MULTILABEL_TEXT_CLASSIFICATION = 'multilabel_text_classification'
     SENTIMENT_ANALYSIS = 'sentiment_analysis'
     QUESTION_ANSWERING = 'question_answering'
     ENTAILMENT = 'entailment'
@@ -311,6 +312,7 @@ class ResetIndex(str, Enum):
 
 
 text_model_tasks = {ModelTask.TEXT_CLASSIFICATION,
+                    ModelTask.MULTILABEL_TEXT_CLASSIFICATION,
                     ModelTask.SENTIMENT_ANALYSIS,
                     ModelTask.QUESTION_ANSWERING,
                     ModelTask.ENTAILMENT,
