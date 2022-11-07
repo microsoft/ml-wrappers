@@ -6,21 +6,16 @@
 
 import numpy as np
 from ml_wrappers.common.constants import ModelTask
-
-from ..common.warnings_suppressor import shap_warnings_suppressor
+from ml_wrappers.common.warnings_suppressor import shap_warnings_suppressor
+from ml_wrappers.model.model_utils import (MULTILABEL_THRESHOLD,
+                                           _is_transformers_pipeline)
 
 with shap_warnings_suppressor():
     try:
         from shap import models
-        from shap.utils import safe_isinstance
         shap_installed = True
     except BaseException:
         shap_installed = False
-
-
-def _is_transformers_pipeline(model):
-    return shap_installed and safe_isinstance(
-        model, "transformers.pipelines.Pipeline")
 
 
 def _wrap_text_model(model, examples, model_task, is_function):
@@ -50,16 +45,22 @@ def _wrap_text_model(model, examples, model_task, is_function):
             _wrapped_model = WrappedTextClassificationModel(model)
         elif model_task == ModelTask.QUESTION_ANSWERING:
             _wrapped_model = WrappedQuestionAnsweringModel(model)
+        elif model_task == ModelTask.MULTILABEL_TEXT_CLASSIFICATION:
+            _wrapped_model = WrappedTextClassificationModel(model, multilabel=True)
     return _wrapped_model, model_task
 
 
 class WrappedTextClassificationModel(object):
     """A class for wrapping a Transformers model in the scikit-learn style."""
 
-    def __init__(self, model):
+    def __init__(self, model, multilabel=False):
         """Initialize the WrappedTextClassificationModel."""
         self._model = model
+        if not shap_installed:
+            raise ImportError("SHAP is not installed. Please install it " +
+                              "to use WrappedTextClassificationModel.")
         self._wrapped_model = models.TransformersPipeline(model)
+        self._multilabel = multilabel
 
     def predict(self, dataset):
         """Predict the output using the wrapped Transformers model.
@@ -73,8 +74,20 @@ class WrappedTextClassificationModel(object):
             if not isinstance(val, list):
                 val = [val]
             scores = [obj["score"] for obj in val]
-            max_score_index = np.argmax(scores)
-            output.append(max_score_index)
+            if self._multilabel:
+                threshold = MULTILABEL_THRESHOLD
+                # jagged, thresholded array of labels model predicted
+                labels = np.where(np.array(scores) > threshold)
+                predictions = np.zeros(len(scores))
+                # indicator matrix of labels since numpy does not
+                # support jagged arrays, which seems to be the format
+                # scikit-learn MultiOutputClassifier uses,
+                # see sklearn.multioutput.MultiOutputClassifier.predict
+                predictions[labels] = 1
+                output.append(predictions)
+            else:
+                max_score_index = np.argmax(scores)
+                output.append(max_score_index)
         return np.array(output)
 
     def predict_proba(self, dataset):
