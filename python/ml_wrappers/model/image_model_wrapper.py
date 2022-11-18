@@ -4,8 +4,24 @@
 
 """Defines wrappers for vision-based models."""
 
+import logging
+
 import numpy as np
 from ml_wrappers.common.constants import ModelTask
+from ml_wrappers.dataset.dataset_wrapper import DatasetWrapper
+from ml_wrappers.model.evaluator import _eval_model
+from ml_wrappers.model.pytorch_wrapper import WrappedPytorchModel
+from ml_wrappers.model.wrapped_classification_model import \
+    WrappedClassificationModel
+
+module_logger = logging.getLogger(__name__)
+module_logger.setLevel(logging.INFO)
+
+
+try:
+    import torch.nn as nn
+except ImportError:
+    module_logger.debug('Could not import torch, required if using a PyTorch model')
 
 
 def _wrap_image_model(model, examples, model_task, is_function):
@@ -28,6 +44,16 @@ def _wrap_image_model(model, examples, model_task, is_function):
     """
     _wrapped_model = model
     if model_task == ModelTask.IMAGE_CLASSIFICATION:
+        try:
+            if isinstance(model, nn.Module):
+                model = WrappedPytorchModel(model, image_to_tensor=True)
+                if not isinstance(examples, DatasetWrapper):
+                    examples = DatasetWrapper(examples)
+                eval_function, eval_ml_domain = _eval_model(model, examples, model_task)
+                return WrappedClassificationModel(model, eval_function, examples), eval_ml_domain
+        except (NameError, AttributeError):
+            module_logger.debug('Could not import torch, required if using a pytorch model')
+
         if str(type(model)).endswith("fastai.learner.Learner'>"):
             _wrapped_model = WrappedFastAIImageClassificationModel(model)
         else:

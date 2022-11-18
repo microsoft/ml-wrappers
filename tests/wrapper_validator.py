@@ -80,7 +80,6 @@ def validate_wrapped_pred_classes_model(wrapped_model, X_test, model_task):
     else:
         predictions = wrapped_model.predict(X_test)
         # validate predictions have correct shape
-        print(predictions.shape)
         assert len(predictions.shape) == 1 or predictions.shape[1] == 1
 
 
