@@ -18,6 +18,12 @@ try:
 except ImportError:
     module_logger.debug('Could not import torch, required if using a PyTorch model')
 
+try:
+    from torchvision.transforms import ToTensor
+except ImportError:
+    module_logger.debug('Could not import torchvision, required if using' +
+                        ' a vision PyTorch model')
+
 
 class WrappedPytorchModel(object):
     """A class for wrapping a PyTorch model.
@@ -30,15 +36,64 @@ class WrappedPytorchModel(object):
     probabilities in classification.
     """
 
-    def __init__(self, model):
+    def __init__(self, model, image_to_tensor=False):
         """Initialize the WrappedPytorchModel with the model and evaluation function.
 
         :param model: The PyTorch model to wrap.
         :type model: torch.nn.Module
+        :param image_to_tensor: Whether to convert the image to tensor.
+        :type image_to_tensor: bool
         """
         self._model = model
         # Set eval automatically for user for batchnorm and dropout layers
         self._model.eval()
+        self._image_to_tensor = image_to_tensor
+
+    def _convert_to_tensor(self, dataset):
+        """Convert the dataset to a pytorch tensor.
+
+        For image datasets, we use ToTensor from torchvision,
+        which moves channel to the first dimension and for
+        2D images adds a third dimension.
+
+        :param dataset: The dataset to convert.
+        :type dataset: ml_wrappers.DatasetWrapper
+        :return: The converted dataset.
+        :rtype: torch.Tensor
+        """
+        # Convert the data to pytorch Variable
+        if isinstance(dataset, pd.DataFrame):
+            if self._image_to_tensor:
+                dataset = dataset.iloc[0]
+            dataset = dataset.values
+            # If represented as a list of arrays,
+            # convert to a 3D array instead of array
+            # of 2D arrays
+            if len(dataset.shape) == 1:
+                if self._image_to_tensor and len(dataset[0].shape) == 2:
+                    # add channel to end of image if 2D grayscale
+                    for i in range(dataset.shape[0]):
+                        dataset[i] = np.expand_dims(dataset[i], axis=2)
+                dataset = np.stack(dataset)
+        # If not already tensor, convert
+        if not isinstance(dataset, torch.Tensor):
+            if self._image_to_tensor:
+                # For torchvision images, can only convert one
+                # image at a time
+                # Note pytorch wrapper expects extra dimension for rows
+                # to be expanded in evaluator for image case,
+                # otherwise this code won't work for a single
+                # image input to predict call
+                rows = []
+                for row in range(dataset.shape[0]):
+                    instance = dataset[row]
+                    if not isinstance(instance, torch.Tensor):
+                        instance = ToTensor()(instance)
+                    rows.append(instance)
+                dataset = torch.stack(rows)
+            else:
+                dataset = torch.Tensor(dataset)
+        return dataset
 
     def predict(self, dataset):
         """Predict the output using the wrapped PyTorch model.
@@ -48,10 +103,7 @@ class WrappedPytorchModel(object):
         :return: The prediction results.
         :rtype: numpy.ndarray
         """
-        # Convert the data to pytorch Variable
-        if isinstance(dataset, pd.DataFrame):
-            dataset = dataset.values
-        wrapped_dataset = torch.Tensor(dataset)
+        wrapped_dataset = self._convert_to_tensor(dataset)
         with torch.no_grad():
             result = self._model(wrapped_dataset).numpy()
         # Reshape to 2D if output is 1D and input has one row
@@ -67,10 +119,7 @@ class WrappedPytorchModel(object):
         :return: The predicted classes.
         :rtype: numpy.ndarray
         """
-        # Convert the data to pytorch Variable
-        if isinstance(dataset, pd.DataFrame):
-            dataset = dataset.values
-        wrapped_dataset = torch.Tensor(dataset)
+        wrapped_dataset = self._convert_to_tensor(dataset)
         with torch.no_grad():
             result = self._model(wrapped_dataset)
         result_len = len(result.shape)
