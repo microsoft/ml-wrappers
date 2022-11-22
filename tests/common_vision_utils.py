@@ -194,7 +194,50 @@ class ResNetPipeline(object):
 
 
 def create_image_classification_pipeline():
+    """Create a pipeline for image classification.
+
+    :return: pipeline
+    :rtype: ResNetPipeline
+    """
     return ResNetPipeline()
+
+
+class ScikitResNetPipeline(object):
+    def __init__(self):
+        """Creates a scikit-learn compatible pipeline for image classification.
+        """
+        self.model = ResNet50(weights='imagenet')
+
+    def predict(self, X):
+        """Predicts the class for each image in the dataset.
+
+        :param X: dataset
+        :type X: numpy.ndarray
+        :return: predicted classes
+        :rtype: numpy.ndarray
+        """
+        return np.argmax(self.predict_proba(X), axis=1)
+
+    def predict_proba(self, X):
+        """Predicts the probability of each class for each image in the dataset.
+
+        :param X: dataset
+        :type X: numpy.ndarray
+        :return: predicted probabilities
+        :rtype: numpy.ndarray
+        """
+        tmp = X.copy()
+        preprocess_input(tmp)
+        return self.model(tmp)
+
+
+def create_scikit_classification_pipeline():
+    """Create a scikit-learn compatible pipeline for image classification.
+
+    :return: scikit-learn compatible pipeline
+    :rtype: ScikitResNetPipeline
+    """
+    return ScikitResNetPipeline()
 
 
 class FetchModel(object):

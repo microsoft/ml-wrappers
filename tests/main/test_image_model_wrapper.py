@@ -12,6 +12,7 @@ import pytest
 import torchvision
 from common_vision_utils import (IMAGE, create_image_classification_pipeline,
                                  create_pytorch_image_model,
+                                 create_scikit_classification_pipeline,
                                  load_fridge_dataset, load_imagenet_dataset,
                                  load_images, load_multilabel_fridge_dataset,
                                  load_object_fridge_dataset,
@@ -38,6 +39,12 @@ class TestImageModelWrapper(object):
     def test_wrap_resnet_classification_model(self):
         data = load_imagenet_dataset()
         pred = create_image_classification_pipeline()
+        wrapped_model = wrap_model(pred, data, ModelTask.IMAGE_CLASSIFICATION)
+        validate_wrapped_classification_model(wrapped_model, data)
+
+    def test_wrap_scikit_classification_model(self):
+        data = load_imagenet_dataset()
+        pred = create_scikit_classification_pipeline()
         wrapped_model = wrap_model(pred, data, ModelTask.IMAGE_CLASSIFICATION)
         validate_wrapped_classification_model(wrapped_model, data)
 
