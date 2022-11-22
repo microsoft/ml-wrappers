@@ -10,6 +10,7 @@ import numpy as np
 from ml_wrappers.common.constants import ModelTask
 from ml_wrappers.dataset.dataset_wrapper import DatasetWrapper
 from ml_wrappers.model.evaluator import _eval_model
+from ml_wrappers.model.model_utils import _is_transformers_pipeline
 from ml_wrappers.model.pytorch_wrapper import WrappedPytorchModel
 from ml_wrappers.model.wrapped_classification_model import \
     WrappedClassificationModel
@@ -56,7 +57,7 @@ def _wrap_image_model(model, examples, model_task, is_function):
 
         if str(type(model)).endswith("fastai.learner.Learner'>"):
             _wrapped_model = WrappedFastAIImageClassificationModel(model)
-        else:
+        elif _is_transformers_pipeline(model):
             _wrapped_model = WrappedTransformerImageClassificationModel(model)
     return _wrapped_model, model_task
 
