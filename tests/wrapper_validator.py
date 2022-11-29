@@ -17,6 +17,7 @@ def validate_wrapped_classification_model(wrapped_model, X_test):
     # validate we can call the model on the dataset
     predictions = wrapped_model.predict(X_test)
     probabilities = wrapped_model.predict_proba(X_test)
+    print(type(wrapped_model), type(predictions),type(probabilities),predictions.shape, probabilities.shape,predictions, probabilities)
     # validate predictions and probabilities have correct shape
     assert len(predictions.shape) == 1
     assert len(probabilities.shape) == 2

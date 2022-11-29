@@ -30,6 +30,8 @@ def _wrap_image_model(model, examples, model_task, is_function):
     if model_task == ModelTask.IMAGE_CLASSIFICATION:
         if str(type(model)).endswith("fastai.learner.Learner'>"):
             _wrapped_model = WrappedFastAIImageClassificationModel(model)
+        elif str(type(model)).endswith("mlflow.pyfunc.PyFuncModel'>"):
+            _wrapped_model = WrappedMlflowAutomlImagesClassificationModel(model)
         else:
             _wrapped_model = WrappedTransformerImageClassificationModel(model)
     return _wrapped_model, model_task
@@ -116,3 +118,45 @@ class WrappedFastAIImageClassificationModel(object):
         :rtype: numpy.ndarray
         """
         return self._fastai_predict(dataset, 2)
+
+
+class WrappedMlflowAutomlImagesClassificationModel(object):
+    """A class for wrapping an AutoML for images MLflow model in the scikit-learn style."""
+
+    def __init__(self, model):
+        """Initialize the WrappedMlflowAutomlImagesClassificationModel."""
+        self._model = model
+
+    def _mlflow_predict(self, dataset):
+        """Predict the output using the wrapped MLflow model.
+
+        :param dataset: The dataset to predict on.
+        :type dataset: pandas.DataFrame
+        :type index: int
+        :return: The predicted data.
+        :rtype: numpy.ndarray
+        """
+        predictions = self._model.predict(dataset)
+        return predictions
+
+    def predict(self, dataset):
+        """Predict the output value using the wrapped MLflow model.
+
+        :param dataset: The dataset to predict on.
+        :type dataset: pandas.DataFrame
+        :return: The predicted values.
+        :rtype: numpy.ndarray
+        """
+        predictions = self._mlflow_predict(dataset)
+        return predictions.loc[:, "probs"].map(lambda x: np.argmax(x)).values
+
+    def predict_proba(self, dataset):
+        """Predict the output probability using the MLflow model.
+
+        :param dataset: The dataset to predict_proba on.
+        :type dataset: pandas.DataFrame
+        :return: The predicted probabilities.
+        :rtype: numpy.ndarray
+        """
+        predictions = self._mlflow_predict(dataset)
+        return np.stack(predictions.probs.values)

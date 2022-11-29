@@ -4,14 +4,32 @@
 
 """Tests for wrap_model function on vision-based models"""
 
+import copy
+import json
+import os
 import sys
+import tempfile
 
+import azureml.automl.core.shared.constants as shared_constants
+import mlflow
 import pytest
-from common_vision_utils import (create_image_classification_pipeline,
-                                 load_fridge_dataset, load_imagenet_dataset,
-                                 load_images, retrieve_or_train_fridge_model)
+import torch
+from azureml.automl.dnn.vision.classification.common.constants import \
+    ModelNames
+from azureml.automl.dnn.vision.classification.models import ModelFactory
+from azureml.automl.dnn.vision.common.mlflow.mlflow_model_wrapper import \
+    MLFlowImagesModelWrapper
+from azureml.automl.dnn.vision.common.model_export_utils import (
+    _get_mlflow_signature, _get_scoring_method)
 from ml_wrappers import wrap_model
 from ml_wrappers.common.constants import ModelTask
+
+from common_vision_utils import (IMAGE, create_image_classification_pipeline,
+                                 create_pytorch_image_model,
+                                 load_fridge_dataset, load_imagenet_dataset,
+                                 load_images, load_images_for_automl_images,
+                                 preprocess_imagenet_dataset,
+                                 retrieve_or_train_fridge_model)
 from wrapper_validator import validate_wrapped_classification_model
 
 
@@ -38,3 +56,74 @@ class TestImageModelWrapper(object):
         data = load_images(data)
         wrapped_model = wrap_model(model, data, ModelTask.IMAGE_CLASSIFICATION)
         validate_wrapped_classification_model(wrapped_model, data)
+
+    @pytest.mark.parametrize("model_name", [ModelNames.SERESNEXT])
+    @pytest.mark.parametrize("multilabel", [False])
+    def test_wrap_automl_image_classification_model(self, model_name, multilabel):
+        data = load_fridge_dataset()
+
+        with tempfile.TemporaryDirectory() as tmp_output_dir:
+
+            task_type = shared_constants.Tasks.IMAGE_CLASSIFICATION
+            number_of_classes = 10
+            model_wrapper = ModelFactory().get_model_wrapper(model_name,
+                                                             number_of_classes,
+                                                             multilabel=multilabel,
+                                                             device="cpu",
+                                                             distributed=False,
+                                                             local_rank=0)
+            model_file = os.path.join(tmp_output_dir, "model.pt")
+            # torch.save(model_wrapper.state_dict(), model_file)
+            torch.save({
+                'model_name': model_name,
+                'number_of_classes': number_of_classes,
+                'model_state': copy.deepcopy(model_wrapper.state_dict()),
+                'specs': {
+                    'multilabel': model_wrapper.multilabel,
+                    'model_settings': model_wrapper.model_settings,
+                    'labels': model_wrapper.labels
+                },
+
+            }, model_file)
+
+            # mock for Mlflow model generation
+            settings_file = os.path.join(
+                tmp_output_dir, shared_constants.MLFlowLiterals.MODEL_SETTINGS_FILENAME)
+            remote_path = os.path.join(tmp_output_dir, "outputs")
+
+            # best_model_wts = copy.deepcopy(model_wrapper.state_dict())
+
+            with open(settings_file, 'w') as f:
+                json.dump({}, f)
+
+            conda_env = {
+                'channels': ['conda-forge', 'pytorch'],
+                'dependencies': [
+                    'python=3.7',
+                    'numpy==1.21.6',
+                    'pytorch==1.7.1',
+                    'torchvision==0.12.0',
+                    {'pip': ['azureml-automl-dnn-vision']}
+                ],
+                'name': 'azureml-automl-dnn-vision-env'
+            }
+
+            mlflow_model_wrapper = MLFlowImagesModelWrapper(
+                model_settings={},
+                task_type=task_type,
+                scoring_method=_get_scoring_method(task_type)
+            )
+            print("Saving mlflow model at {}".format(remote_path))
+            mlflow.pyfunc.save_model(path=remote_path,
+                                     python_model=mlflow_model_wrapper,
+                                     artifacts={"model": model_file,
+                                                "settings": settings_file},
+                                     conda_env=conda_env,
+                                     signature=_get_mlflow_signature(task_type))
+            mlflow_model = mlflow.pyfunc.load_model(remote_path)
+
+            # load the paths as numpy arrays
+            data = load_images_for_automl_images(data)
+            wrapped_model = wrap_model(
+                mlflow_model, data, ModelTask.IMAGE_CLASSIFICATION)
+            validate_wrapped_classification_model(wrapped_model, data)
