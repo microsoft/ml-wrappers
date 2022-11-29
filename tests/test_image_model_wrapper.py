@@ -23,15 +23,14 @@ from azureml.automl.dnn.vision.common.mlflow.mlflow_model_wrapper import \
     MLFlowImagesModelWrapper
 from azureml.automl.dnn.vision.common.model_export_utils import (
     _get_mlflow_signature, _get_scoring_method)
-from ml_wrappers import wrap_model
-from ml_wrappers.common.constants import ModelTask
-
 from common_vision_utils import (IMAGE, create_image_classification_pipeline,
                                  create_pytorch_image_model,
                                  load_fridge_dataset, load_imagenet_dataset,
                                  load_images, load_images_for_automl_images,
                                  preprocess_imagenet_dataset,
                                  retrieve_or_train_fridge_model)
+from ml_wrappers import wrap_model
+from ml_wrappers.common.constants import ModelTask
 from wrapper_validator import validate_wrapped_classification_model
 
 
@@ -74,7 +73,6 @@ class TestImageModelWrapper(object):
                                                              device="cpu",
                                                              distributed=False,
                                                              local_rank=0)
-
 
             # mock for Mlflow model generation
             model_file = os.path.join(tmp_output_dir, "model.pt")

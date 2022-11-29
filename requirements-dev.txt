@@ -7,3 +7,5 @@ transformers<4.20.0
 datasets
 raiutils
 fastai
+azureml-automl-core
+azureml-automl-dnn-vision

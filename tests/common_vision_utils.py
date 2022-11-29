@@ -24,7 +24,6 @@ try:
 except SyntaxError:
     # Skip for older versions of python due to breaking changes in fastai
     pass
-from PIL import Image
 from raiutils.common.retries import retry_function
 from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
 from torch import Tensor

@@ -158,7 +158,6 @@ class WrappedMlflowAutomlImagesClassificationModel(object):
 
         :param dataset: The dataset to predict on.
         :type dataset: pandas.DataFrame
-        :type index: int
         :return: The predicted data.
         :rtype: numpy.ndarray
         """
