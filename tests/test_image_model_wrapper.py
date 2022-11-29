@@ -74,6 +74,9 @@ class TestImageModelWrapper(object):
                                                              device="cpu",
                                                              distributed=False,
                                                              local_rank=0)
+
+
+            # mock for Mlflow model generation
             model_file = os.path.join(tmp_output_dir, "model.pt")
             # torch.save(model_wrapper.state_dict(), model_file)
             torch.save({
@@ -87,13 +90,9 @@ class TestImageModelWrapper(object):
                 },
 
             }, model_file)
-
-            # mock for Mlflow model generation
             settings_file = os.path.join(
                 tmp_output_dir, shared_constants.MLFlowLiterals.MODEL_SETTINGS_FILENAME)
             remote_path = os.path.join(tmp_output_dir, "outputs")
-
-            # best_model_wts = copy.deepcopy(model_wrapper.state_dict())
 
             with open(settings_file, 'w') as f:
                 json.dump({}, f)
@@ -124,11 +123,12 @@ class TestImageModelWrapper(object):
                                      signature=_get_mlflow_signature(task_type))
             mlflow_model = mlflow.pyfunc.load_model(remote_path)
 
-            # load the paths as numpy arrays
+            # load the paths as base64 images
             data = load_images_for_automl_images(data)
             wrapped_model = wrap_model(
                 mlflow_model, data, ModelTask.IMAGE_CLASSIFICATION)
             validate_wrapped_classification_model(wrapped_model, data)
+
     # Skip for older versions of pytorch due to missing classes
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Older versions of pytorch not supported')
