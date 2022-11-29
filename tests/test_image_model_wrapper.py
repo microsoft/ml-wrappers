@@ -12,6 +12,8 @@ import tempfile
 
 import azureml.automl.core.shared.constants as shared_constants
 import mlflow
+import numpy as np
+import pandas as pd
 import pytest
 import torch
 from azureml.automl.dnn.vision.classification.common.constants import \
@@ -127,3 +129,31 @@ class TestImageModelWrapper(object):
             wrapped_model = wrap_model(
                 mlflow_model, data, ModelTask.IMAGE_CLASSIFICATION)
             validate_wrapped_classification_model(wrapped_model, data)
+    # Skip for older versions of pytorch due to missing classes
+    @pytest.mark.skipif(sys.version_info.minor <= 6,
+                        reason='Older versions of pytorch not supported')
+    def test_pytorch_image_classification_model(self):
+        data = load_imagenet_dataset()[:3]
+        data = preprocess_imagenet_dataset(data)
+        model = create_pytorch_image_model()
+        wrapped_model = wrap_model(model, data, ModelTask.IMAGE_CLASSIFICATION)
+        validate_wrapped_classification_model(wrapped_model, data)
+
+    # Skip for older versions of pytorch due to missing classes
+    @pytest.mark.skipif(sys.version_info.minor <= 6,
+                        reason='Older versions of pytorch not supported')
+    def test_pytorch_image_classification_model_pandas(self):
+        data = load_imagenet_dataset()[:3]
+        data = preprocess_imagenet_dataset(data)
+        # convert to pandas dataframe of images
+        data = np.array(data)
+        # change back to channel at last dimension for
+        # standard image representation
+        data = np.moveaxis(data, 1, -1)
+        imgs = np.empty((len(data)), dtype=object)
+        for i, row in enumerate(data):
+            imgs[i] = row
+        data = pd.DataFrame(imgs, columns=[IMAGE])
+        model = create_pytorch_image_model()
+        wrapped_model = wrap_model(model, data, ModelTask.IMAGE_CLASSIFICATION)
+        validate_wrapped_classification_model(wrapped_model, data)

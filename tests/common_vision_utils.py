@@ -27,6 +27,13 @@ except SyntaxError:
 from PIL import Image
 from raiutils.common.retries import retry_function
 from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
+from torch import Tensor
+
+try:
+    from torchvision.models import ResNet50_Weights, resnet50
+except ImportError:
+    # Skip for older versions of python due to recent torchvision updates
+    pass
 
 try:
     from urllib import urlretrieve
@@ -176,3 +183,15 @@ def retrieve_or_train_fridge_model(df, force_train=False):
                        retry_delay=retry_delay)
         model = load_learner(FRIDGE_MODEL_NAME)
     return model
+
+
+def create_pytorch_image_model():
+    model = resnet50(weights=ResNet50_Weights.DEFAULT)
+    model.eval()
+    return model
+
+
+def preprocess_imagenet_dataset(dataset):
+    weights = ResNet50_Weights.DEFAULT
+    preprocess = weights.transforms()
+    return preprocess(Tensor(np.moveaxis(dataset, -1, 0)))
