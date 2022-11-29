@@ -25,8 +25,8 @@ from azureml.automl.dnn.vision.common.model_export_utils import (
     _get_mlflow_signature, _get_scoring_method)
 from common_vision_utils import (IMAGE, create_image_classification_pipeline,
                                  create_pytorch_image_model,
-                                 load_fridge_dataset, load_imagenet_dataset,
-                                 load_images, load_images_for_automl_images,
+                                 load_base64_images, load_fridge_dataset,
+                                 load_imagenet_dataset, load_images,
                                  preprocess_imagenet_dataset,
                                  retrieve_or_train_fridge_model)
 from ml_wrappers import wrap_model
@@ -122,7 +122,7 @@ class TestImageModelWrapper(object):
             mlflow_model = mlflow.pyfunc.load_model(remote_path)
 
             # load the paths as base64 images
-            data = load_images_for_automl_images(data)
+            data = load_base64_images(data)
             wrapped_model = wrap_model(
                 mlflow_model, data, ModelTask.IMAGE_CLASSIFICATION)
             validate_wrapped_classification_model(wrapped_model, data)

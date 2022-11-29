@@ -116,7 +116,7 @@ def get_base64_string_from_path(img_path):
     return img_str.decode("utf-8")
 
 
-def load_images_for_automl_images(data):
+def load_base64_images(data):
     """Create dataframe of images encoded in base64 format
 
     :param data: input data with image paths and lables
