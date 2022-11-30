@@ -101,7 +101,7 @@ def load_images(data):
     return np.array(images)
 
 
-def get_base64_string_from_path(img_path):
+def get_base64_string_from_path(img_path: str) -> str:
     """Load and convert pillow image to base64-encoded image
 
     :param img_path: image path
@@ -116,7 +116,7 @@ def get_base64_string_from_path(img_path):
     return img_str.decode("utf-8")
 
 
-def load_base64_images(data):
+def load_base64_images(data: pd.DataFrame) -> pd.DataFrame:
     """Create dataframe of images encoded in base64 format
 
     :param data: input data with image paths and lables

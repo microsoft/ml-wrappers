@@ -146,7 +146,7 @@ class WrappedFastAIImageClassificationModel(object):
         return self._fastai_predict(dataset, 2)
 
 
-class WrappedMlflowAutomlImagesClassificationModel(object):
+class WrappedMlflowAutomlImagesClassificationModel:
     """A class for wrapping an AutoML for images MLflow model in the scikit-learn style."""
 
     def __init__(self, model):
