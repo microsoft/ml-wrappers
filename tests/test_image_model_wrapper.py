@@ -58,6 +58,11 @@ class TestImageModelWrapper(object):
         wrapped_model = wrap_model(model, data, ModelTask.IMAGE_CLASSIFICATION)
         validate_wrapped_classification_model(wrapped_model, data)
 
+    # Skip for older versions of python as azureml-automl-dnn-vision works with ">=3.7,<3.8"
+    @pytest.mark.skipif(sys.version_info.minor < (3, 7),
+                        reason='azureml-automl-dnn-vision not supported for older versions')
+    @pytest.mark.skipif(sys.version_info.minor >= (3, 8),
+                        reason='azureml-automl-dnn-vision not supported for newer versions')
     @pytest.mark.parametrize("model_name", [ModelNames.SERESNEXT])
     @pytest.mark.parametrize("multilabel", [False])
     def test_wrap_automl_image_classification_model(self, model_name, multilabel):
@@ -76,7 +81,6 @@ class TestImageModelWrapper(object):
 
             # mock for Mlflow model generation
             model_file = os.path.join(tmp_output_dir, "model.pt")
-            # torch.save(model_wrapper.state_dict(), model_file)
             torch.save({
                 'model_name': model_name,
                 'number_of_classes': number_of_classes,
