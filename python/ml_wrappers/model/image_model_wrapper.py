@@ -150,7 +150,11 @@ class WrappedMlflowAutomlImagesClassificationModel(object):
     """A class for wrapping an AutoML for images MLflow model in the scikit-learn style."""
 
     def __init__(self, model):
-        """Initialize the WrappedMlflowAutomlImagesClassificationModel."""
+        """Initialize the WrappedMlflowAutomlImagesClassificationModel.
+
+        :param model: mlflow model
+        :type model: mlflow.pyfunc.PyFuncModel
+        """
         self._model = model
 
     def _mlflow_predict(self, dataset):
