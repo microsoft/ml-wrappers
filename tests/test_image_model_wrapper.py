@@ -10,15 +10,14 @@ import os
 import sys
 import tempfile
 
-import mlflow
 import numpy as np
 import pandas as pd
 import pytest
 import torch
 
 try:
-
     import azureml.automl.core.shared.constants as shared_constants
+    import mlflow
     from azureml.automl.dnn.vision.classification.common.constants import \
         ModelNames
     from azureml.automl.dnn.vision.classification.models import ModelFactory
