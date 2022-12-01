@@ -1,0 +1,2 @@
+azureml-automl-core
+azureml-automl-dnn-vision

@@ -63,6 +63,8 @@ class TestImageModelWrapper(object):
                         reason='azureml-automl-dnn-vision not supported for older versions')
     @pytest.mark.skipif(sys.version_info.minor >= (3, 8),
                         reason='azureml-automl-dnn-vision not supported for newer versions')
+    @pytest.mark.skipif('azureml-automl-dnn-vision' not in sys.modules,
+                    reason="requires the azureml-automl-dnn-vision library")
     @pytest.mark.parametrize("model_name", [ModelNames.SERESNEXT])
     @pytest.mark.parametrize("multilabel", [False])
     def test_wrap_automl_image_classification_model(self, model_name, multilabel):
