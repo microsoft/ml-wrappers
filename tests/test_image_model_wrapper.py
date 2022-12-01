@@ -69,11 +69,10 @@ class TestImageModelWrapper(object):
                         reason='azureml-automl-dnn-vision not supported for newer versions')
     @pytest.mark.skipif('azureml-automl-dnn-vision' not in sys.modules,
                         reason="requires the azureml-automl-dnn-vision library")
-    @pytest.mark.parametrize("model_name", [ModelNames.SERESNEXT])
-    @pytest.mark.parametrize("multilabel", [False])
-    def test_wrap_automl_image_classification_model(self, model_name, multilabel):
+    def test_wrap_automl_image_classification_model(self):
         data = load_fridge_dataset()
-
+        model_name = ModelNames.SERESNEXT
+        multilabel = False
         with tempfile.TemporaryDirectory() as tmp_output_dir:
 
             task_type = shared_constants.Tasks.IMAGE_CLASSIFICATION
