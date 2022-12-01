@@ -10,19 +10,24 @@ import os
 import sys
 import tempfile
 
-import azureml.automl.core.shared.constants as shared_constants
 import mlflow
 import numpy as np
 import pandas as pd
 import pytest
 import torch
-from azureml.automl.dnn.vision.classification.common.constants import \
-    ModelNames
-from azureml.automl.dnn.vision.classification.models import ModelFactory
-from azureml.automl.dnn.vision.common.mlflow.mlflow_model_wrapper import \
-    MLFlowImagesModelWrapper
-from azureml.automl.dnn.vision.common.model_export_utils import (
-    _get_mlflow_signature, _get_scoring_method)
+
+try:
+
+    import azureml.automl.core.shared.constants as shared_constants
+    from azureml.automl.dnn.vision.classification.common.constants import \
+        ModelNames
+    from azureml.automl.dnn.vision.classification.models import ModelFactory
+    from azureml.automl.dnn.vision.common.mlflow.mlflow_model_wrapper import \
+        MLFlowImagesModelWrapper
+    from azureml.automl.dnn.vision.common.model_export_utils import (
+        _get_mlflow_signature, _get_scoring_method)
+except ImportError:
+    pass
 from common_vision_utils import (IMAGE, create_image_classification_pipeline,
                                  create_pytorch_image_model,
                                  load_base64_images, load_fridge_dataset,
@@ -64,7 +69,7 @@ class TestImageModelWrapper(object):
     @pytest.mark.skipif(sys.version_info.minor >= (3, 8),
                         reason='azureml-automl-dnn-vision not supported for newer versions')
     @pytest.mark.skipif('azureml-automl-dnn-vision' not in sys.modules,
-                    reason="requires the azureml-automl-dnn-vision library")
+                        reason="requires the azureml-automl-dnn-vision library")
     @pytest.mark.parametrize("model_name", [ModelNames.SERESNEXT])
     @pytest.mark.parametrize("multilabel", [False])
     def test_wrap_automl_image_classification_model(self, model_name, multilabel):
