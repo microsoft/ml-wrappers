@@ -63,9 +63,9 @@ class TestImageModelWrapper(object):
         validate_wrapped_classification_model(wrapped_model, data)
 
     # Skip for older versions of python as azureml-automl-dnn-vision works with ">=3.7,<3.8"
-    @pytest.mark.skipif(sys.version_info.minor < (3, 7),
+    @pytest.mark.skipif(sys.version_info < (3, 7),
                         reason='azureml-automl-dnn-vision not supported for older versions')
-    @pytest.mark.skipif(sys.version_info.minor >= (3, 8),
+    @pytest.mark.skipif(sys.version_info >= (3, 8),
                         reason='azureml-automl-dnn-vision not supported for newer versions')
     @pytest.mark.skipif('azureml-automl-dnn-vision' not in sys.modules,
                         reason="requires the azureml-automl-dnn-vision library")
