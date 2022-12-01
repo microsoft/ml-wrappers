@@ -68,7 +68,7 @@ jobs:
     - name: Test with pytest
       shell: bash -l {0}
       run: |
-        pytest ./tests -s -v -k 'test_wrap_automl_image' --durations=10 --cov='ml_wrappers' --cov-report=xml --cov-report=html
+        pytest ./tests/automl -s -v --durations=10 --cov='ml_wrappers' --cov-report=xml --cov-report=html
     - name: Upload code coverage results
       uses: actions/upload-artifact@v3
       with:

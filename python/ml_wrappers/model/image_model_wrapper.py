@@ -49,15 +49,21 @@ def _wrap_image_model(model, examples, model_task, is_function):
                 model = WrappedPytorchModel(model, image_to_tensor=True)
                 if not isinstance(examples, DatasetWrapper):
                     examples = DatasetWrapper(examples)
-                eval_function, eval_ml_domain = _eval_model(model, examples, model_task)
+                eval_function, eval_ml_domain = _eval_model(
+                    model, examples, model_task)
                 return WrappedClassificationModel(model, eval_function, examples), eval_ml_domain
         except (NameError, AttributeError):
-            module_logger.debug('Could not import torch, required if using a pytorch model')
+            module_logger.debug(
+                'Could not import torch, required if using a pytorch model')
 
         if str(type(model)).endswith("fastai.learner.Learner'>"):
             _wrapped_model = WrappedFastAIImageClassificationModel(model)
-        elif str(type(model)).endswith("mlflow.pyfunc.PyFuncModel'>"):
-            _wrapped_model = WrappedMlflowAutomlImagesClassificationModel(model)
+        elif hasattr(model, '_model_impl') and callable(model._model_impl):
+            if str(type(model._model_impl.python_model)).endswith(
+            "azureml.automl.dnn.vision.common.mlflow.mlflow_model_wrapper.MLFlowImagesModelWrapper'>"
+            ):
+                _wrapped_model = WrappedMlflowAutomlImagesClassificationModel(
+                    model)
         else:
             _wrapped_model = WrappedTransformerImageClassificationModel(model)
     return _wrapped_model, model_task
