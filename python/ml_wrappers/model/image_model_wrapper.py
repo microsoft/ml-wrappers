@@ -58,9 +58,9 @@ def _wrap_image_model(model, examples, model_task, is_function):
 
         if str(type(model)).endswith("fastai.learner.Learner'>"):
             _wrapped_model = WrappedFastAIImageClassificationModel(model)
-        elif hasattr(model, '_model_impl') and callable(model._model_impl):
+        elif hasattr(model, '_model_impl'):
             if str(type(model._model_impl.python_model)).endswith(
-            "azureml.automl.dnn.vision.common.mlflow.mlflow_model_wrapper.MLFlowImagesModelWrapper'>"
+                "azureml.automl.dnn.vision.common.mlflow.mlflow_model_wrapper.MLFlowImagesModelWrapper'>"
             ):
                 _wrapped_model = WrappedMlflowAutomlImagesClassificationModel(
                     model)
