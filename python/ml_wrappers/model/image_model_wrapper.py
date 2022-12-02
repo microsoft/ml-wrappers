@@ -6,7 +6,9 @@
 
 import logging
 
+import mlflow
 import numpy as np
+import pandas as pd
 from ml_wrappers.common.constants import ModelTask
 from ml_wrappers.dataset.dataset_wrapper import DatasetWrapper
 from ml_wrappers.model.evaluator import _eval_model
@@ -155,7 +157,7 @@ class WrappedFastAIImageClassificationModel(object):
 class WrappedMlflowAutomlImagesClassificationModel:
     """A class for wrapping an AutoML for images MLflow model in the scikit-learn style."""
 
-    def __init__(self, model):
+    def __init__(self, model: mlflow.pyfunc.PyFuncModel) -> None:
         """Initialize the WrappedMlflowAutomlImagesClassificationModel.
 
         :param model: mlflow model
@@ -163,7 +165,7 @@ class WrappedMlflowAutomlImagesClassificationModel:
         """
         self._model = model
 
-    def _mlflow_predict(self, dataset):
+    def _mlflow_predict(self, dataset: pd.DataFrame) -> np.ndarray:
         """Predict the output using the wrapped MLflow model.
 
         :param dataset: The dataset to predict on.
@@ -174,7 +176,7 @@ class WrappedMlflowAutomlImagesClassificationModel:
         predictions = self._model.predict(dataset)
         return predictions
 
-    def predict(self, dataset):
+    def predict(self, dataset: pd.DataFrame) -> np.ndarray:
         """Predict the output value using the wrapped MLflow model.
 
         :param dataset: The dataset to predict on.
@@ -185,7 +187,7 @@ class WrappedMlflowAutomlImagesClassificationModel:
         predictions = self._mlflow_predict(dataset)
         return predictions.loc[:, "probs"].map(lambda x: np.argmax(x)).values
 
-    def predict_proba(self, dataset):
+    def predict_proba(self, dataset: pd.DataFrame) -> np.ndarray:
         """Predict the output probability using the MLflow model.
 
         :param dataset: The dataset to predict_proba on.
