@@ -165,13 +165,13 @@ class WrappedMlflowAutomlImagesClassificationModel:
         """
         self._model = model
 
-    def _mlflow_predict(self, dataset: pd.DataFrame) -> np.ndarray:
+    def _mlflow_predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
         """Predict the output using the wrapped MLflow model.
 
         :param dataset: The dataset to predict on.
         :type dataset: pandas.DataFrame
         :return: The predicted data.
-        :rtype: numpy.ndarray
+        :rtype: pandas.DataFrame
         """
         predictions = self._model.predict(dataset)
         return predictions
