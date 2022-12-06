@@ -166,7 +166,7 @@ class WrappedMlflowAutomlImagesClassificationModel:
         self._model = model
 
     def _mlflow_predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
-        """Predict the output using the wrapped MLflow model.
+        """Perform the inference using the wrapped MLflow model.
 
         :param dataset: The dataset to predict on.
         :type dataset: pandas.DataFrame
