@@ -10,8 +10,6 @@ import os
 import sys
 import tempfile
 
-import numpy as np
-import pandas as pd
 import azureml.automl.core.shared.constants as shared_constants
 import mlflow
 import pytest
