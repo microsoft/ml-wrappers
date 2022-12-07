@@ -12,11 +12,13 @@ import pytest
 from common_vision_utils import (IMAGE, create_image_classification_pipeline,
                                  create_pytorch_image_model,
                                  load_fridge_dataset, load_imagenet_dataset,
-                                 load_images, preprocess_imagenet_dataset,
+                                 load_images, load_multilabel_fridge_dataset,
+                                 preprocess_imagenet_dataset,
                                  retrieve_or_train_fridge_model)
 from ml_wrappers import wrap_model
 from ml_wrappers.common.constants import ModelTask
-from wrapper_validator import validate_wrapped_classification_model
+from wrapper_validator import (validate_wrapped_classification_model,
+                               validate_wrapped_multilabel_model)
 
 
 @pytest.mark.usefixtures('_clean_dir')
@@ -71,3 +73,22 @@ class TestImageModelWrapper(object):
         model = create_pytorch_image_model()
         wrapped_model = wrap_model(model, data, ModelTask.IMAGE_CLASSIFICATION)
         validate_wrapped_classification_model(wrapped_model, data)
+
+    # Skip for older versions of python due to many breaking changes in fastai
+    @pytest.mark.skipif(sys.version_info.minor <= 6,
+                        reason='Fastai not supported for older versions')
+    def test_wrap_fastai_multilabel_image_classification_model(self):
+        data = load_multilabel_fridge_dataset()
+        try:
+            model = retrieve_or_train_fridge_model(data, multilabel=True)
+        except Exception as e:
+            print("Failed to retrieve or load Fastai model, force training")
+            print("Inner exception message on retrieving model: {}".format(e))
+            model = retrieve_or_train_fridge_model(
+                data, force_train=True, multilabel=True)
+        # load the paths as numpy arrays
+        data = load_images(data)
+        wrapped_model = wrap_model(
+            model, data, ModelTask.MULTILABEL_IMAGE_CLASSIFICATION)
+        num_labels = 4
+        validate_wrapped_multilabel_model(wrapped_model, data, num_labels)

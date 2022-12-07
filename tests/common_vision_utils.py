@@ -16,7 +16,8 @@ from PIL import Image
 try:
     from fastai.data.transforms import Normalize
     from fastai.learner import load_learner
-    from fastai.metrics import accuracy
+    from fastai.losses import BCEWithLogitsLossFlat
+    from fastai.metrics import accuracy, accuracy_multi
     from fastai.vision import models
     from fastai.vision.augment import Resize
     from fastai.vision.data import ImageDataLoaders, imagenet_stats
@@ -48,6 +49,8 @@ IMAGE = 'image'
 LABEL = 'label'
 FRIDGE_MODEL_NAME = 'fridge_model'
 FRIDGE_MODEL_WINDOWS_NAME = 'fridge_model_windows'
+MULTILABEL_FRIDGE_MODEL_NAME = 'multilabel_fridge_model'
+MULTILABEL_FRIDGE_MODEL_WINDOWS_NAME = 'multilabel_fridge_model_windows'
 WIN = 'win'
 
 
@@ -66,6 +69,15 @@ def load_imagenet_labels():
     return class_names
 
 
+def retrieve_unzip_file(download_url, data_file):
+    urlretrieve(download_url, filename=data_file)
+    # extract files
+    with ZipFile(data_file, "r") as zipfile:
+        zipfile.extractall(path="./data")
+    # delete zip file
+    os.remove(data_file)
+
+
 def load_fridge_dataset():
     # create data folder if it doesnt exist.
     os.makedirs("data", exist_ok=True)
@@ -73,13 +85,8 @@ def load_fridge_dataset():
     # download data
     download_url = "https://cvbp-secondary.z19.web.core.windows.net/datasets/image_classification/fridgeObjects.zip"
     data_file = "./data/fridgeObjects.zip"
-    urlretrieve(download_url, filename=data_file)
+    retrieve_unzip_file(download_url, data_file)
 
-    # extract files
-    with ZipFile(data_file, "r") as zipfile:
-        zipfile.extractall(path="./data")
-    # delete zip file
-    os.remove(data_file)
     # get all file names into a pandas dataframe with the labels
     data = pd.DataFrame(columns=[IMAGE,
                                  LABEL])
@@ -89,6 +96,26 @@ def load_fridge_dataset():
             data = data.append({IMAGE: image_path,
                                 LABEL: folder},
                                ignore_index=True)
+    return data
+
+
+def load_multilabel_fridge_dataset():
+    # create data folder if it doesnt exist.
+    os.makedirs("data", exist_ok=True)
+
+    # download data
+    download_url = ("https://cvbp-secondary.z19.web.core.windows.net/" +
+                    "datasets/image_classification/multilabelFridgeObjects.zip")
+    folder_path = './data/multilabelFridgeObjects'
+    data_file = folder_path + '.zip'
+    retrieve_unzip_file(download_url, data_file)
+
+    data = pd.read_csv(folder_path + '/labels.csv')
+    data.rename(columns={'filename': IMAGE,
+                         'labels': LABEL}, inplace=True)
+    image_col = data[IMAGE]
+    for i in range(len(image_col)):
+        image_col[i] = folder_path + '/images/' + image_col[i]
     return data
 
 
@@ -143,20 +170,36 @@ def create_image_classification_pipeline():
 
 
 class FetchModel(object):
-    def __init__(self):
-        pass
+    def __init__(self, multilabel=False):
+        self.multilabel = multilabel
 
     def fetch(self):
         if sys.platform.startswith(WIN):
-            model_name = FRIDGE_MODEL_WINDOWS_NAME
+            if self.multilabel:
+                model_name = MULTILABEL_FRIDGE_MODEL_WINDOWS_NAME
+            else:
+                model_name = FRIDGE_MODEL_WINDOWS_NAME
         else:
-            model_name = FRIDGE_MODEL_NAME
+            if self.multilabel:
+                model_name = MULTILABEL_FRIDGE_MODEL_NAME
+            else:
+                model_name = FRIDGE_MODEL_NAME
         url = ('https://publictestdatasets.blob.core.windows.net/models/' +
                model_name)
-        urlretrieve(url, FRIDGE_MODEL_NAME)
+        saved_model_name = FRIDGE_MODEL_NAME
+        if self.multilabel:
+            saved_model_name = MULTILABEL_FRIDGE_MODEL_NAME
+        urlretrieve(url, saved_model_name)
 
 
 def train_fastai_image_classifier(df):
+    """Trains a fastai multiclass image classifier.
+
+    :param df: dataframe with image paths and labels
+    :type df: pandas.DataFrame
+    :return: fastai vision learner
+    :rtype: fastai.vision.learner
+    """
     data = ImageDataLoaders.from_df(
         df, valid_pct=0.2, seed=10, bs=BATCH_SIZE,
         batch_tfms=[Resize(IM_SIZE), Normalize.from_stats(*imagenet_stats)])
@@ -166,21 +209,56 @@ def train_fastai_image_classifier(df):
     return model
 
 
-def retrieve_or_train_fridge_model(df, force_train=False):
+def train_fastai_image_multilabel(df):
+    """Trains fastai image classifier for multilabel classification
+
+    :param df: dataframe with image paths and labels
+    :type df: pandas.DataFrame
+    :return: trained fastai model
+    :rtype: fastai.vision.learner.Learner
+    """
+    data = ImageDataLoaders.from_df(
+        df, valid_pct=0.2, seed=10, label_delim=' ', bs=BATCH_SIZE,
+        batch_tfms=[Resize(IM_SIZE), Normalize.from_stats(*imagenet_stats)])
+    model = vision_learner(data, models.resnet18,
+                           metrics=[accuracy_multi],
+                           loss_func=BCEWithLogitsLossFlat())
+    model.unfreeze()
+    model.fit(EPOCHS, LEARNING_RATE)
+    return model
+
+
+def retrieve_or_train_fridge_model(df, force_train=False,
+                                   multilabel=False):
+    """Retrieves or trains fastai image classifier
+
+    :param df: dataframe with image paths and labels
+    :type df: pandas.DataFrame
+    :param force_train: whether to force training of model
+    :type force_train: bool
+    :param multilabel: whether to train multilabel classifier
+    :type multilabel: bool
+    """
+    model_name = FRIDGE_MODEL_NAME
+    if multilabel:
+        model_name = MULTILABEL_FRIDGE_MODEL_NAME
     if force_train:
-        model = train_fastai_image_classifier(df)
+        if multilabel:
+            model = train_fastai_image_multilabel(df)
+        else:
+            model = train_fastai_image_classifier(df)
         # Save model to disk
-        model.export(FRIDGE_MODEL_NAME)
+        model.export(model_name)
     else:
-        fetcher = FetchModel()
-        action_name = "Dataset download"
-        err_msg = "Failed to download dataset"
+        fetcher = FetchModel(multilabel)
+        action_name = "Fridge model download"
+        err_msg = "Failed to download model"
         max_retries = 4
         retry_delay = 60
         retry_function(fetcher.fetch, action_name, err_msg,
                        max_retries=max_retries,
                        retry_delay=retry_delay)
-        model = load_learner(FRIDGE_MODEL_NAME)
+        model = load_learner(model_name)
     return model
 
 
