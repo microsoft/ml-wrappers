@@ -1,14 +1,17 @@
 # Copyright (c) Microsoft Corporation
 # Licensed under the MIT License.
 
+import base64
 import json
 import os
 import sys
+from io import BytesIO
 from zipfile import ZipFile
 
 import numpy as np
 import pandas as pd
 import shap
+from PIL import Image
 
 try:
     from fastai.data.transforms import Normalize
@@ -21,7 +24,6 @@ try:
 except SyntaxError:
     # Skip for older versions of python due to breaking changes in fastai
     pass
-from PIL import Image
 from raiutils.common.retries import retry_function
 from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
 from torch import Tensor
@@ -97,6 +99,33 @@ def load_images(data):
             image = np.array(im)
         images.append(image)
     return np.array(images)
+
+
+def get_base64_string_from_path(img_path: str) -> str:
+    """Load and convert pillow image to base64-encoded image
+
+    :param img_path: image path
+    :type img_path: str
+    :return: base64-encoded image
+    :rtype: str
+    """
+    img = Image.open(img_path)
+    imgio = BytesIO()
+    img.save(imgio, img.format)
+    img_str = base64.b64encode(imgio.getvalue())
+    return img_str.decode("utf-8")
+
+
+def load_base64_images(data: pd.DataFrame) -> pd.DataFrame:
+    """Create dataframe of images encoded in base64 format
+
+    :param data: input data with image paths and lables
+    :type data: pandas.DataFrame
+    :return: base64-encoded image
+    :rtype: pandas.DataFrame
+    """
+    data.loc[:, IMAGE] = data.loc[:, IMAGE].map(lambda img_path: get_base64_string_from_path(img_path))
+    return data.loc[:, [IMAGE]]
 
 
 class ResNetPipeline(object):

@@ -6,7 +6,9 @@
 
 import logging
 
+import mlflow
 import numpy as np
+import pandas as pd
 from ml_wrappers.common.constants import ModelTask
 from ml_wrappers.dataset.dataset_wrapper import DatasetWrapper
 from ml_wrappers.model.evaluator import _eval_model
@@ -49,13 +51,21 @@ def _wrap_image_model(model, examples, model_task, is_function):
                 model = WrappedPytorchModel(model, image_to_tensor=True)
                 if not isinstance(examples, DatasetWrapper):
                     examples = DatasetWrapper(examples)
-                eval_function, eval_ml_domain = _eval_model(model, examples, model_task)
+                eval_function, eval_ml_domain = _eval_model(
+                    model, examples, model_task)
                 return WrappedClassificationModel(model, eval_function, examples), eval_ml_domain
         except (NameError, AttributeError):
-            module_logger.debug('Could not import torch, required if using a pytorch model')
+            module_logger.debug(
+                'Could not import torch, required if using a pytorch model')
 
         if str(type(model)).endswith("fastai.learner.Learner'>"):
             _wrapped_model = WrappedFastAIImageClassificationModel(model)
+        elif hasattr(model, '_model_impl'):
+            if str(type(model._model_impl.python_model)).endswith(
+                "azureml.automl.dnn.vision.common.mlflow.mlflow_model_wrapper.MLFlowImagesModelWrapper'>"
+            ):
+                _wrapped_model = WrappedMlflowAutomlImagesClassificationModel(
+                    model)
         else:
             _wrapped_model = WrappedTransformerImageClassificationModel(model)
     return _wrapped_model, model_task
@@ -142,3 +152,48 @@ class WrappedFastAIImageClassificationModel(object):
         :rtype: numpy.ndarray
         """
         return self._fastai_predict(dataset, 2)
+
+
+class WrappedMlflowAutomlImagesClassificationModel:
+    """A class for wrapping an AutoML for images MLflow model in the scikit-learn style."""
+
+    def __init__(self, model: mlflow.pyfunc.PyFuncModel) -> None:
+        """Initialize the WrappedMlflowAutomlImagesClassificationModel.
+
+        :param model: mlflow model
+        :type model: mlflow.pyfunc.PyFuncModel
+        """
+        self._model = model
+
+    def _mlflow_predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
+        """Perform the inference using the wrapped MLflow model.
+
+        :param dataset: The dataset to predict on.
+        :type dataset: pandas.DataFrame
+        :return: The predicted data.
+        :rtype: pandas.DataFrame
+        """
+        predictions = self._model.predict(dataset)
+        return predictions
+
+    def predict(self, dataset: pd.DataFrame) -> np.ndarray:
+        """Predict the output value using the wrapped MLflow model.
+
+        :param dataset: The dataset to predict on.
+        :type dataset: pandas.DataFrame
+        :return: The predicted values.
+        :rtype: numpy.ndarray
+        """
+        predictions = self._mlflow_predict(dataset)
+        return predictions.loc[:, "probs"].map(lambda x: np.argmax(x)).values
+
+    def predict_proba(self, dataset: pd.DataFrame) -> np.ndarray:
+        """Predict the output probability using the MLflow model.
+
+        :param dataset: The dataset to predict_proba on.
+        :type dataset: pandas.DataFrame
+        :return: The predicted probabilities.
+        :rtype: numpy.ndarray
+        """
+        predictions = self._mlflow_predict(dataset)
+        return np.stack(predictions.probs.values)
