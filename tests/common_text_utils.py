@@ -15,12 +15,13 @@ except ImportError:
     from urllib.request import urlretrieve
 
 
+EMOTION_DATASET = 'SetFit/emotion'
 EMOTION = 'emotion'
 COVID19_EVENTS_MODEL_NAME = "covid19_events_model"
 
 
 def load_emotion_dataset():
-    dataset = datasets.load_dataset(EMOTION, split="train")
+    dataset = datasets.load_dataset(EMOTION_DATASET, split="train")
     data = pd.DataFrame({'text': dataset['text'],
                          EMOTION: dataset['label']})
     return data
