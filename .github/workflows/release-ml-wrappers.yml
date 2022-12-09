@@ -68,7 +68,7 @@ jobs:
 
       - name: run ml-wrappers tests
         shell: bash -l {0}
-        run: pytest ./tests/
+        run: pytest ./tests/main
 
       - name: Upload a ml-wrappers build result
         uses: actions/upload-artifact@v2
