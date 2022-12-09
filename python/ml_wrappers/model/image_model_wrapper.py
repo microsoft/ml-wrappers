@@ -26,6 +26,20 @@ except ImportError:
     module_logger.debug('Could not import torch, required if using a PyTorch model')
 
 
+FASTAI_MODEL_SUFFIX = "fastai.learner.Learner'>"
+
+
+def _is_fastai_model(model):
+    """Check if the model is a fastai model.
+
+    :param model: The model to check.
+    :type model: object
+    :return: True if the model is a fastai model, False otherwise.
+    :rtype: bool
+    """
+    return str(type(model)).endswith(FASTAI_MODEL_SUFFIX)
+
+
 def _wrap_image_model(model, examples, model_task, is_function):
     """If needed, wraps the model or function in a common API.
 
@@ -58,7 +72,7 @@ def _wrap_image_model(model, examples, model_task, is_function):
             module_logger.debug(
                 'Could not import torch, required if using a pytorch model')
 
-        if str(type(model)).endswith("fastai.learner.Learner'>"):
+        if _is_fastai_model(model):
             _wrapped_model = WrappedFastAIImageClassificationModel(model)
         elif hasattr(model, '_model_impl'):
             if str(type(model._model_impl.python_model)).endswith(
@@ -68,6 +82,10 @@ def _wrap_image_model(model, examples, model_task, is_function):
                     model)
         else:
             _wrapped_model = WrappedTransformerImageClassificationModel(model)
+    elif model_task == ModelTask.MULTILABEL_IMAGE_CLASSIFICATION:
+        if _is_fastai_model(model):
+            _wrapped_model = WrappedFastAIImageClassificationModel(
+                model, multilabel=True)
     return _wrapped_model, model_task
 
 
@@ -102,9 +120,16 @@ class WrappedTransformerImageClassificationModel(object):
 class WrappedFastAIImageClassificationModel(object):
     """A class for wrapping a FastAI model in the scikit-learn style."""
 
-    def __init__(self, model):
-        """Initialize the WrappedFastAIImageClassificationModel."""
+    def __init__(self, model, multilabel=False):
+        """Initialize the WrappedFastAIImageClassificationModel.
+
+        :param model: The model to wrap.
+        :type model: fastai.learner.Learner
+        :param multilabel: Whether the model is a multilabel model.
+        :type multilabel: bool
+        """
         self._model = model
+        self._multilabel = multilabel
 
     def _fastai_predict(self, dataset, index):
         """Predict the output using the wrapped FastAI model.
@@ -124,13 +149,17 @@ class WrappedFastAIImageClassificationModel(object):
             for row in dataset:
                 predictions.append(self._fastai_predict(row, index))
             predictions = np.array(predictions)
-            if index == 1:
+            if index == 1 and not self._multilabel:
                 predictions = predictions.flatten()
             return predictions
         else:
             predictions = np.array(self._model.predict(dataset)[index])
             if len(predictions.shape) == 0:
                 predictions = predictions.reshape(1)
+            if index == 1:
+                is_boolean = predictions.dtype == bool
+                if is_boolean:
+                    predictions = predictions.astype(int)
             return predictions
 
     def predict(self, dataset):
