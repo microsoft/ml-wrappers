@@ -6,7 +6,6 @@
 
 import logging
 
-import mlflow
 import numpy as np
 import pandas as pd
 from ml_wrappers.common.constants import ModelTask
@@ -24,6 +23,13 @@ try:
     import torch.nn as nn
 except ImportError:
     module_logger.debug('Could not import torch, required if using a PyTorch model')
+
+try:
+    from mlflow.pyfunc import PyFuncModel
+except ImportError:
+    from typing import Any
+    PyFuncModel = Any
+    module_logger.debug('Could not import mlflow, required if using an mlflow model')
 
 
 FASTAI_MODEL_SUFFIX = "fastai.learner.Learner'>"
@@ -186,7 +192,7 @@ class WrappedFastAIImageClassificationModel(object):
 class WrappedMlflowAutomlImagesClassificationModel:
     """A class for wrapping an AutoML for images MLflow model in the scikit-learn style."""
 
-    def __init__(self, model: mlflow.pyfunc.PyFuncModel) -> None:
+    def __init__(self, model: PyFuncModel) -> None:
         """Initialize the WrappedMlflowAutomlImagesClassificationModel.
 
         :param model: mlflow model
