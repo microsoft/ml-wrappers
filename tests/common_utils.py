@@ -37,13 +37,21 @@ try:
     from tensorflow.keras.models import Sequential
     from tensorflow.keras.wrappers.scikit_learn import (KerasClassifier,
                                                         KerasRegressor)
-except ImportError:
+except (ImportError, TypeError):
     pass
 
 try:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
+except ImportError:
+    pass
+
+try:
+    from fastai.data.block import CategoryBlock, RegressionBlock
+    from fastai.metrics import accuracy
+    from fastai.tabular.data import TabularDataLoaders
+    from fastai.tabular.learner import tabular_learner
 except ImportError:
     pass
 
@@ -54,6 +62,7 @@ LIGHTGBM_METHOD = 'mimic.lightgbm'
 LINEAR_METHOD = 'mimic.linear'
 SGD_METHOD = 'mimic.sgd'
 TREE_METHOD = 'mimic.tree'
+LABEL = 'label'
 
 
 def get_mimic_method(surrogate_model):
@@ -327,6 +336,30 @@ def create_scikit_keras_multiclass_classifier(X, y):
     model = KerasClassifier(build_fn=model_func, nb_epoch=epochs, batch_size=batch_size, verbose=1)
     model.fit(X, y)
     return model
+
+
+def _common_fastai_tabular_learner(X, y, is_classifier=True):
+    if is_classifier:
+        y_block = CategoryBlock()
+    else:
+        y_block = RegressionBlock()
+    X_copy = X.copy().reset_index(drop=True)
+    X_copy[LABEL] = y
+    data = TabularDataLoaders.from_df(X_copy, cat_names=[],
+                                      cont_names=list(X.columns),
+                                      procs=[], y_names=LABEL,
+                                      y_block=y_block)
+    learn = tabular_learner(data, layers=[200, 100], metrics=accuracy)
+    learn.fit(1, 1e-2)
+    return learn
+
+
+def create_fastai_tabular_classifier(X, y):
+    return _common_fastai_tabular_learner(X, y, is_classifier=True)
+
+
+def create_fastai_tabular_regressor(X, y):
+    return _common_fastai_tabular_learner(X, y, is_classifier=False)
 
 
 def _common_pytorch_generator(numCols, num_classes=None):

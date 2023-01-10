@@ -7,8 +7,11 @@
 import pandas as pd
 import pytest
 from common_utils import (create_catboost_classifier,
-                          create_catboost_regressor, create_keras_classifier,
-                          create_keras_regressor, create_lightgbm_classifier,
+                          create_catboost_regressor,
+                          create_fastai_tabular_classifier,
+                          create_fastai_tabular_regressor,
+                          create_keras_classifier, create_keras_regressor,
+                          create_lightgbm_classifier,
                           create_lightgbm_regressor,
                           create_pytorch_multiclass_classifier,
                           create_pytorch_regressor,
@@ -73,6 +76,9 @@ class TestModelWrapper(object):
         train_classification_model_numpy(create_scikit_keras_multiclass_classifier, iris)
         train_classification_model_pandas(create_scikit_keras_multiclass_classifier, iris)
 
+    def test_wrap_fastai_classification_model(self, iris):
+        train_classification_model_pandas(create_fastai_tabular_classifier, iris)
+
     def test_wrap_sklearn_linear_regression_model(self, housing):
         train_regression_model_numpy(
             create_sklearn_linear_regressor, housing)
@@ -108,6 +114,9 @@ class TestModelWrapper(object):
     def test_wrap_scikit_keras_regression_model(self, housing):
         train_regression_model_numpy(create_scikit_keras_regressor, housing)
         train_regression_model_pandas(create_scikit_keras_regressor, housing)
+
+    def test_wrap_fastai_regression_model(self, iris):
+        train_regression_model_pandas(create_fastai_tabular_regressor, iris)
 
     def test_batch_dataset(self, housing):
         X_train = housing[DatasetConstants.X_TRAIN]
