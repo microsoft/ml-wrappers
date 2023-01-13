@@ -18,6 +18,7 @@ from ..common.constants import (ModelTask, SKLearn, image_model_tasks,
                                 text_model_tasks)
 from ..dataset.dataset_wrapper import DatasetWrapper
 from .evaluator import _eval_function, _eval_model
+from .fastai_wrapper import WrappedFastAITabularModel, _is_fastai_tabular_model
 from .image_model_wrapper import _wrap_image_model
 from .pytorch_wrapper import WrappedPytorchModel
 from .tensorflow_wrapper import WrappedTensorflowModel, is_sequential
@@ -98,6 +99,8 @@ def _wrap_model(model, examples, model_task, is_function):
                 model = WrappedPytorchModel(model)
         except (NameError, AttributeError):
             module_logger.debug('Could not import torch, required if using a pytorch model')
+        if _is_fastai_tabular_model(model):
+            model = WrappedFastAITabularModel(model)
         if is_sequential(model):
             model = WrappedTensorflowModel(model)
         if _classifier_without_proba(model):

@@ -22,7 +22,7 @@ try:
     from fastai.vision.augment import Resize
     from fastai.vision.data import ImageDataLoaders, imagenet_stats
     from fastai.vision.learner import vision_learner
-except SyntaxError:
+except (ImportError, SyntaxError):
     # Skip for older versions of python due to breaking changes in fastai
     pass
 from raiutils.common.retries import retry_function
