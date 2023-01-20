@@ -15,6 +15,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (FunctionTransformer, OneHotEncoder,
@@ -48,11 +49,13 @@ except ImportError:
     pass
 
 try:
+    from fastai.callback.core import Callback
     from fastai.data.block import CategoryBlock, RegressionBlock
     from fastai.metrics import accuracy
     from fastai.tabular.data import TabularDataLoaders
     from fastai.tabular.learner import tabular_learner
 except (ImportError, SyntaxError):
+    Callback = object
     # Skip for older versions of python due to breaking changes in fastai
     pass
 
@@ -339,7 +342,28 @@ def create_scikit_keras_multiclass_classifier(X, y):
     return model
 
 
-def _common_fastai_tabular_learner(X, y, is_classifier=True):
+def buggy_auc(y_score, y_true):
+    # buggy AUC metric which throws when single row is passed
+    y_score = y_score[:, 1].flatten()
+    y_true = y_true.flatten()
+    if y_true.shape[0] == 1:
+        raise ValueError('Only one row passed, this is a buggy function!')
+    return roc_auc_score(y_true, y_score)
+
+
+class BuggyCallback(Callback):
+    """A buggy fastai callback."""
+
+    def __init__(self):
+        """Initialize the BuggyCallback."""
+        self.run = True
+
+    def after_epoch(self):
+        """Throw an exception after the first epoch."""
+        raise ValueError('This buggy callback throws, bummer!')
+
+
+def _common_fastai_tabular_learner(X, y, is_classifier=True, multimetric=False):
     if is_classifier:
         y_block = CategoryBlock()
     else:
@@ -350,17 +374,30 @@ def _common_fastai_tabular_learner(X, y, is_classifier=True):
                                       cont_names=list(X.columns),
                                       procs=[], y_names=LABEL,
                                       y_block=y_block)
-    learn = tabular_learner(data, layers=[200, 100], metrics=accuracy)
+    if multimetric:
+        metrics = [accuracy, buggy_auc]
+    else:
+        metrics = accuracy
+    learn = tabular_learner(data, layers=[200, 100], metrics=metrics)
     learn.fit(1, 1e-2)
+    if multimetric:
+        learn.add_cb(BuggyCallback())
     return learn
 
 
 def create_fastai_tabular_classifier(X, y):
-    return _common_fastai_tabular_learner(X, y, is_classifier=True)
+    return _common_fastai_tabular_learner(
+        X, y, is_classifier=True, multimetric=False)
+
+
+def create_fastai_tabular_classifier_multimetric(X, y):
+    return _common_fastai_tabular_learner(
+        X, y, is_classifier=True, multimetric=True)
 
 
 def create_fastai_tabular_regressor(X, y):
-    return _common_fastai_tabular_learner(X, y, is_classifier=False)
+    return _common_fastai_tabular_learner(
+        X, y, is_classifier=False, multimetric=False)
 
 
 def _common_pytorch_generator(numCols, num_classes=None):
