@@ -29,7 +29,8 @@ def train_classification_model_numpy(model_initializer, dataset,
 
 
 def train_classification_model_pandas(model_initializer, dataset,
-                                      use_dataset_wrapper=True):
+                                      use_dataset_wrapper=True,
+                                      validate_single_row=False):
     X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
                            columns=dataset[DatasetConstants.FEATURES])
     X_test = pd.DataFrame(data=dataset[DatasetConstants.X_TEST],
@@ -42,6 +43,8 @@ def train_classification_model_pandas(model_initializer, dataset,
         X_test_wrapped = X_test
     wrapped_model = wrap_model(model, X_test_wrapped,
                                model_task=ModelTask.CLASSIFICATION)
+    if validate_single_row:
+        validate_wrapped_classification_model(wrapped_model, X_test.iloc[0:1])
     validate_wrapped_classification_model(wrapped_model, X_test)
 
 
