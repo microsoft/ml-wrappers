@@ -11,6 +11,7 @@ import pytest
 from common_utils import (create_catboost_classifier,
                           create_catboost_regressor,
                           create_fastai_tabular_classifier,
+                          create_fastai_tabular_classifier_multimetric,
                           create_fastai_tabular_regressor,
                           create_keras_classifier, create_keras_regressor,
                           create_lightgbm_classifier,
@@ -83,6 +84,18 @@ class TestModelWrapper(object):
                         reason='Fastai not supported for older versions')
     def test_wrap_fastai_classification_model(self, iris):
         train_classification_model_pandas(create_fastai_tabular_classifier, iris)
+
+    # Skip for older versions due to latest fastai not supporting 3.6
+    @pytest.mark.skipif(sys.version_info.minor <= 6,
+                        reason='Fastai not supported for older versions')
+    def test_wrap_fastai_classification_model_multimetric(self, iris):
+        iris = iris.copy()
+        data_to_transform = [DatasetConstants.Y_TRAIN, DatasetConstants.Y_TEST]
+        for data in data_to_transform:
+            iris[data][iris[data] == 2] = 1
+        train_classification_model_pandas(
+            create_fastai_tabular_classifier_multimetric, iris,
+            validate_single_row=True)
 
     def test_wrap_sklearn_linear_regression_model(self, housing):
         train_regression_model_numpy(
