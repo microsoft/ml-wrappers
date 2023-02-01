@@ -5,10 +5,11 @@
 """Utilities for calling the wrap_model function and validating the results."""
 
 import pandas as pd
-from constants import DatasetConstants
 from ml_wrappers import wrap_model
 from ml_wrappers.common.constants import ModelTask
 from ml_wrappers.dataset.dataset_wrapper import DatasetWrapper
+
+from constants import DatasetConstants
 from wrapper_validator import (validate_wrapped_classification_model,
                                validate_wrapped_regression_model)
 

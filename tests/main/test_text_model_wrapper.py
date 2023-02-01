@@ -5,13 +5,14 @@
 """Tests for wrap_model function on text-based models"""
 
 import pytest
+from ml_wrappers import wrap_model
+from ml_wrappers.common.constants import ModelTask
+
 from common_text_utils import (EMOTION, create_multilabel_text_pipeline,
                                create_question_answering_pipeline,
                                create_text_classification_pipeline,
                                load_covid19_emergency_event_dataset,
                                load_emotion_dataset, load_squad_dataset)
-from ml_wrappers import wrap_model
-from ml_wrappers.common.constants import ModelTask
 from wrapper_validator import (validate_wrapped_classification_model,
                                validate_wrapped_multilabel_model,
                                validate_wrapped_question_answering_model)

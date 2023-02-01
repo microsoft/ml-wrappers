@@ -7,8 +7,13 @@ import os
 import tempfile
 
 import pytest
-from common_utils import (create_complex_titanic_data, create_housing_data,
-                          create_iris_data, create_simple_titanic_data)
+
+from common_utils import (create_cancer_data, create_cancer_data_booleans,
+                          create_complex_titanic_data, create_diabetes_data,
+                          create_energy_data, create_housing_data,
+                          create_iris_data,
+                          create_multiclass_classification_dataset,
+                          create_simple_titanic_data, create_wine_data)
 from constants import DatasetConstants
 
 test_logger = logging.getLogger(__name__)
@@ -36,14 +41,28 @@ def iris():
 
 
 @pytest.fixture(scope='session')
-def housing():
-    x_train, x_test, y_train, y_test, features = create_housing_data()
+def cancer():
+    x_train, x_test, y_train, y_test, features, classes = create_cancer_data()
     return {
         DatasetConstants.X_TRAIN: x_train,
         DatasetConstants.X_TEST: x_test,
         DatasetConstants.Y_TRAIN: y_train,
         DatasetConstants.Y_TEST: y_test,
-        DatasetConstants.FEATURES: features
+        DatasetConstants.FEATURES: features,
+        DatasetConstants.CLASSES: classes
+    }
+
+
+@pytest.fixture(scope='session')
+def cancer_booleans():
+    x_train, x_test, y_train, y_test, features, classes = create_cancer_data_booleans()
+    return {
+        DatasetConstants.X_TRAIN: x_train,
+        DatasetConstants.X_TEST: x_test,
+        DatasetConstants.Y_TRAIN: y_train,
+        DatasetConstants.Y_TEST: y_test,
+        DatasetConstants.FEATURES: features,
+        DatasetConstants.CLASSES: classes
     }
 
 
@@ -68,4 +87,67 @@ def titanic_complex():
         DatasetConstants.X_TEST: x_test,
         DatasetConstants.Y_TRAIN: y_train,
         DatasetConstants.Y_TEST: y_test
+    }
+
+
+@pytest.fixture(scope='session')
+def wine():
+    x_train, x_test, y_train, y_test, features, classes = create_wine_data()
+    return {
+        DatasetConstants.X_TRAIN: x_train,
+        DatasetConstants.X_TEST: x_test,
+        DatasetConstants.Y_TRAIN: y_train,
+        DatasetConstants.Y_TEST: y_test,
+        DatasetConstants.FEATURES: features,
+        DatasetConstants.CLASSES: classes
+    }
+
+
+@pytest.fixture(scope='session')
+def multiclass_classification():
+    x_train, x_test, y_train, y_test, features, classes = \
+        create_multiclass_classification_dataset()
+    return {
+        DatasetConstants.X_TRAIN: x_train,
+        DatasetConstants.X_TEST: x_test,
+        DatasetConstants.Y_TRAIN: y_train,
+        DatasetConstants.Y_TEST: y_test,
+        DatasetConstants.FEATURES: features,
+        DatasetConstants.CLASSES: classes
+    }
+
+
+@pytest.fixture(scope='session')
+def housing():
+    x_train, x_test, y_train, y_test, features = create_housing_data()
+    return {
+        DatasetConstants.X_TRAIN: x_train,
+        DatasetConstants.X_TEST: x_test,
+        DatasetConstants.Y_TRAIN: y_train,
+        DatasetConstants.Y_TEST: y_test,
+        DatasetConstants.FEATURES: features
+    }
+
+
+@pytest.fixture(scope='session')
+def energy():
+    x_train, x_test, y_train, y_test, features = create_energy_data()
+    return {
+        DatasetConstants.X_TRAIN: x_train,
+        DatasetConstants.X_TEST: x_test,
+        DatasetConstants.Y_TRAIN: y_train,
+        DatasetConstants.Y_TEST: y_test,
+        DatasetConstants.FEATURES: features
+    }
+
+
+@pytest.fixture(scope='session')
+def diabetes():
+    x_train, x_test, y_train, y_test, features = create_diabetes_data()
+    return {
+        DatasetConstants.X_TRAIN: x_train,
+        DatasetConstants.X_TEST: x_test,
+        DatasetConstants.Y_TRAIN: y_train,
+        DatasetConstants.Y_TEST: y_test,
+        DatasetConstants.FEATURES: features
     }

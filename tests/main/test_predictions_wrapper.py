@@ -9,12 +9,13 @@ import pickle
 import numpy as np
 import pandas as pd
 import pytest
-from common_utils import (create_lightgbm_classifier,
-                          create_lightgbm_regressor, create_titanic_pipeline)
-from constants import DatasetConstants
 from ml_wrappers.model.predictions_wrapper import (
     DataValidationException, EmptyDataException,
     PredictionsModelWrapperClassification, PredictionsModelWrapperRegression)
+
+from common_utils import (create_lightgbm_classifier,
+                          create_lightgbm_regressor, create_titanic_pipeline)
+from constants import DatasetConstants
 
 
 class TestPredictionsWrapper:
@@ -37,23 +38,35 @@ class TestPredictionsWrapper:
 
 
 class TestPredictionsWrapperClassification(TestPredictionsWrapper):
-    @pytest.mark.parametrize('dataset_name', ['iris', 'titanic'])
-    def test_prediction_wrapper_classification(self, iris, titanic_simple, dataset_name):
+    @pytest.mark.parametrize('dataset_name', ['iris', 'titanic', 'cancer', 'wine', 'multiclass'])
+    def test_prediction_wrapper_classification(
+            self, iris, titanic_simple, cancer, cancer_booleans, wine,
+            multiclass_classification, dataset_name):
         if dataset_name == 'iris':
             dataset = iris
-            X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
-                                   columns=dataset[DatasetConstants.FEATURES])
-            X_test = pd.DataFrame(data=dataset[DatasetConstants.X_TEST],
-                                  columns=dataset[DatasetConstants.FEATURES])
-        else:
+        elif dataset_name == 'titanic':
             dataset = titanic_simple
-            X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
-                                   columns=dataset[DatasetConstants.NUMERIC] + dataset[DatasetConstants.CATEGORICAL])
-            X_test = pd.DataFrame(data=dataset[DatasetConstants.X_TEST],
-                                  columns=dataset[DatasetConstants.NUMERIC] + dataset[DatasetConstants.CATEGORICAL])
+        elif dataset_name == 'cancer':
+            dataset = cancer
+        elif dataset_name == 'cancer_booleans':
+            dataset = cancer_booleans
+        elif dataset_name == 'multiclass':
+            dataset = multiclass_classification
+        else:
+            dataset = wine
+
+        if dataset_name != 'titanic':
+            features = dataset[DatasetConstants.FEATURES]
+        else:
+            features = dataset[DatasetConstants.NUMERIC] + dataset[DatasetConstants.CATEGORICAL]
+
+        X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
+                               columns=features)
+        X_test = pd.DataFrame(data=dataset[DatasetConstants.X_TEST],
+                              columns=features)
 
         y_train = dataset[DatasetConstants.Y_TRAIN]
-        if dataset_name == 'iris':
+        if dataset_name != 'titanic':
             model = create_lightgbm_classifier(X_train, y_train)
         else:
             model = create_titanic_pipeline(X_train, y_train)
@@ -166,12 +179,20 @@ class TestPredictionsWrapperClassification(TestPredictionsWrapper):
 
 
 class TestPredictionsWrapperRegression(TestPredictionsWrapper):
-    def test_prediction_wrapper_regression(self, housing):
-        dataset = housing
+    @pytest.mark.parametrize('dataset_name', ['housing', 'energy', 'diabetes'])
+    def test_prediction_wrapper_regression(self, dataset_name, housing, energy, diabetes):
+        if dataset_name == 'housing':
+            dataset = housing
+        elif dataset_name == 'diabetes':
+            dataset = diabetes
+        else:
+            dataset = energy
+
         X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
                                columns=dataset[DatasetConstants.FEATURES])
         X_test = pd.DataFrame(data=dataset[DatasetConstants.X_TEST],
                               columns=dataset[DatasetConstants.FEATURES])
+
         y_train = dataset[DatasetConstants.Y_TRAIN]
         model = create_lightgbm_regressor(X_train, y_train)
 

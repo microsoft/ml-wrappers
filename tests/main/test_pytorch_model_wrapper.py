@@ -5,10 +5,11 @@
 """Tests for WrappedPytorchModel"""
 
 import pytest
-from common_utils import (create_pytorch_multiclass_classifier,
-                          create_pytorch_regressor)
 from ml_wrappers.common.constants import ModelTask
 from ml_wrappers.model import WrappedPytorchModel
+
+from common_utils import (create_pytorch_multiclass_classifier,
+                          create_pytorch_regressor)
 from train_wrapper_utils import (train_classification_model_numpy,
                                  train_regression_model_numpy)
 from wrapper_validator import validate_wrapped_pytorch_model
