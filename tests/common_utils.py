@@ -739,7 +739,7 @@ def create_multiclass_classification_dataset(num_classes=5, num_features=20, num
     feature_names = ["col" + str(i) for i in list(range(x_train.shape[1]))]
     classes = np.unique(y_train).tolist()
 
-    return pd.DataFrame(x_train), pd.DataFrame(x_test), y_train, y_test, feature_names, classes
+    return x_train, x_test, y_train, y_test, feature_names, classes
 
 
 def create_reviews_data(test_size):
