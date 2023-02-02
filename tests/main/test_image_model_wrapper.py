@@ -9,15 +9,14 @@ import sys
 import numpy as np
 import pandas as pd
 import pytest
-from ml_wrappers import wrap_model
-from ml_wrappers.common.constants import ModelTask
-
 from common_vision_utils import (IMAGE, create_image_classification_pipeline,
                                  create_pytorch_image_model,
                                  load_fridge_dataset, load_imagenet_dataset,
                                  load_images, load_multilabel_fridge_dataset,
                                  preprocess_imagenet_dataset,
                                  retrieve_or_train_fridge_model)
+from ml_wrappers import wrap_model
+from ml_wrappers.common.constants import ModelTask
 from wrapper_validator import (validate_wrapped_classification_model,
                                validate_wrapped_multilabel_model)
 

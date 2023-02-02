@@ -60,9 +60,8 @@ except (ImportError, SyntaxError):
     # Skip for older versions of python due to breaking changes in fastai
     pass
 
-from pandas import read_csv
-
 from datasets_utils import retrieve_dataset
+from pandas import read_csv
 
 LIGHTGBM_METHOD = 'mimic.lightgbm'
 LINEAR_METHOD = 'mimic.linear'

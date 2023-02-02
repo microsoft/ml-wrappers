@@ -9,13 +9,12 @@ import pickle
 import numpy as np
 import pandas as pd
 import pytest
-from ml_wrappers.model.predictions_wrapper import (
-    DataValidationException, EmptyDataException,
-    PredictionsModelWrapperClassification, PredictionsModelWrapperRegression)
-
 from common_utils import (create_lightgbm_classifier,
                           create_lightgbm_regressor, create_titanic_pipeline)
 from constants import DatasetConstants
+from ml_wrappers.model.predictions_wrapper import (
+    DataValidationException, EmptyDataException,
+    PredictionsModelWrapperClassification, PredictionsModelWrapperRegression)
 
 
 class TestPredictionsWrapper:
