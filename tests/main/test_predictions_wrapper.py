@@ -41,18 +41,15 @@ class TestPredictionsWrapperClassification(TestPredictionsWrapper):
     def test_prediction_wrapper_classification(
             self, iris, titanic_simple, cancer, cancer_booleans, wine,
             multiclass_classification, dataset_name):
-        if dataset_name == 'iris':
-            dataset = iris
-        elif dataset_name == 'titanic':
-            dataset = titanic_simple
-        elif dataset_name == 'cancer':
-            dataset = cancer
-        elif dataset_name == 'cancer_booleans':
-            dataset = cancer_booleans
-        elif dataset_name == 'multiclass':
-            dataset = multiclass_classification
-        else:
-            dataset = wine
+        dataset_to_fixture_dict = {
+           'iris': iris,
+           'titanic': titanic_simple,
+           'cancer': cancer,
+           'cancer_booleans': cancer_booleans,
+           'multiclass': multiclass_classification,
+           'wine': wine
+        }
+        dataset = dataset_to_fixture_dict[dataset_name]
 
         if dataset_name != 'titanic':
             features = dataset[DatasetConstants.FEATURES]
@@ -180,12 +177,12 @@ class TestPredictionsWrapperClassification(TestPredictionsWrapper):
 class TestPredictionsWrapperRegression(TestPredictionsWrapper):
     @pytest.mark.parametrize('dataset_name', ['housing', 'energy', 'diabetes'])
     def test_prediction_wrapper_regression(self, dataset_name, housing, energy, diabetes):
-        if dataset_name == 'housing':
-            dataset = housing
-        elif dataset_name == 'diabetes':
-            dataset = diabetes
-        else:
-            dataset = energy
+        dataset_to_fixture_dict = {
+           'housing': housing,
+           'energy': energy,
+           'diabetes': diabetes
+        }
+        dataset = dataset_to_fixture_dict[dataset_name]
 
         X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
                                columns=dataset[DatasetConstants.FEATURES])
