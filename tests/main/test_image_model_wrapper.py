@@ -22,7 +22,6 @@ from wrapper_validator import (validate_wrapped_classification_model,
 
 
 @pytest.mark.usefixtures('_clean_dir')
-@pytest.mark.skip(reason='Disabling as this test suite is failing in main')
 class TestImageModelWrapper(object):
     def test_wrap_resnet_classification_model(self):
         data = load_imagenet_dataset()
@@ -33,7 +32,6 @@ class TestImageModelWrapper(object):
     # Skip for older versions of python due to many breaking changes in fastai
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Fastai not supported for older versions')
-    @pytest.mark.skip(reason='Disabling as this test is failing in main')
     def test_wrap_fastai_image_classification_model(self):
         data = load_fridge_dataset()
         try:
@@ -50,7 +48,6 @@ class TestImageModelWrapper(object):
     # Skip for older versions of pytorch due to missing classes
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Older versions of pytorch not supported')
-    @pytest.mark.skip(reason='Disabling as this test is failing in main')
     def test_pytorch_image_classification_model(self):
         data = load_imagenet_dataset()[:3]
         data = preprocess_imagenet_dataset(data)
