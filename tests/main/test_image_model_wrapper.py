@@ -32,6 +32,9 @@ class TestImageModelWrapper(object):
     # Skip for older versions of python due to many breaking changes in fastai
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Fastai not supported for older versions')
+    # Skip is using macos due to fastai failing on latest macos
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='Fastai not supported for latest macos')
     def test_wrap_fastai_image_classification_model(self):
         data = load_fridge_dataset()
         try:
@@ -77,6 +80,9 @@ class TestImageModelWrapper(object):
     # Skip for older versions of python due to many breaking changes in fastai
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Fastai not supported for older versions')
+    # Skip is using macos due to fastai failing on latest macos
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='Fastai not supported for latest macos')
     def test_wrap_fastai_multilabel_image_classification_model(self):
         data = load_multilabel_fridge_dataset()
         try:

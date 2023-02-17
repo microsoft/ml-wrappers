@@ -82,12 +82,18 @@ class TestModelWrapper(object):
     # Skip for older versions due to latest fastai not supporting 3.6
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Fastai not supported for older versions')
+    # Skip is using macos due to fastai failing on latest macos
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='Fastai not supported for latest macos')
     def test_wrap_fastai_classification_model(self, iris):
         train_classification_model_pandas(create_fastai_tabular_classifier, iris)
 
     # Skip for older versions due to latest fastai not supporting 3.6
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Fastai not supported for older versions')
+    # Skip is using macos due to fastai failing on latest macos
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='Fastai not supported for latest macos')
     def test_wrap_fastai_classification_model_multimetric(self, iris):
         iris = iris.copy()
         data_to_transform = [DatasetConstants.Y_TRAIN, DatasetConstants.Y_TEST]
@@ -136,6 +142,9 @@ class TestModelWrapper(object):
     # Skip for older versions due to latest fastai not supporting 3.6
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Fastai not supported for older versions')
+    # Skip is using macos due to fastai failing on latest macos
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='Fastai not supported for latest macos')
     def test_wrap_fastai_regression_model(self, iris):
         train_regression_model_pandas(create_fastai_tabular_regressor, iris)
 
