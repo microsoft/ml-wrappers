@@ -37,23 +37,32 @@ class TestPredictionsWrapper:
 
 
 class TestPredictionsWrapperClassification(TestPredictionsWrapper):
-    @pytest.mark.parametrize('dataset_name', ['iris', 'titanic'])
-    def test_prediction_wrapper_classification(self, iris, titanic_simple, dataset_name):
-        if dataset_name == 'iris':
-            dataset = iris
-            X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
-                                   columns=dataset[DatasetConstants.FEATURES])
-            X_test = pd.DataFrame(data=dataset[DatasetConstants.X_TEST],
-                                  columns=dataset[DatasetConstants.FEATURES])
+    @pytest.mark.parametrize('dataset_name', ['iris', 'titanic', 'cancer', 'wine', 'multiclass'])
+    def test_prediction_wrapper_classification(
+            self, iris, titanic_simple, cancer, cancer_booleans, wine,
+            multiclass_classification, dataset_name):
+        dataset_to_fixture_dict = {
+           'iris': iris,
+           'titanic': titanic_simple,
+           'cancer': cancer,
+           'cancer_booleans': cancer_booleans,
+           'multiclass': multiclass_classification,
+           'wine': wine
+        }
+        dataset = dataset_to_fixture_dict[dataset_name]
+
+        if dataset_name != 'titanic':
+            features = dataset[DatasetConstants.FEATURES]
         else:
-            dataset = titanic_simple
-            X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
-                                   columns=dataset[DatasetConstants.NUMERIC] + dataset[DatasetConstants.CATEGORICAL])
-            X_test = pd.DataFrame(data=dataset[DatasetConstants.X_TEST],
-                                  columns=dataset[DatasetConstants.NUMERIC] + dataset[DatasetConstants.CATEGORICAL])
+            features = dataset[DatasetConstants.NUMERIC] + dataset[DatasetConstants.CATEGORICAL]
+
+        X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
+                               columns=features)
+        X_test = pd.DataFrame(data=dataset[DatasetConstants.X_TEST],
+                              columns=features)
 
         y_train = dataset[DatasetConstants.Y_TRAIN]
-        if dataset_name == 'iris':
+        if dataset_name != 'titanic':
             model = create_lightgbm_classifier(X_train, y_train)
         else:
             model = create_titanic_pipeline(X_train, y_train)
@@ -166,12 +175,20 @@ class TestPredictionsWrapperClassification(TestPredictionsWrapper):
 
 
 class TestPredictionsWrapperRegression(TestPredictionsWrapper):
-    def test_prediction_wrapper_regression(self, housing):
-        dataset = housing
+    @pytest.mark.parametrize('dataset_name', ['housing', 'energy', 'diabetes'])
+    def test_prediction_wrapper_regression(self, dataset_name, housing, energy, diabetes):
+        dataset_to_fixture_dict = {
+           'housing': housing,
+           'energy': energy,
+           'diabetes': diabetes
+        }
+        dataset = dataset_to_fixture_dict[dataset_name]
+
         X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
                                columns=dataset[DatasetConstants.FEATURES])
         X_test = pd.DataFrame(data=dataset[DatasetConstants.X_TEST],
                               columns=dataset[DatasetConstants.FEATURES])
+
         y_train = dataset[DatasetConstants.Y_TRAIN]
         model = create_lightgbm_regressor(X_train, y_train)
 

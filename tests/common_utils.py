@@ -10,7 +10,8 @@ from sklearn import linear_model, svm
 from sklearn.base import TransformerMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import (fetch_20newsgroups, fetch_california_housing,
-                              load_breast_cancer, load_iris)
+                              load_breast_cancer, load_diabetes, load_iris,
+                              load_wine, make_classification)
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.impute import SimpleImputer
@@ -616,6 +617,17 @@ def create_dnn_classifier_unfit(feature_number):
     return model
 
 
+def create_diabetes_data():
+    diabetes_data = load_diabetes()
+    X = diabetes_data.data
+    y = diabetes_data.target
+    feature_names = diabetes_data.feature_names
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=0)
+    return X_train, X_test, y_train, y_test, feature_names
+
+
 def create_iris_data():
     # Import Iris dataset
     iris = load_iris()
@@ -689,6 +701,19 @@ def create_scikit_cancer_data():
     return x_train, x_test, y_train, y_test, feature_names, classes
 
 
+def create_wine_data():
+    wine = load_wine()
+    X = wine.data
+    y = wine.target
+    classes = wine.target_names
+    feature_names = wine.feature_names
+    X_train, X_test, y_train, y_test = train_test_split(X,
+                                                        y,
+                                                        test_size=0.5,
+                                                        random_state=0)
+    return X_train, X_test, y_train, y_test, feature_names, classes
+
+
 def create_msx_data(test_size):
     sparse_matrix = retrieve_dataset('msx_transformed_2226.npz')
     sparse_matrix_x = sparse_matrix[:, :sparse_matrix.shape[1] - 2]
@@ -700,10 +725,7 @@ def create_binary_classification_dataset():
     return create_multiclass_classification_dataset(num_classes=2)
 
 
-def create_multiclass_classification_dataset(num_classes=5, num_features=20, num_informative=2):
-    import numpy as np
-    import pandas as pd
-    from sklearn.datasets import make_classification
+def create_multiclass_classification_dataset(num_classes=5, num_features=20, num_informative=10):
     X, y = make_classification(n_classes=num_classes,
                                n_features=num_features,
                                n_informative=num_informative)
@@ -713,9 +735,10 @@ def create_multiclass_classification_dataset(num_classes=5, num_features=20, num
                                                         y,
                                                         test_size=0.2,
                                                         random_state=0)
+    feature_names = ["col" + str(i) for i in list(range(x_train.shape[1]))]
     classes = np.unique(y_train).tolist()
 
-    return pd.DataFrame(x_train), y_train, pd.DataFrame(x_test), y_test, classes
+    return x_train, x_test, y_train, y_test, feature_names, classes
 
 
 def create_reviews_data(test_size):
