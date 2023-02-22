@@ -9,16 +9,20 @@ import sys
 import numpy as np
 import pandas as pd
 import pytest
+import torchvision
 from common_vision_utils import (IMAGE, create_image_classification_pipeline,
                                  create_pytorch_image_model,
                                  load_fridge_dataset, load_imagenet_dataset,
                                  load_images, load_multilabel_fridge_dataset,
+                                 load_object_fridge_dataset,
                                  preprocess_imagenet_dataset,
                                  retrieve_or_train_fridge_model)
 from ml_wrappers import wrap_model
 from ml_wrappers.common.constants import ModelTask
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from wrapper_validator import (validate_wrapped_classification_model,
-                               validate_wrapped_multilabel_model)
+                               validate_wrapped_multilabel_model,
+                               validate_wrapped_object_detection_model)
 
 
 @pytest.mark.usefixtures('_clean_dir')
@@ -98,3 +102,15 @@ class TestImageModelWrapper(object):
             model, data, ModelTask.MULTILABEL_IMAGE_CLASSIFICATION)
         num_labels = 4
         validate_wrapped_multilabel_model(wrapped_model, data, num_labels)
+
+    # Skip for older versions of pytorch due to missing classes
+    @pytest.mark.skipif(sys.version_info.minor <= 6,
+                        reason='Older versions of pytorch not supported')
+    def test_pytorch_object_detection_model_pandas(self):
+        data = load_object_fridge_dataset()[:3]
+        data = load_images(data)
+        model = torchvision.models.detection.fasterrcnn_resnet50_fpn()
+        in_features = model.roi_heads.box_predictor.cls_score.in_features
+        model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 5)
+        wrapped_model = wrap_model(model, data, ModelTask.OBJECT_DETECTION)
+        validate_wrapped_object_detection_model(wrapped_model, data)
