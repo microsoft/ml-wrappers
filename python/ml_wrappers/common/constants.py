@@ -180,11 +180,14 @@ class ModelTask(str, Enum):
     CLASSIFICATION = 'classification'
     REGRESSION = 'regression'
     TEXT_CLASSIFICATION = 'text_classification'
+    MULTILABEL_TEXT_CLASSIFICATION = 'multilabel_text_classification'
     SENTIMENT_ANALYSIS = 'sentiment_analysis'
     QUESTION_ANSWERING = 'question_answering'
     ENTAILMENT = 'entailment'
     SUMMARIZATIONS = 'summarizations'
     IMAGE_CLASSIFICATION = 'image_classification'
+    MULTILABEL_IMAGE_CLASSIFICATION = 'multilabel_image_classification'
+    OBJECT_DETECTION = 'object_detection'
     UNKNOWN = 'unknown'
 
 
@@ -311,10 +314,13 @@ class ResetIndex(str, Enum):
 
 
 text_model_tasks = {ModelTask.TEXT_CLASSIFICATION,
+                    ModelTask.MULTILABEL_TEXT_CLASSIFICATION,
                     ModelTask.SENTIMENT_ANALYSIS,
                     ModelTask.QUESTION_ANSWERING,
                     ModelTask.ENTAILMENT,
                     ModelTask.SUMMARIZATIONS}
 
 
-image_model_tasks = {ModelTask.IMAGE_CLASSIFICATION}
+image_model_tasks = {ModelTask.IMAGE_CLASSIFICATION,
+                     ModelTask.MULTILABEL_IMAGE_CLASSIFICATION,
+                     ModelTask.OBJECT_DETECTION}

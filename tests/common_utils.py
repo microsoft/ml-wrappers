@@ -10,11 +10,13 @@ from sklearn import linear_model, svm
 from sklearn.base import TransformerMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import (fetch_20newsgroups, fetch_california_housing,
-                              load_breast_cancer, load_iris)
+                              load_breast_cancer, load_diabetes, load_iris,
+                              load_wine, make_classification)
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (FunctionTransformer, OneHotEncoder,
@@ -37,7 +39,7 @@ try:
     from tensorflow.keras.models import Sequential
     from tensorflow.keras.wrappers.scikit_learn import (KerasClassifier,
                                                         KerasRegressor)
-except ImportError:
+except (ImportError, TypeError):
     pass
 
 try:
@@ -47,6 +49,17 @@ try:
 except ImportError:
     pass
 
+try:
+    from fastai.callback.core import Callback
+    from fastai.data.block import CategoryBlock, RegressionBlock
+    from fastai.metrics import accuracy
+    from fastai.tabular.data import TabularDataLoaders
+    from fastai.tabular.learner import tabular_learner
+except (ImportError, SyntaxError):
+    Callback = object
+    # Skip for older versions of python due to breaking changes in fastai
+    pass
+
 from datasets_utils import retrieve_dataset
 from pandas import read_csv
 
@@ -54,6 +67,7 @@ LIGHTGBM_METHOD = 'mimic.lightgbm'
 LINEAR_METHOD = 'mimic.linear'
 SGD_METHOD = 'mimic.sgd'
 TREE_METHOD = 'mimic.tree'
+LABEL = 'label'
 
 
 def get_mimic_method(surrogate_model):
@@ -244,7 +258,7 @@ def wrap_classifier_without_proba(classifier):
 
 
 def create_sklearn_linear_regressor(X, y, pipeline=False):
-    lin = linear_model.LinearRegression(normalize=True)
+    lin = linear_model.LinearRegression()
     if pipeline:
         lin = Pipeline([('lin', lin)])
     model = lin.fit(X, y)
@@ -327,6 +341,64 @@ def create_scikit_keras_multiclass_classifier(X, y):
     model = KerasClassifier(build_fn=model_func, nb_epoch=epochs, batch_size=batch_size, verbose=1)
     model.fit(X, y)
     return model
+
+
+def buggy_auc(y_score, y_true):
+    # buggy AUC metric which throws when single row is passed
+    y_score = y_score[:, 1].flatten()
+    y_true = y_true.flatten()
+    if y_true.shape[0] == 1:
+        raise ValueError('Only one row passed, this is a buggy function!')
+    return roc_auc_score(y_true, y_score)
+
+
+class BuggyCallback(Callback):
+    """A buggy fastai callback."""
+
+    def __init__(self):
+        """Initialize the BuggyCallback."""
+        self.run = True
+
+    def after_epoch(self):
+        """Throw an exception after the first epoch."""
+        raise ValueError('This buggy callback throws, bummer!')
+
+
+def _common_fastai_tabular_learner(X, y, is_classifier=True, multimetric=False):
+    if is_classifier:
+        y_block = CategoryBlock()
+    else:
+        y_block = RegressionBlock()
+    X_copy = X.copy().reset_index(drop=True)
+    X_copy[LABEL] = y
+    data = TabularDataLoaders.from_df(X_copy, cat_names=[],
+                                      cont_names=list(X.columns),
+                                      procs=[], y_names=LABEL,
+                                      y_block=y_block)
+    if multimetric:
+        metrics = [accuracy, buggy_auc]
+    else:
+        metrics = accuracy
+    learn = tabular_learner(data, layers=[200, 100], metrics=metrics)
+    learn.fit(1, 1e-2)
+    if multimetric:
+        learn.add_cb(BuggyCallback())
+    return learn
+
+
+def create_fastai_tabular_classifier(X, y):
+    return _common_fastai_tabular_learner(
+        X, y, is_classifier=True, multimetric=False)
+
+
+def create_fastai_tabular_classifier_multimetric(X, y):
+    return _common_fastai_tabular_learner(
+        X, y, is_classifier=True, multimetric=True)
+
+
+def create_fastai_tabular_regressor(X, y):
+    return _common_fastai_tabular_learner(
+        X, y, is_classifier=False, multimetric=False)
 
 
 def _common_pytorch_generator(numCols, num_classes=None):
@@ -545,6 +617,17 @@ def create_dnn_classifier_unfit(feature_number):
     return model
 
 
+def create_diabetes_data():
+    diabetes_data = load_diabetes()
+    X = diabetes_data.data
+    y = diabetes_data.target
+    feature_names = diabetes_data.feature_names
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=0)
+    return X_train, X_test, y_train, y_test, feature_names
+
+
 def create_iris_data():
     # Import Iris dataset
     iris = load_iris()
@@ -618,6 +701,19 @@ def create_scikit_cancer_data():
     return x_train, x_test, y_train, y_test, feature_names, classes
 
 
+def create_wine_data():
+    wine = load_wine()
+    X = wine.data
+    y = wine.target
+    classes = wine.target_names
+    feature_names = wine.feature_names
+    X_train, X_test, y_train, y_test = train_test_split(X,
+                                                        y,
+                                                        test_size=0.5,
+                                                        random_state=0)
+    return X_train, X_test, y_train, y_test, feature_names, classes
+
+
 def create_msx_data(test_size):
     sparse_matrix = retrieve_dataset('msx_transformed_2226.npz')
     sparse_matrix_x = sparse_matrix[:, :sparse_matrix.shape[1] - 2]
@@ -629,10 +725,7 @@ def create_binary_classification_dataset():
     return create_multiclass_classification_dataset(num_classes=2)
 
 
-def create_multiclass_classification_dataset(num_classes=5, num_features=20, num_informative=2):
-    import numpy as np
-    import pandas as pd
-    from sklearn.datasets import make_classification
+def create_multiclass_classification_dataset(num_classes=5, num_features=20, num_informative=10):
     X, y = make_classification(n_classes=num_classes,
                                n_features=num_features,
                                n_informative=num_informative)
@@ -642,9 +735,10 @@ def create_multiclass_classification_dataset(num_classes=5, num_features=20, num
                                                         y,
                                                         test_size=0.2,
                                                         random_state=0)
+    feature_names = ["col" + str(i) for i in list(range(x_train.shape[1]))]
     classes = np.unique(y_train).tolist()
 
-    return pd.DataFrame(x_train), y_train, pd.DataFrame(x_test), y_test, classes
+    return x_train, x_test, y_train, y_test, feature_names, classes
 
 
 def create_reviews_data(test_size):

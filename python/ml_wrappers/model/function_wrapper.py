@@ -4,9 +4,22 @@
 
 """Defines helper utilities for resolving prediction function shape inconsistencies."""
 
+import logging
+
 import numpy as np
 
 from ..common.constants import ModelTask
+
+module_logger = logging.getLogger(__name__)
+module_logger.setLevel(logging.INFO)
+
+
+try:
+    import torch
+    pytorch_installed = True
+except ImportError:
+    pytorch_installed = False
+    module_logger.debug('Could not import torch, required if using a PyTorch model')
 
 
 def _convert_to_two_cols(function, examples):
@@ -51,24 +64,43 @@ class _FunctionWrapper(object):
     :type function: function
     """
 
-    def __init__(self, function):
+    def __init__(self, function, base_dims=1, is_pytorch_image_model=False):
         """Wraps a function to reshape the input and output data.
 
         :param function: The prediction function to evaluate on the examples.
         :type function: function
+        :param base_dims: The base dimensions of the input data.
+        :type base_dims: int
         """
         self._function = function
+        self._base_dims = base_dims
+        self._is_pytorch_image_model = is_pytorch_image_model
 
-    def _function_input_1D_wrapper(self, dataset):
-        """Wraps a function that reshapes the input dataset to be 2D from 1D.
+    def _function_input_expand_wrapper(self, dataset):
+        """Wraps a function that expands the dims of input dataset.
+
+        Note unlike other functions, this runs on the input dataset type,
+        and not the converted type.  Note in practice only numpy and tensor
+        arrays have been seen to have this issue for models, this function
+        does not apply to pandas dataframes.
 
         :param dataset: The model evaluation examples.
-        :type dataset: numpy.ndarray
+        :type dataset: numpy.ndarray or torch.Tensor
         :return: A wrapped function.
         :rtype: function
         """
-        if len(dataset.shape) == 1:
-            dataset = dataset.reshape(1, -1)
+        if len(dataset.shape) == self._base_dims:
+            is_tensor = False
+            if pytorch_installed and isinstance(dataset, torch.Tensor):
+                is_tensor = True
+            # pytorch requires extra dimension for grayscale images
+            # this only needs to be done if image is not yet in tensor format
+            is_2d = len(dataset.shape) == 2
+            if not is_tensor and self._is_pytorch_image_model and is_2d:
+                dataset = np.expand_dims(dataset, axis=2)
+            dataset = np.expand_dims(dataset, axis=0)
+            if is_tensor:
+                dataset = torch.tensor(dataset)
         return self._function(dataset)
 
     def _function_flatten(self, dataset):

@@ -12,14 +12,40 @@ PREDICT_CLASSES = 'predict_classes'
 
 def validate_wrapped_classification_model(wrapped_model, X_test):
     # validate wrapped model has predict and predict_proba functions
-    assert hasattr(wrapped_model, SKLearn.PREDICT)
-    assert hasattr(wrapped_model, SKLearn.PREDICT_PROBA)
+    function_names = [SKLearn.PREDICT, SKLearn.PREDICT_PROBA]
+    validate_functions(wrapped_model, function_names)
     # validate we can call the model on the dataset
     predictions = wrapped_model.predict(X_test)
     probabilities = wrapped_model.predict_proba(X_test)
     # validate predictions and probabilities have correct shape
     assert len(predictions.shape) == 1
     assert len(probabilities.shape) == 2
+
+
+def validate_wrapped_object_detection_model(wrapped_model, X_test):
+    # validate wrapped model has predict and predict_proba functions
+    function_names = [SKLearn.PREDICT, SKLearn.PREDICT_PROBA]
+    validate_functions(wrapped_model, function_names)
+    # validate we can call the model on the dataset
+    predictions = wrapped_model.predict(X_test)
+    probabilities = wrapped_model.predict_proba(X_test)
+    # validate predictions and probabilities have correct shape
+    assert len(predictions) == 3
+    assert len(probabilities) == 3
+
+
+def validate_wrapped_multilabel_model(wrapped_model, X_test, num_labels):
+    # validate wrapped model has predict and predict_proba functions
+    function_names = [SKLearn.PREDICT, SKLearn.PREDICT_PROBA]
+    validate_functions(wrapped_model, function_names)
+    # validate we can call the model on the dataset
+    predictions = wrapped_model.predict(X_test)
+    probabilities = wrapped_model.predict_proba(X_test)
+    # validate predictions and probabilities have correct shape
+    assert len(predictions.shape) == 2
+    assert len(probabilities.shape) == 2
+    assert predictions.shape[1] == num_labels
+    assert probabilities.shape[1] == num_labels
 
 
 def validate_wrapped_regression_model(wrapped_model, X_test):
@@ -54,9 +80,8 @@ def validate_wrapped_pytorch_model(wrapped_pytorch_model, X_test, model_task):
 
 
 def validate_wrapped_pred_classes_model(wrapped_model, X_test, model_task):
-    assert hasattr(wrapped_model, SKLearn.PREDICT)
-    assert hasattr(wrapped_model, SKLearn.PREDICT_PROBA)
-    assert hasattr(wrapped_model, PREDICT_CLASSES)
+    function_names = [SKLearn.PREDICT, SKLearn.PREDICT_PROBA, PREDICT_CLASSES]
+    validate_functions(wrapped_model, function_names)
     # validate we can call the model on the dataset
     if model_task == ModelTask.CLASSIFICATION:
         probabilities = wrapped_model.predict_proba(X_test)
@@ -67,5 +92,9 @@ def validate_wrapped_pred_classes_model(wrapped_model, X_test, model_task):
     else:
         predictions = wrapped_model.predict(X_test)
         # validate predictions have correct shape
-        print(predictions.shape)
         assert len(predictions.shape) == 1 or predictions.shape[1] == 1
+
+
+def validate_functions(wrapped_model, function_names):
+    for function_name in function_names:
+        assert hasattr(wrapped_model, function_name)
