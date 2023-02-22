@@ -5,7 +5,10 @@ import base64
 import json
 import os
 import sys
+<<<<<<< HEAD
 import xml.etree.ElementTree as ET
+=======
+>>>>>>> main
 from io import BytesIO
 from zipfile import ZipFile
 
@@ -88,7 +91,11 @@ def load_fridge_dataset():
     download_url = "https://cvbp-secondary.z19.web.core.windows.net/datasets/"
     download_url_end = "image_classification/fridgeObjects.zip"
     data_file = "./data/fridgeObjects.zip"
+<<<<<<< HEAD
     retrieve_unzip_file(download_url+download_url_end, data_file)
+=======
+    retrieve_unzip_file(download_url, data_file)
+>>>>>>> main
 
     # get all file names into a pandas dataframe with the labels
     data = pd.DataFrame(columns=[IMAGE,
@@ -108,8 +115,12 @@ def load_multilabel_fridge_dataset():
 
     # download data
     download_url = ("https://cvbp-secondary.z19.web.core.windows.net/" +
+<<<<<<< HEAD
                     "datasets/image_classification/" +
                     "multilabelFridgeObjects.zip")
+=======
+                    "datasets/image_classification/multilabelFridgeObjects.zip")
+>>>>>>> main
     folder_path = './data/multilabelFridgeObjects'
     data_file = folder_path + '.zip'
     retrieve_unzip_file(download_url, data_file)
@@ -155,8 +166,12 @@ def load_base64_images(data: pd.DataFrame) -> pd.DataFrame:
     :return: base64-encoded image
     :rtype: pandas.DataFrame
     """
+<<<<<<< HEAD
     data.loc[:, IMAGE] = data.loc[:, IMAGE].map(
         lambda img_path: get_base64_string_from_path(img_path))
+=======
+    data.loc[:, IMAGE] = data.loc[:, IMAGE].map(lambda img_path: get_base64_string_from_path(img_path))
+>>>>>>> main
     return data.loc[:, [IMAGE]]
 
 
@@ -277,6 +292,7 @@ def preprocess_imagenet_dataset(dataset):
     weights = ResNet50_Weights.DEFAULT
     preprocess = weights.transforms()
     return preprocess(Tensor(np.moveaxis(dataset, -1, 0)))
+<<<<<<< HEAD
 
 
 def load_object_fridge_dataset_labels():
@@ -347,3 +363,5 @@ def load_object_fridge_dataset():
         data = data.append({"image": image_path,
                             "label": labels[i]}, ignore_index=True)
     return data
+=======
+>>>>>>> main

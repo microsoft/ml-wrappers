@@ -322,5 +322,9 @@ text_model_tasks = {ModelTask.TEXT_CLASSIFICATION,
 
 
 image_model_tasks = {ModelTask.IMAGE_CLASSIFICATION,
+<<<<<<< HEAD
                      ModelTask.MULTILABEL_IMAGE_CLASSIFICATION,
                      ModelTask.OBJECT_DETECTION}
+=======
+                     ModelTask.MULTILABEL_IMAGE_CLASSIFICATION}
+>>>>>>> main
