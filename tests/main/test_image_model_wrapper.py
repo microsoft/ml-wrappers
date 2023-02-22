@@ -19,15 +19,10 @@ from common_vision_utils import (IMAGE, create_image_classification_pipeline,
                                  retrieve_or_train_fridge_model)
 from ml_wrappers import wrap_model
 from ml_wrappers.common.constants import ModelTask
-<<<<<<< HEAD
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from wrapper_validator import (validate_wrapped_classification_model,
                                validate_wrapped_multilabel_model,
                                validate_wrapped_object_detection_model)
-=======
-from wrapper_validator import (validate_wrapped_classification_model,
-                               validate_wrapped_multilabel_model)
->>>>>>> main
 
 
 @pytest.mark.usefixtures('_clean_dir')
@@ -41,12 +36,9 @@ class TestImageModelWrapper(object):
     # Skip for older versions of python due to many breaking changes in fastai
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Fastai not supported for older versions')
-<<<<<<< HEAD
     # Skip is using macos due to fastai failing on latest macos
     @pytest.mark.skipif(sys.platform == 'darwin',
                         reason='Fastai not supported for latest macos')
-=======
->>>>>>> main
     def test_wrap_fastai_image_classification_model(self):
         data = load_fridge_dataset()
         try:
@@ -92,12 +84,9 @@ class TestImageModelWrapper(object):
     # Skip for older versions of python due to many breaking changes in fastai
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Fastai not supported for older versions')
-<<<<<<< HEAD
     # Skip is using macos due to fastai failing on latest macos
     @pytest.mark.skipif(sys.platform == 'darwin',
                         reason='Fastai not supported for latest macos')
-=======
->>>>>>> main
     def test_wrap_fastai_multilabel_image_classification_model(self):
         data = load_multilabel_fridge_dataset()
         try:
@@ -113,7 +102,6 @@ class TestImageModelWrapper(object):
             model, data, ModelTask.MULTILABEL_IMAGE_CLASSIFICATION)
         num_labels = 4
         validate_wrapped_multilabel_model(wrapped_model, data, num_labels)
-<<<<<<< HEAD
 
     # Skip for older versions of pytorch due to missing classes
     @pytest.mark.skipif(sys.version_info.minor <= 6,
@@ -126,5 +114,3 @@ class TestImageModelWrapper(object):
         model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 5)
         wrapped_model = wrap_model(model, data, ModelTask.OBJECT_DETECTION)
         validate_wrapped_object_detection_model(wrapped_model, data)
-=======
->>>>>>> main
