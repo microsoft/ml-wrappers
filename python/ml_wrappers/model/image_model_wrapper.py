@@ -297,7 +297,7 @@ class WrappedObjectDetectionModel:
 
         return predictions
 
-    def predict_proba(self, dataset, iou_threshold=0.05):
+    def predict_proba(self, dataset, iou_threshold=0.1):
         """Predict the output probability using the wrapped model.
 
         :param dataset: The dataset to predict_proba on.
