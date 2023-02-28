@@ -261,7 +261,7 @@ class WrappedObjectDetectionModel:
         # Set eval automatically for user for batchnorm and dropout layers
         self._model.eval()
 
-    def predict(self, dataset, detection_error_threshold=0.1):
+    def predict(self, dataset, iou_threshold=0.1):
         """
         Prediction function for object detector.
 
@@ -269,9 +269,9 @@ class WrappedObjectDetectionModel:
         type dataset: PIL Image or numpy.ndarray
         param device: device pytorch is writing to
         type device: pytorch device
-        param detection_error_threshold: amount of acceptable error.
+        param iou_threshold: amount of acceptable error.
             objects with error scores higher than the threshold will be removed
-        type detection_threshold: float
+        type iou_threshold: float
         """
         predictions = []
         for image in dataset:
@@ -282,7 +282,7 @@ class WrappedObjectDetectionModel:
             keep = torchvision.ops.nms(
                 prediction["boxes"],
                 prediction["scores"],
-                detection_error_threshold,
+                iou_threshold,
             )
 
             prediction["boxes"] = prediction["boxes"][keep]
@@ -297,12 +297,15 @@ class WrappedObjectDetectionModel:
 
         return predictions
 
-    def predict_proba(self, dataset, detection_error_threshold=0.05):
+    def predict_proba(self, dataset, iou_threshold=0.05):
         """Predict the output probability using the wrapped model.
 
         :param dataset: The dataset to predict_proba on.
         :type dataset: ml_wrappers.DatasetWrapper
+        param iou_threshold: amount of acceptable error.
+            objects with error scores higher than the threshold will be removed
+        type iou_threshold: float
         """
-        predictions = self.predict(dataset, detection_error_threshold)
+        predictions = self.predict(dataset, iou_threshold)
         prob_scores = [[pred[-1] for pred in image_prediction] for image_prediction in predictions]
         return prob_scores
