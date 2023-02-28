@@ -187,6 +187,7 @@ class ModelTask(str, Enum):
     SUMMARIZATIONS = 'summarizations'
     IMAGE_CLASSIFICATION = 'image_classification'
     MULTILABEL_IMAGE_CLASSIFICATION = 'multilabel_image_classification'
+    OBJECT_DETECTION = 'object_detection'
     UNKNOWN = 'unknown'
 
 
@@ -321,4 +322,5 @@ text_model_tasks = {ModelTask.TEXT_CLASSIFICATION,
 
 
 image_model_tasks = {ModelTask.IMAGE_CLASSIFICATION,
-                     ModelTask.MULTILABEL_IMAGE_CLASSIFICATION}
+                     ModelTask.MULTILABEL_IMAGE_CLASSIFICATION,
+                     ModelTask.OBJECT_DETECTION}
