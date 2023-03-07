@@ -38,7 +38,7 @@ except ImportError:
     module_logger.debug('Could not import torch, required if using a PyTorch model')
 
 
-def wrap_model(model, examples, model_task=ModelTask.UNKNOWN):
+def wrap_model(model, examples, model_task=ModelTask.UNKNOWN, num_classes=None):
     """If needed, wraps the model in a common API based on model task and prediction function contract.
 
     :param model: The model to evaluate on the examples.
@@ -53,6 +53,9 @@ def wrap_model(model, examples, model_task=ModelTask.UNKNOWN):
         In most cases, the type of the model can be inferred based on the shape of the output, where a classifier
         has a predict_proba method and outputs a 2 dimensional array, while a regressor has a predict method and
         outputs a 1 dimensional array.
+    :param num_classes: optional parameter specifying the number of classes in
+        the dataset
+    :type num_classes: int
     :type model_task: str
     :return: The wrapper model.
     :rtype: model
@@ -64,7 +67,7 @@ def wrap_model(model, examples, model_task=ModelTask.UNKNOWN):
     if model_task in text_model_tasks:
         return _wrap_text_model(model, examples, model_task, False)[0]
     if model_task in image_model_tasks:
-        return _wrap_image_model(model, examples, model_task, False)[0]
+        return _wrap_image_model(model, examples, model_task, False, num_classes)[0]
     return _wrap_model(model, examples, model_task, False)[0]
 
 

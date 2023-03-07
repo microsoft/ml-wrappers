@@ -15,6 +15,8 @@ from ml_wrappers.model.evaluator import _eval_model
 from ml_wrappers.model.pytorch_wrapper import WrappedPytorchModel
 from ml_wrappers.model.wrapped_classification_model import \
     WrappedClassificationModel
+from vision_explanation_methods.explanations import common as od_common
+from torchvision import transforms as T
 
 module_logger = logging.getLogger(__name__)
 module_logger.setLevel(logging.INFO)
@@ -53,7 +55,7 @@ def _is_fastai_model(model):
     return str(type(model)).endswith(FASTAI_MODEL_SUFFIX)
 
 
-def _wrap_image_model(model, examples, model_task, is_function):
+def _wrap_image_model(model, examples, model_task, is_function, num_classes=None):
     """If needed, wraps the model or function in a common API.
 
     Wraps the model based on model task and prediction function contract.
@@ -67,6 +69,9 @@ def _wrap_image_model(model, examples, model_task, is_function):
     :param model_task: Parameter to specify whether the model is an
         'image_classification' or another type of image model.
     :type model_task: str
+    :param num_classes: optional parameter specifying the number of classes in
+        the dataset
+    :type num_classes: int
     :return: The function chosen from given model and chosen domain, or
         model wrapping the function and chosen domain.
     :rtype: (function, str) or (model, str)
@@ -103,7 +108,7 @@ def _wrap_image_model(model, examples, model_task, is_function):
                 model, multilabel=True
             )
     elif model_task == ModelTask.OBJECT_DETECTION:
-        _wrapped_model = WrappedObjectDetectionModel(model)
+        _wrapped_model = WrappedObjectDetectionModel(model, num_classes)
     return _wrapped_model, model_task
 
 
@@ -249,53 +254,94 @@ class WrappedMlflowAutomlImagesClassificationModel:
 class WrappedObjectDetectionModel:
     """A class for wrapping a object detection model in the scikit-learn style."""
 
-    def __init__(self, model: Any) -> None:
+    def __init__(self, model: Any, number_of_classes: int) -> None:
         """Initialize the WrappedObjectDetectionModel with the model and evaluation function.
 
         :param model: mlflow model
         :type model: Any
         """
-        self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+        self._device = torch.device("cuda" if torch.cuda.is_available()
+                                    else "cpu")
         self._model = model
-        # Set eval automatically for user for batchnorm and dropout layers
-        self._model.eval()
+        self._number_of_classes = number_of_classes
 
-    def predict(self, dataset, detection_error_threshold=0.1):
+    def predict(self, x, iou_thresh: float = 0.5, score_thresh: float = 0.5):
+        """Create a list of detection records from the image predictions.
+
+        :param x: Tensor of the image
+        :type x: torch.Tensor
+        :return: Baseline detections to get saliency maps for
+        :rtype: List of Detection Records
         """
-        Prediction function for object detector.
+        detections = []
+        for image in x:
+            if type(image) == torch.Tensor:
+                raw_detections = self._model(image.to(self._device).unsqueeze(0))
+            else:
+                raw_detections = self._model(T.ToTensor()(image)
+                                            .to(self._device).unsqueeze(0))
 
-        :param dataset: The dataset to predict on.
-        type dataset: PIL Image or numpy.ndarray
-        param device: device pytorch is writing to
-        type device: pytorch device
-        param detection_error_threshold: amount of acceptable error.
-            objects with error scores higher than the threshold will be removed
-        type detection_threshold: float
-        """
-        predictions = []
-        for image in dataset:
-            detections = self._model(ToTensor()(image).to(self._device).unsqueeze(0))
+            def apply_nms(orig_prediction: dict):
+                """Perform nms on the predictions based on their IoU.
 
-            prediction = detections[0]
+                :param orig_prediction: Original model prediction
+                :type orig_prediction: dict
+                :param iou_thresh: iou_threshold for nms
+                :type iou_thresh: float
+                :return: Model prediction after nms is applied
+                :rtype: dict
+                """
+                keep = torchvision.ops.nms(orig_prediction['boxes'],
+                                           orig_prediction['scores'], iou_thresh)
 
-            keep = torchvision.ops.nms(
-                prediction["boxes"],
-                prediction["scores"],
-                detection_error_threshold,
-            )
+                nms_prediction = orig_prediction
+                nms_prediction['boxes'] = nms_prediction['boxes'][keep]
+                nms_prediction['scores'] = nms_prediction['scores'][keep]
+                nms_prediction['labels'] = nms_prediction['labels'][keep]
+                return nms_prediction
 
-            prediction["boxes"] = prediction["boxes"][keep]
-            prediction["scores"] = prediction["scores"][keep]
-            prediction["labels"] = prediction["labels"][keep]
+            def filter_score(orig_prediction: dict):
+                """Filter out predictions with confidence scores < score_thresh.
 
-            image_predictions = torch.cat((prediction["labels"].unsqueeze(1),
-                                           prediction["boxes"],
-                                           prediction["scores"].unsqueeze(1)), dim=1)
+                :param orig_prediction: Original model prediction
+                :type orig_prediction: dict
+                :param score_thresh: Score threshold to filter by
+                :type score_thresh: float
+                :return: Model predictions filtered out by score_thresh
+                :rtype: dict
+                """
+                keep = orig_prediction['scores'] > score_thresh
 
-            predictions.append(image_predictions.detach().cpu().numpy().tolist())
+                filter_prediction = orig_prediction
+                filter_prediction['boxes'] = filter_prediction['boxes'][keep]
+                filter_prediction['scores'] = filter_prediction['scores'][keep]
+                filter_prediction['labels'] = filter_prediction['labels'][keep]
+                return filter_prediction
+            
+            for raw_detection in raw_detections:
+                raw_detection = apply_nms(raw_detection)
 
-        return predictions
+                # Note that FasterRCNN doesn't return a score for each class, only
+                # the predicted class. DRISE requires a score for each class.
+                # We approximate the score for each class
+                # by dividing (class score) evenly among the other classes.
+
+                raw_detection = filter_score(raw_detection)
+                #TODO - add in expanded class scores
+                # expanded_class_scores = od_common.expand_class_scores(
+                #     raw_detection['scores'],
+                #     raw_detection['labels'],
+                #     self._number_of_classes)
+
+
+                image_predictions = torch.cat((raw_detection["labels"].unsqueeze(1),
+                                               raw_detection["boxes"],
+                                               raw_detection["scores"]
+                                               .unsqueeze(1)), dim=1)
+
+                detections.append(image_predictions.detach().cpu().numpy()
+                                  .tolist())
+        return detections
 
     def predict_proba(self, dataset, detection_error_threshold=0.05):
         """Predict the output probability using the wrapped model.
@@ -304,5 +350,100 @@ class WrappedObjectDetectionModel:
         :type dataset: ml_wrappers.DatasetWrapper
         """
         predictions = self.predict(dataset, detection_error_threshold)
-        prob_scores = [[pred[-1] for pred in image_prediction] for image_prediction in predictions]
+        prob_scores = [[pred.class_scores for pred in image_prediction] for image_prediction in predictions]
         return prob_scores
+
+
+class PytorchFasterRCNNWrapper(
+        od_common.GeneralObjectDetectionModelWrapper):
+    """Wraps a PytorchFasterRCNN model with a predict API function.
+
+    To be compatible with the D-RISE explainability method,
+    all models must be wrapped to have the same output and input class and a
+    predict function for object detection. This wrapper is customized for the
+    FasterRCNN model from Pytorch, and can also be used with the RetinaNet or
+    any other models with the same output class.
+
+    :param model: Object detection model
+    :type model: PytorchFasterRCNN model
+    :param number_of_classes: Number of classes the model is predicting
+    :type number_of_classes: int
+    """
+
+    def __init__(self, model, number_of_classes: int):
+        """Initialize the PytorchFasterRCNNWrapper."""
+        self._model = model
+        self._number_of_classes = number_of_classes
+
+    def predict(self, x: torch.Tensor) -> list[od_common.DetectionRecord]:
+        """Create a list of detection records from the image predictions.
+
+        :param x: Tensor of the image
+        :type x: torch.Tensor
+        :return: Baseline detections to get saliency maps for
+        :rtype: List of Detection Records
+        """
+        raw_detections = self._model(x)
+
+        def apply_nms(orig_prediction: dict, iou_thresh: float = 0.5):
+            """Perform nms on the predictions based on their IoU.
+
+            :param orig_prediction: Original model prediction
+            :type orig_prediction: dict
+            :param iou_thresh: iou_threshold for nms
+            :type iou_thresh: float
+            :return: Model prediction after nms is applied
+            :rtype: dict
+            """
+            keep = torchvision.ops.nms(orig_prediction['boxes'],
+                                       orig_prediction['scores'], iou_thresh)
+
+            nms_prediction = orig_prediction
+            nms_prediction['boxes'] = nms_prediction['boxes'][keep]
+            nms_prediction['scores'] = nms_prediction['scores'][keep]
+            nms_prediction['labels'] = nms_prediction['labels'][keep]
+            return nms_prediction
+
+        def filter_score(orig_prediction: dict, score_thresh: float = 0.5):
+            """Filter out predictions with confidence scores < score_thresh.
+
+            :param orig_prediction: Original model prediction
+            :type orig_prediction: dict
+            :param score_thresh: Score threshold to filter by
+            :type score_thresh: float
+            :return: Model predictions filtered out by score_thresh
+            :rtype: dict
+            """
+            keep = orig_prediction['scores'] > score_thresh
+
+            filter_prediction = orig_prediction
+            filter_prediction['boxes'] = filter_prediction['boxes'][keep]
+            filter_prediction['scores'] = filter_prediction['scores'][keep]
+            filter_prediction['labels'] = filter_prediction['labels'][keep]
+            return filter_prediction
+
+        detections = []
+        for raw_detection in raw_detections:
+            raw_detection = apply_nms(raw_detection, 0.005)
+
+            # Note that FasterRCNN doesn't return a score for each class, only
+            # the predicted class. DRISE requires a score for each class.
+            # We approximate the score for each class
+            # by dividing (class score) evenly among the other classes.
+
+            raw_detection = filter_score(raw_detection, 0.5)
+            expanded_class_scores = od_common.expand_class_scores(
+                raw_detection['scores'],
+                raw_detection['labels'],
+                self._number_of_classes)
+
+            detections.append(
+                od_common.DetectionRecord(
+                    bounding_boxes=raw_detection['boxes'],
+                    class_scores=expanded_class_scores,
+                    objectness_scores=torch.tensor(
+                        [1.0]*raw_detection['boxes'].shape[0]),
+                )
+            )
+
+        return detections
