@@ -343,11 +343,14 @@ class WrappedObjectDetectionModel:
                                   .tolist())
         return detections
 
-    def predict_proba(self, dataset, detection_error_threshold=0.05):
+    def predict_proba(self, dataset, iou_threshold=0.1):
         """Predict the output probability using the wrapped model.
 
         :param dataset: The dataset to predict_proba on.
         :type dataset: ml_wrappers.DatasetWrapper
+        param iou_threshold: amount of acceptable error.
+            objects with error scores higher than the threshold will be removed
+        type iou_threshold: float
         """
         predictions = self.predict(dataset, detection_error_threshold)
         prob_scores = [[pred.class_scores for pred in image_prediction] for image_prediction in predictions]
