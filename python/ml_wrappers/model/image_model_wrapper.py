@@ -35,12 +35,6 @@ except ImportError:
     PyFuncModel = Any
     module_logger.debug('Could not import mlflow, required if using an mlflow model')
 
-try:
-    from torchvision.transforms import ToTensor
-except ImportError:
-    module_logger.debug('Could not import torchvision, required if using' +
-                        ' a vision PyTorch model')
-
 FASTAI_MODEL_SUFFIX = "fastai.learner.Learner'>"
 
 
@@ -279,7 +273,7 @@ class WrappedObjectDetectionModel:
                 raw_detections = self._model(image.to(self._device).unsqueeze(0))
             else:
                 raw_detections = self._model(T.ToTensor()(image)
-                                            .to(self._device).unsqueeze(0))
+                                             .to(self._device).unsqueeze(0))
 
             def apply_nms(orig_prediction: dict):
                 """Perform nms on the predictions based on their IoU.
@@ -317,7 +311,7 @@ class WrappedObjectDetectionModel:
                 filter_prediction['scores'] = filter_prediction['scores'][keep]
                 filter_prediction['labels'] = filter_prediction['labels'][keep]
                 return filter_prediction
-            
+
             for raw_detection in raw_detections:
                 raw_detection = apply_nms(raw_detection)
 
@@ -327,14 +321,13 @@ class WrappedObjectDetectionModel:
                 # by dividing (class score) evenly among the other classes.
 
                 raw_detection = filter_score(raw_detection)
-                #TODO - add in expanded class scores
+                # to do - add in expanded class scores
                 # expanded_class_scores = od_common.expand_class_scores(
                 #     raw_detection['scores'],
                 #     raw_detection['labels'],
                 #     self._number_of_classes)
-
-
-                image_predictions = torch.cat((raw_detection["labels"].unsqueeze(1),
+                image_predictions = torch.cat((raw_detection["labels"]
+                                               .unsqueeze(1),
                                                raw_detection["boxes"],
                                                raw_detection["scores"]
                                                .unsqueeze(1)), dim=1)
@@ -352,7 +345,7 @@ class WrappedObjectDetectionModel:
             objects with error scores higher than the threshold will be removed
         type iou_threshold: float
         """
-        predictions = self.predict(dataset, detection_error_threshold)
+        predictions = self.predict(dataset, iou_threshold)
         prob_scores = [[pred.class_scores for pred in image_prediction] for image_prediction in predictions]
         return prob_scores
 
