@@ -49,7 +49,7 @@ def _is_fastai_model(model):
     return str(type(model)).endswith(FASTAI_MODEL_SUFFIX)
 
 
-def _wrap_image_model(model, examples, model_task, is_function, num_classes=None):
+def _wrap_image_model(model, examples, model_task, is_function, number_of_classes=None):
     """If needed, wraps the model or function in a common API.
 
     Wraps the model based on model task and prediction function contract.
@@ -63,9 +63,9 @@ def _wrap_image_model(model, examples, model_task, is_function, num_classes=None
     :param model_task: Parameter to specify whether the model is an
         'image_classification' or another type of image model.
     :type model_task: str
-    :param num_classes: optional parameter specifying the number of classes in
+    :param number_of_classes: optional parameter specifying the number of classes in
         the dataset
-    :type num_classes: int
+    :type number_of_classes: int
     :return: The function chosen from given model and chosen domain, or
         model wrapping the function and chosen domain.
     :rtype: (function, str) or (model, str)
@@ -102,7 +102,7 @@ def _wrap_image_model(model, examples, model_task, is_function, num_classes=None
                 model, multilabel=True
             )
     elif model_task == ModelTask.OBJECT_DETECTION:
-        _wrapped_model = WrappedObjectDetectionModel(model, num_classes)
+        _wrapped_model = WrappedObjectDetectionModel(model, number_of_classes)
     return _wrapped_model, model_task
 
 
