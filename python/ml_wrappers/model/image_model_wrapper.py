@@ -321,7 +321,7 @@ class WrappedObjectDetectionModel:
                 # by dividing (class score) evenly among the other classes.
 
                 raw_detection = filter_score(raw_detection)
-                # to do - add in expanded class scores
+                # TODO - add in expanded class scores
                 # expanded_class_scores = od_common.expand_class_scores(
                 #     raw_detection['scores'],
                 #     raw_detection['labels'],
