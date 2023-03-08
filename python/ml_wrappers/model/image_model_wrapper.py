@@ -265,6 +265,24 @@ class WrappedObjectDetectionModel:
         :type x: torch.Tensor
         :return: Baseline detections to get saliency maps for
         :rtype: List of Detection Records
+
+        Example Label (y) representation for a cohort of 2 images:
+
+        [
+
+            [
+            [object_1, x1, y1, b1, h1, (optional) confidence_score],
+            [object_2, x2, y2, b2, h2, (optional) confidence_score],
+            [object_1, x3, y3, b3, h3, (optional) confidence_score]
+        ],
+
+        [
+            [object_1, x4, y4, b4, h4, (optional) confidence_score],
+            [object_2, x5, y5, b5, h5, (optional) confidence_score]
+        ]
+
+        ]
+
         """
         detections = []
         for image in x:
