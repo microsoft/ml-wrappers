@@ -1,3 +1,4 @@
 mlflow
 azureml-automl-core
 azureml-automl-dnn-vision
+vision_explanation_methods
