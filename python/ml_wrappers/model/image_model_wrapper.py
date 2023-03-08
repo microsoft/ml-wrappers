@@ -350,7 +350,7 @@ class WrappedObjectDetectionModel:
         return prob_scores
 
 
-class PytorchFasterRCNNWrapper(
+class PytorchDRiseWrapper(
         od_common.GeneralObjectDetectionModelWrapper):
     """Wraps a PytorchFasterRCNN model with a predict API function.
 
@@ -367,9 +367,46 @@ class PytorchFasterRCNNWrapper(
     """
 
     def __init__(self, model, number_of_classes: int):
-        """Initialize the PytorchFasterRCNNWrapper."""
+        """Initialize the PytorchDRiseWrapper."""
         self._model = model
         self._number_of_classes = number_of_classes
+
+    def apply_nms(orig_prediction: dict, iou_thresh: float = 0.5):
+        """Perform nms on the predictions based on their IoU.
+
+        :param orig_prediction: Original model prediction
+        :type orig_prediction: dict
+        :param iou_thresh: iou_threshold for nms
+        :type iou_thresh: float
+        :return: Model prediction after nms is applied
+        :rtype: dict
+        """
+        keep = torchvision.ops.nms(orig_prediction['boxes'],
+                                    orig_prediction['scores'], iou_thresh)
+
+        nms_prediction = orig_prediction
+        nms_prediction['boxes'] = nms_prediction['boxes'][keep]
+        nms_prediction['scores'] = nms_prediction['scores'][keep]
+        nms_prediction['labels'] = nms_prediction['labels'][keep]
+        return nms_prediction
+
+    def filter_score(orig_prediction: dict, score_thresh: float = 0.5):
+        """Filter out predictions with confidence scores < score_thresh.
+
+        :param orig_prediction: Original model prediction
+        :type orig_prediction: dict
+        :param score_thresh: Score threshold to filter by
+        :type score_thresh: float
+        :return: Model predictions filtered out by score_thresh
+        :rtype: dict
+        """
+        keep = orig_prediction['scores'] > score_thresh
+
+        filter_prediction = orig_prediction
+        filter_prediction['boxes'] = filter_prediction['boxes'][keep]
+        filter_prediction['scores'] = filter_prediction['scores'][keep]
+        filter_prediction['labels'] = filter_prediction['labels'][keep]
+        return filter_prediction
 
     def predict(self, x: torch.Tensor):
         """Create a list of detection records from the image predictions.
@@ -381,53 +418,16 @@ class PytorchFasterRCNNWrapper(
         """
         raw_detections = self._model(x)
 
-        def apply_nms(orig_prediction: dict, iou_thresh: float = 0.5):
-            """Perform nms on the predictions based on their IoU.
-
-            :param orig_prediction: Original model prediction
-            :type orig_prediction: dict
-            :param iou_thresh: iou_threshold for nms
-            :type iou_thresh: float
-            :return: Model prediction after nms is applied
-            :rtype: dict
-            """
-            keep = torchvision.ops.nms(orig_prediction['boxes'],
-                                       orig_prediction['scores'], iou_thresh)
-
-            nms_prediction = orig_prediction
-            nms_prediction['boxes'] = nms_prediction['boxes'][keep]
-            nms_prediction['scores'] = nms_prediction['scores'][keep]
-            nms_prediction['labels'] = nms_prediction['labels'][keep]
-            return nms_prediction
-
-        def filter_score(orig_prediction: dict, score_thresh: float = 0.5):
-            """Filter out predictions with confidence scores < score_thresh.
-
-            :param orig_prediction: Original model prediction
-            :type orig_prediction: dict
-            :param score_thresh: Score threshold to filter by
-            :type score_thresh: float
-            :return: Model predictions filtered out by score_thresh
-            :rtype: dict
-            """
-            keep = orig_prediction['scores'] > score_thresh
-
-            filter_prediction = orig_prediction
-            filter_prediction['boxes'] = filter_prediction['boxes'][keep]
-            filter_prediction['scores'] = filter_prediction['scores'][keep]
-            filter_prediction['labels'] = filter_prediction['labels'][keep]
-            return filter_prediction
-
         detections = []
         for raw_detection in raw_detections:
-            raw_detection = apply_nms(raw_detection, 0.005)
+            raw_detection = self.apply_nms(raw_detection, 0.005)
 
             # Note that FasterRCNN doesn't return a score for each class, only
             # the predicted class. DRISE requires a score for each class.
             # We approximate the score for each class
             # by dividing (class score) evenly among the other classes.
 
-            raw_detection = filter_score(raw_detection, 0.5)
+            raw_detection = self.filter_score(raw_detection, 0.5)
             expanded_class_scores = od_common.expand_class_scores(
                 raw_detection['scores'],
                 raw_detection['labels'],
@@ -441,5 +441,4 @@ class PytorchFasterRCNNWrapper(
                         [1.0]*raw_detection['boxes'].shape[0]),
                 )
             )
-
         return detections
