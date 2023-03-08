@@ -378,7 +378,7 @@ class PytorchFasterRCNNWrapper(
         self._model = model
         self._number_of_classes = number_of_classes
 
-    def predict(self, x: torch.Tensor) -> list[od_common.DetectionRecord]:
+    def predict(self, x: torch.Tensor):
         """Create a list of detection records from the image predictions.
 
         :param x: Tensor of the image
