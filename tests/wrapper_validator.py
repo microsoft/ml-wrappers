@@ -21,6 +21,14 @@ def validate_wrapped_classification_model(wrapped_model, X_test):
     assert len(predictions.shape) == 1
     assert len(probabilities.shape) == 2
 
+def validate_wrapped_object_detection_custom_model(wrapped_model, X_test):
+    # validate wrapped model has predict and predict_proba functions
+    function_names = [SKLearn.PREDICT]
+    validate_functions(wrapped_model, function_names)
+    # validate we can call the model on the dataset
+    predictions = wrapped_model.predict(X_test)
+    # validate predictions and probabilities have correct shape
+    assert len(predictions) == 2
 
 def validate_wrapped_object_detection_model(wrapped_model, X_test):
     # validate wrapped model has predict and predict_proba functions
