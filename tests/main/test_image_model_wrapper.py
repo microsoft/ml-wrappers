@@ -24,8 +24,8 @@ from torchvision import transforms as T
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from wrapper_validator import (validate_wrapped_classification_model,
                                validate_wrapped_multilabel_model,
-                               validate_wrapped_object_detection_model,
-                               validate_wrapped_object_detection_custom_model)
+                               validate_wrapped_object_detection_custom_model,
+                               validate_wrapped_object_detection_model)
 
 
 @pytest.mark.usefixtures('_clean_dir')
