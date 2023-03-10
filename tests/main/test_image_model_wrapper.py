@@ -26,6 +26,7 @@ from wrapper_validator import (validate_wrapped_classification_model,
                                validate_wrapped_object_detection_model)
 
 try:
+    import torch
     from torchvision import transforms as T
     from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 except ImportError:
@@ -117,9 +118,13 @@ class TestImageModelWrapper(object):
         data = load_object_fridge_dataset()[:3]
         data = load_images(data)
         model = torchvision.models.detection.fasterrcnn_resnet50_fpn()
+        model.eval()
         in_features = model.roi_heads.box_predictor.cls_score.in_features
         model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 5)
-        wrapped_model = wrap_model(model, data, ModelTask.OBJECT_DETECTION)
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        wrapped_model = wrap_model(model.to(device),
+                                   data,
+                                   ModelTask.OBJECT_DETECTION)
         validate_wrapped_object_detection_model(wrapped_model, data)
 
     # Skip for older versions of pytorch due to missing classes
