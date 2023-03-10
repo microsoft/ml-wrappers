@@ -15,7 +15,6 @@ from ml_wrappers.model.evaluator import _eval_model
 from ml_wrappers.model.pytorch_wrapper import WrappedPytorchModel
 from ml_wrappers.model.wrapped_classification_model import \
     WrappedClassificationModel
-from vision_explanation_methods.explanations import common as od_common
 
 module_logger = logging.getLogger(__name__)
 module_logger.setLevel(logging.INFO)
@@ -25,6 +24,7 @@ try:
     import torch.nn as nn
     import torchvision
     from torchvision import transforms as T
+    from vision_explanation_methods.explanations import common as od_common
 except ImportError:
     module_logger.debug('Could not import torch, required if using a PyTorch model')
 
