@@ -19,7 +19,7 @@ from common_vision_utils import (IMAGE, create_image_classification_pipeline,
                                  retrieve_or_train_fridge_model)
 from ml_wrappers import wrap_model
 from ml_wrappers.common.constants import ModelTask
-from ml_wrappers.model.image_model_wrapper import PytorchFasterRCNNWrapper
+from ml_wrappers.model.image_model_wrapper import PytorchDRiseWrapper
 from wrapper_validator import (validate_wrapped_classification_model,
                                validate_wrapped_multilabel_model,
                                validate_wrapped_object_detection_custom_model,
@@ -132,7 +132,7 @@ class TestImageModelWrapper(object):
         model.eval()
         in_features = model.roi_heads.box_predictor.cls_score.in_features
         model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 5)
-        wrapped_model = PytorchFasterRCNNWrapper(model, 1)
+        wrapped_model = PytorchDRiseWrapper(model, 1)
         validate_wrapped_object_detection_custom_model(wrapped_model,
                                                        T.ToTensor()(data[0])
                                                        .repeat(2, 1, 1, 1))
