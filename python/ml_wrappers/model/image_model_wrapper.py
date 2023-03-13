@@ -381,15 +381,16 @@ class PytorchDRiseWrapper(
     predict function for object detection. This wrapper is customized for the
     FasterRCNN model from Pytorch, and can also be used with the RetinaNet or
     any other models with the same output class.
-
-    :param model: Object detection model
-    :type model: PytorchFasterRCNN model
-    :param number_of_classes: Number of classes the model is predicting
-    :type number_of_classes: int
     """
 
     def __init__(self, model, number_of_classes: int):
-        """Initialize the PytorchDRiseWrapper."""
+        """Initialize the PytorchDRiseWrapper.
+
+        :param model: Object detection model
+        :type model: PytorchFasterRCNN model
+        :param number_of_classes: Number of classes the model is predicting
+        :type number_of_classes: int
+        """
         self._model = model
         self._number_of_classes = number_of_classes
 
