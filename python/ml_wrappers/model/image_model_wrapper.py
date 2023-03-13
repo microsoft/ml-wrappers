@@ -335,18 +335,7 @@ class WrappedObjectDetectionModel:
 
             for raw_detection in raw_detections:
                 raw_detection = _apply_nms(raw_detection)
-
-                # Note that FasterRCNN doesn't return a score for each class,
-                # only the predicted class. DRISE requires a score for each.
-                # We approximate the score for each class
-                # by dividing (class score) evenly among the other classes.
-
                 raw_detection = _filter_score(raw_detection)
-                # TODO - add in expanded class scores
-                # expanded_class_scores = od_common.expand_class_scores(
-                #     raw_detection['scores'],
-                #     raw_detection['labels'],
-                #     self._number_of_classes)
                 image_predictions = torch.cat((raw_detection["labels"]
                                                .unsqueeze(1),
                                                raw_detection["boxes"],
