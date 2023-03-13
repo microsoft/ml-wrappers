@@ -22,17 +22,29 @@ module_logger.setLevel(logging.INFO)
 try:
     import torch
     import torch.nn as nn
-    import torchvision
-    from torchvision import transforms as T
+except ImportError:
+    module_logger.debug('Could not import torch, required if using a' +
+                        'PyTorch model')
+
+try:
     from vision_explanation_methods.explanations import common as od_common
 except ImportError:
-    module_logger.debug('Could not import torch, required if using a PyTorch model')
+    module_logger.debug('Could not import vision_explanation_methods,' +
+                        'required if using DRISE')
+
+try:
+    import torchvision
+    from torchvision import transforms as T
+except ImportError:
+    module_logger.debug('Could not import torchvision, required if' +
+                        'using DRISE')
 
 try:
     from mlflow.pyfunc import PyFuncModel
 except ImportError:
     PyFuncModel = Any
-    module_logger.debug('Could not import mlflow, required if using an mlflow model')
+    module_logger.debug('Could not import mlflow, required if using an' +
+                        'mlflow model')
 
 FASTAI_MODEL_SUFFIX = "fastai.learner.Learner'>"
 
