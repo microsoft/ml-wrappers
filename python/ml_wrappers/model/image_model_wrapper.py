@@ -47,6 +47,9 @@ except ImportError:
                         'mlflow model')
 
 FASTAI_MODEL_SUFFIX = "fastai.learner.Learner'>"
+BOXES = 'boxes'
+LABELS = 'labels'
+SCORES = 'scores'
 
 
 def _is_fastai_model(model):
@@ -70,12 +73,12 @@ def _filter_score(orig_prediction: dict, score_thresh: float = 0.5):
     :return: Model predictions filtered out by score_thresh
     :rtype: dict
     """
-    keep = orig_prediction['scores'] > score_thresh
+    keep = orig_prediction[SCORES] > score_thresh
 
     filter_prediction = orig_prediction
-    filter_prediction['boxes'] = filter_prediction['boxes'][keep]
-    filter_prediction['scores'] = filter_prediction['scores'][keep]
-    filter_prediction['labels'] = filter_prediction['labels'][keep]
+    filter_prediction[BOXES] = filter_prediction[BOXES][keep]
+    filter_prediction[SCORES] = filter_prediction[SCORES][keep]
+    filter_prediction[LABELS] = filter_prediction[LABELS][keep]
     return filter_prediction
 
 
@@ -89,14 +92,14 @@ def _apply_nms(orig_prediction: dict, iou_thresh: float = 0.5):
     :return: Model prediction after nms is applied
     :rtype: dict
     """
-    keep = torchvision.ops.nms(orig_prediction['boxes'],
-                               orig_prediction['scores'],
+    keep = torchvision.ops.nms(orig_prediction[BOXES],
+                               orig_prediction[SCORES],
                                iou_thresh)
 
     nms_prediction = orig_prediction
-    nms_prediction['boxes'] = nms_prediction['boxes'][keep]
-    nms_prediction['scores'] = nms_prediction['scores'][keep]
-    nms_prediction['labels'] = nms_prediction['labels'][keep]
+    nms_prediction[BOXES] = nms_prediction[BOXES][keep]
+    nms_prediction[SCORES] = nms_prediction[SCORES][keep]
+    nms_prediction[LABELS] = nms_prediction[LABELS][keep]
     return nms_prediction
 
 
@@ -415,16 +418,16 @@ class PytorchDRiseWrapper(
 
             raw_detection = _filter_score(raw_detection, 0.5)
             expanded_class_scores = od_common.expand_class_scores(
-                raw_detection['scores'],
-                raw_detection['labels'],
+                raw_detection[SCORES],
+                raw_detection[LABELS],
                 self._number_of_classes)
 
             detections.append(
                 od_common.DetectionRecord(
-                    bounding_boxes=raw_detection['boxes'],
+                    bounding_boxes=raw_detection[BOXES],
                     class_scores=expanded_class_scores,
                     objectness_scores=torch.tensor(
-                        [1.0]*raw_detection['boxes'].shape[0]),
+                        [1.0]*raw_detection[BOXES].shape[0]),
                 )
             )
         return detections
