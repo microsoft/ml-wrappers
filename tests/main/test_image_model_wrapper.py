@@ -118,7 +118,6 @@ class TestImageModelWrapper(object):
         data = load_object_fridge_dataset()[:3]
         data = load_images(data)
         model = torchvision.models.detection.fasterrcnn_resnet50_fpn()
-        model.eval()
         in_features = model.roi_heads.box_predictor.cls_score.in_features
         model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 5)
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -134,7 +133,6 @@ class TestImageModelWrapper(object):
         data = load_object_fridge_dataset()[:1]
         data = load_images(data)
         model = torchvision.models.detection.fasterrcnn_resnet50_fpn()
-        model.eval()
         in_features = model.roi_heads.box_predictor.cls_score.in_features
         model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 5)
         wrapped_model = PytorchDRiseWrapper(model, 1)
