@@ -28,16 +28,19 @@ except ImportError:
 
 try:
     from vision_explanation_methods.explanations import common as od_common
+    from vision_explanation_methods.explanations.common import \
+        GeneralObjectDetectionModelWrapper
 except ImportError:
+    GeneralObjectDetectionModelWrapper = object
     module_logger.debug('Could not import vision_explanation_methods,' +
-                        'required if using DRISE')
+                        'required if using PytorchDRiseWrapper')
 
 try:
     import torchvision
     from torchvision import transforms as T
 except ImportError:
     module_logger.debug('Could not import torchvision, required if' +
-                        'using DRISE')
+                        'using PytorchDRiseWrapper')
 
 try:
     from mlflow.pyfunc import PyFuncModel
@@ -376,8 +379,7 @@ class WrappedObjectDetectionModel:
         return prob_scores
 
 
-class PytorchDRiseWrapper(
-        od_common.GeneralObjectDetectionModelWrapper):
+class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
     """Wraps a PytorchFasterRCNN model with a predict API function.
 
     To be compatible with the D-RISE explainability method,
