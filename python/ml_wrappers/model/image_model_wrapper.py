@@ -22,7 +22,9 @@ module_logger.setLevel(logging.INFO)
 try:
     import torch
     import torch.nn as nn
+    from torch import Tensor
 except ImportError:
+    Tensor = Any
     module_logger.debug('Could not import torch, required if using a' +
                         'PyTorch model')
 
@@ -345,7 +347,7 @@ class WrappedObjectDetectionModel:
         """
         detections = []
         for image in x:
-            if type(image) == torch.Tensor:
+            if type(image) == Tensor:
                 raw_detections = self._model(
                     image.to(self._device).unsqueeze(0))
             else:
@@ -401,7 +403,7 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
         self._model = model
         self._number_of_classes = number_of_classes
 
-    def predict(self, x: torch.Tensor):
+    def predict(self, x: Tensor):
         """Create a list of detection records from the image predictions.
 
         :param x: Tensor of the image
