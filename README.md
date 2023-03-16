@@ -17,7 +17,7 @@ Currently supported data types include:
 
 - numpy.ndarray
 - pandas.DataFrame
-- panads.Series
+- pandas.Series
 - scipy.sparse.csr_matrix
 - shap.DenseData
 - torch.Tensor
