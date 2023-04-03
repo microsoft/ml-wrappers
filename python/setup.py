@@ -39,10 +39,9 @@ CLASSIFIERS = [
 
 DEPENDENCIES = [
     'numpy',
-    'pandas',
+    'pandas<2.0.0',
     'scipy',
-    'scikit-learn',
-    'raiutils'
+    'scikit-learn'
 ]
 
 with open(README_FILE, 'r', encoding='utf-8') as f:
