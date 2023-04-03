@@ -41,7 +41,8 @@ DEPENDENCIES = [
     'numpy',
     'pandas',
     'scipy',
-    'scikit-learn'
+    'scikit-learn',
+    'raiutils'
 ]
 
 with open(README_FILE, 'r', encoding='utf-8') as f:
