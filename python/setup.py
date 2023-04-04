@@ -39,7 +39,7 @@ CLASSIFIERS = [
 
 DEPENDENCIES = [
     'numpy',
-    'pandas',
+    'pandas<2.0.0',
     'scipy',
     'scikit-learn'
 ]
