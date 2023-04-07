@@ -355,7 +355,7 @@ class WrappedObjectDetectionModel:
                     T.ToTensor()(image).to(self._device).unsqueeze(0))
 
             for raw_detection in raw_detections:
-                raw_detection = _apply_nms(raw_detection)
+                raw_detection = _apply_nms(raw_detection, .5)
                 raw_detection = _filter_score(raw_detection)
                 image_predictions = torch.cat((raw_detection["labels"]
                                                .unsqueeze(1),
@@ -415,7 +415,7 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
 
         detections = []
         for raw_detection in raw_detections:
-            raw_detection = _apply_nms(raw_detection, 0.005)
+            raw_detection = _apply_nms(raw_detection, 0.5)
 
             # Note that FasterRCNN doesn't return a score for each class, only
             # the predicted class. DRISE requires a score for each class.
