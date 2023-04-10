@@ -29,10 +29,10 @@ from wrapper_validator import validate_wrapped_classification_model
 
 @pytest.mark.usefixtures('_clean_dir')
 class TestImageModelWrapper(object):
-    # Skip for older versions of python as azureml-automl-dnn-vision works with ">=3.7,<3.8"
+    # Skip for older versions of python as azureml-automl-dnn-vision works with ">=3.7,<3.9"
     @pytest.mark.skipif(sys.version_info < (3, 7),
                         reason='azureml-automl-dnn-vision not supported for older versions')
-    @pytest.mark.skipif(sys.version_info >= (3, 8),
+    @pytest.mark.skipif(sys.version_info >= (3, 9),
                         reason='azureml-automl-dnn-vision not supported for newer versions')
     def test_wrap_automl_image_classification_model(self):
         data = load_fridge_dataset()
