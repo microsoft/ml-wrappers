@@ -8,6 +8,7 @@ import sys
 import xml.etree.ElementTree as ET
 from io import BytesIO
 from zipfile import ZipFile
+from typing import Union, Tuple
 
 import numpy as np
 import pandas as pd
@@ -132,7 +133,7 @@ def load_images(data):
     return np.array(images)
 
 
-def get_base64_string_from_path(img_path: str) -> str:
+def get_base64_string_from_path(img_path: str, return_image_size=False) -> Union[str, Tuple[str, Tuple[int, int]]]:
     """Load and convert pillow image to base64-encoded image
 
     :param img_path: image path
@@ -144,10 +145,12 @@ def get_base64_string_from_path(img_path: str) -> str:
     imgio = BytesIO()
     img.save(imgio, img.format)
     img_str = base64.b64encode(imgio.getvalue())
+    if return_image_size:
+        return img_str.decode("utf-8"), img.size
     return img_str.decode("utf-8")
 
 
-def load_base64_images(data: pd.DataFrame) -> pd.DataFrame:
+def load_base64_images(data: pd.DataFrame, return_image_size=False) -> pd.DataFrame:
     """Create dataframe of images encoded in base64 format
 
     :param data: input data with image paths and lables
@@ -155,10 +158,16 @@ def load_base64_images(data: pd.DataFrame) -> pd.DataFrame:
     :return: base64-encoded image
     :rtype: pandas.DataFrame
     """
+    if return_image_size:
+        dataset = pd.DataFrame(
+            data=[[x for x in get_base64_string_from_path(
+                img_path, return_image_size=True)] for img_path in data.loc[:, IMAGE]],
+            columns=[IMAGE, "image_size"],
+        )
+        return dataset
     data.loc[:, IMAGE] = data.loc[:, IMAGE].map(
         lambda img_path: get_base64_string_from_path(img_path))
     return data.loc[:, [IMAGE]]
-
 
 class ResNetPipeline(object):
     def __init__(self):

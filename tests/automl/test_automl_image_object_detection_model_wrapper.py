@@ -16,7 +16,8 @@ import pytest
 import torch
 from azureml.automl.dnn.vision.object_detection.common.constants import \
     ModelNames
-from azureml.automl.dnn.vision.object_detection.models import ObjectDetectionModelFactory
+# from azureml.automl.dnn.vision.object_detection.models import ObjectDetectionModelFactory
+from azureml.automl.dnn.vision.object_detection.models import object_detection_model_wrappers
 from azureml.automl.dnn.vision.common.mlflow.mlflow_model_wrapper import \
     MLFlowImagesModelWrapper
 from azureml.automl.dnn.vision.common.model_export_utils import (
@@ -32,17 +33,18 @@ class TestImageModelWrapper(object):
     # Skip for older versions of python as azureml-automl-dnn-vision works with ">=3.7,<3.8"
     @pytest.mark.skipif(sys.version_info < (3, 7),
                         reason='azureml-automl-dnn-vision not supported for older versions')
-    @pytest.mark.skipif(sys.version_info >= (3, 8),
+    @pytest.mark.skipif(sys.version_info >= (3, 9),
                         reason='azureml-automl-dnn-vision not supported for newer versions')
     def test_wrap_automl_object_detection_model(self):
-        data = load_object_fridge_dataset()[:3]
+        data = load_object_fridge_dataset()[1:4]
         model_name = ModelNames.FASTER_RCNN_RESNET50_FPN
 
         with tempfile.TemporaryDirectory() as tmp_output_dir:
 
             task_type = shared_constants.Tasks.IMAGE_OBJECT_DETECTION
             number_of_classes = 4
-            model_wrapper = ObjectDetectionModelFactory().get_model_wrapper(number_of_classes, model_name)
+            class_names = ['can', 'carton', 'milk_bottle', 'water_bottle']
+            model_wrapper = object_detection_model_wrappers.ObjectDetectionModelFactory().get_model_wrapper(number_of_classes, model_name)
 
             # mock for Mlflow model generation
             model_file = os.path.join(tmp_output_dir, "model.pt")
@@ -51,8 +53,13 @@ class TestImageModelWrapper(object):
                 'number_of_classes': number_of_classes,
                 'model_state': copy.deepcopy(model_wrapper.state_dict()),
                 'specs': {
-                    'model_settings': model_wrapper.model_settings,
-                    'labels': model_wrapper.labels
+                    'model_settings': model_wrapper.model_settings.get_settings_dict(),
+                    'inference_settings': model_wrapper.inference_settings,
+                    'classes': model_wrapper.classes,
+                    'model_specs': {
+                        'model_settings': model_wrapper.model_settings.get_settings_dict(),
+                        'inference_settings': model_wrapper.inference_settings,
+                    },
                 },
 
             }, model_file)
@@ -90,11 +97,8 @@ class TestImageModelWrapper(object):
             mlflow_model = mlflow.pyfunc.load_model(remote_path)
 
             # load the paths as base64 images
-            data = load_base64_images(data)
-            wrapped_model = wrap_model(
-                mlflow_model, data, ModelTask.OBJECT_DETECTION)
-            validate_wrapped_object_detection_model(wrapped_model, data)
+            data = load_base64_images(data, return_image_size=True)
 
-if __name__== "__main__":
-    obj = TestImageModelWrapper()
-    obj.test_wrap_automl_object_detection_model()
+            wrapped_model = wrap_model(
+                mlflow_model, data, ModelTask.OBJECT_DETECTION, classes=class_names)
+            validate_wrapped_object_detection_model(wrapped_model, data)

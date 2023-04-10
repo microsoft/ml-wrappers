@@ -323,21 +323,27 @@ def _process_mlflow_detections_to_raw_detections(image_detections, label_dict: d
         score = detection['score']
         box = detection["box"]
 
-        if score > 0.6:
-            ymin, xmin, ymax, xmax = (
-                box["topY"],
-                box["topX"],
-                box["bottomY"],
-                box["bottomX"],
-            )
-            topleft_x, topleft_y = x * xmin, y * ymin
-            width, height = x * (xmax - xmin), y * (ymax - ymin)
+        # if score > 0.25:
+        ymin, xmin, ymax, xmax = (
+            box["topY"],
+            box["topX"],
+            box["bottomY"],
+            box["bottomX"],
+        )
+        topleft_x, topleft_y = x * xmin, y * ymin
+        width, height = x * (xmax - xmin), y * (ymax - ymin)
 
-            scores.append(score)
-            labels.append(label)
-            boxes.append([topleft_x, topleft_y, width, height])
+        scores.append(score)
+        labels.append(label)
+        boxes.append([topleft_x, topleft_y, width, height])
+    try:
+        labels = [int(x) for x in labels]
+    except:
+        labels = [label_dict[x] for x in labels]
+    
+    print("PRINTING labels")
+    print(labels)
 
-    labels = [label_dict[x] for x in labels]
     return {"boxes": torch.Tensor(boxes), "labels": torch.Tensor(labels), "scores": torch.Tensor(scores)}
 
 
@@ -350,6 +356,7 @@ class WrappedMlflowAutomlObjectDetectionModel:
         :param model: mlflow model
         :type model: mlflow.pyfunc.PyFuncModel
         """
+
         self._model = model
         self._classes = classes
         self._label_dict = {label: (i+1) for i, label in enumerate(classes)}
@@ -384,9 +391,10 @@ class WrappedMlflowAutomlObjectDetectionModel:
         for image_detections, img_size in zip(predictions['boxes'], image_sizes):
             raw_detections = _process_mlflow_detections_to_raw_detections(
                 image_detections, self._label_dict, img_size)
+
             raw_detections = _apply_nms(raw_detections, iou_thresh)
             raw_detections = _filter_score(raw_detections, score_thresh)
-            
+        
             image_predictions = torch.cat((raw_detections["labels"].unsqueeze(1), 
                                            raw_detections["boxes"], 
                                            raw_detections["scores"].unsqueeze(1)
@@ -564,7 +572,7 @@ class MLflowDRiseWrapper():
         :param number_of_classes: Number of classes the model is predicting
         :type number_of_classes: int
         """
-
+        
         self._model = model
         self._classes = classes
         self._number_of_classes = len(classes)
