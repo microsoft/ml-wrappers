@@ -5,7 +5,7 @@
 """Defines wrappers for vision-based models."""
 
 import logging
-from typing import Any
+from typing import Any, Union
 
 import numpy as np
 import pandas as pd
@@ -108,7 +108,7 @@ def _apply_nms(orig_prediction: dict, iou_thresh: float = 0.5):
     return nms_prediction
 
 
-def _wrap_image_model(model, examples, model_task, is_function, number_of_classes=None):
+def _wrap_image_model(model, examples, model_task, is_function, classes = None, number_of_classes = None):
     """If needed, wraps the model or function in a common API.
 
     Wraps the model based on model task and prediction function contract.
@@ -161,7 +161,13 @@ def _wrap_image_model(model, examples, model_task, is_function, number_of_classe
                 model, multilabel=True
             )
     elif model_task == ModelTask.OBJECT_DETECTION:
-        _wrapped_model = WrappedObjectDetectionModel(model, number_of_classes)
+        if hasattr(model, '_model_impl'):
+            if str(type(model._model_impl.python_model)).endswith(
+                "azureml.automl.dnn.vision.common.mlflow.mlflow_model_wrapper.MLFlowImagesModelWrapper'>"
+            ):
+                _wrapped_model = WrappedMlflowAutomlObjectDetectionModel(model, classes)
+        else:
+            _wrapped_model = WrappedObjectDetectionModel(model, number_of_classes)
     return _wrapped_model, model_task
 
 
@@ -303,6 +309,105 @@ class WrappedMlflowAutomlImagesClassificationModel:
         predictions = self._mlflow_predict(dataset)
         return np.stack(predictions.probs.values)
 
+def _process_mlflow_detections_to_raw_detections(image_detections, label_dict: dict, image_size: tuple):
+
+    x, y = image_size
+
+    boxes = []
+    scores = []
+    labels = []
+    for detection in image_detections:
+        label = detection['label']
+        score = detection['score']
+        box = detection["box"]
+
+        if score > 0.6:
+            ymin, xmin, ymax, xmax = (
+                box["topY"],
+                box["topX"],
+                box["bottomY"],
+                box["bottomX"],
+            )
+            topleft_x, topleft_y = x * xmin, y * ymin
+            width, height = x * (xmax - xmin), y * (ymax - ymin)
+
+            scores.append(score)
+            labels.append(label)
+            boxes.append([topleft_x, topleft_y, width, height])
+
+    labels = [label_dict[x] for x in labels]
+    return {"boxes": torch.Tensor(boxes), "labels": torch.Tensor(labels), "scores": torch.Tensor(scores)}
+
+
+class WrappedMlflowAutomlObjectDetectionModel:
+    """A class for wrapping an AutoML for images MLflow model in the scikit-learn style."""
+
+    def __init__(self, model: PyFuncModel, classes: Union[list, np.ndarray]) -> None:
+        """Initialize the WrappedMlflowAutomlObjectDetectionModel.
+
+        :param model: mlflow model
+        :type model: mlflow.pyfunc.PyFuncModel
+        """
+        self._model = model
+        self._classes = classes
+        self._label_dict = {label: (i+1) for i, label in enumerate(classes)}
+
+    def _mlflow_predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
+        """Perform the inference using the wrapped MLflow model.
+
+        :param dataset: The dataset to predict on.
+        :type dataset: pandas.DataFrame
+        :return: The predicted data.
+        :rtype: pandas.DataFrame
+        """
+        predictions = self._model.predict(dataset)
+        return predictions
+
+    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.5, score_thresh: float = 0.5):
+        """Predict the output value using the wrapped MLflow model.
+
+        :param dataset: The dataset to predict on.
+        :type dataset: pandas.DataFrame
+        :return: The predicted values.
+        :rtype: numpy.ndarray
+        """
+        image_sizes = dataset['image_size']
+
+        dataset = dataset.drop(['image_size'], axis = 1)
+
+        predictions = self._mlflow_predict(dataset)
+        assert len(predictions['boxes']) == len(image_sizes)
+
+        detections = []
+        for image_detections, img_size in zip(predictions['boxes'], image_sizes):
+            raw_detections = _process_mlflow_detections_to_raw_detections(
+                image_detections, self._label_dict, img_size)
+            raw_detections = _apply_nms(raw_detections, iou_thresh)
+            raw_detections = _filter_score(raw_detections, score_thresh)
+            
+            image_predictions = torch.cat((raw_detections["labels"].unsqueeze(1), 
+                                           raw_detections["boxes"], 
+                                           raw_detections["scores"].unsqueeze(1)
+                                           ), 
+                                           dim=1)
+
+            detections.append(image_predictions.detach().cpu().numpy().tolist())
+        
+        return detections
+
+    def predict_proba(self, dataset: pd.DataFrame, iou_thresh=0.1) -> np.ndarray:
+        """Predict the output probability using the MLflow model.
+
+        :param dataset: The dataset to predict_proba on.
+        :type dataset: pandas.DataFrame
+        :return: The predicted probabilities.
+        :rtype: numpy.ndarray
+        """
+
+        predictions = self.predict(dataset, iou_thresh=iou_thresh)
+        prob_scores = [[pred[-1] for pred in image_prediction] for image_prediction in predictions]
+        return prob_scores
+
 
 class WrappedObjectDetectionModel:
     """A class for wrapping a object detection model in the scikit-learn style."""
@@ -436,4 +541,81 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
                         [1.0]*raw_detection[BOXES].shape[0]),
                 )
             )
+        return detections
+
+
+class MLflowDRiseWrapper():
+    """Wraps a Mlflow model with a predict API function.
+
+    To be compatible with the D-RISE explainability method,
+    all models must be wrapped to have the same output and input class and a
+    predict function for object detection. This wrapper is customized for the
+    FasterRCNN model from Pytorch, and can also be used with the RetinaNet or
+    any other models with the same output class.
+    """
+
+    def __init__(self, model: PyFuncModel, classes: Union[list, np.ndarray]) -> None:
+        """Initialize the MLflowDRiseWrapper.
+
+        :param model: mlflow model
+        :type model: mlflow.pyfunc.PyFuncModel
+        :param number_of_classes: Number of classes the model is predicting
+        :type number_of_classes: int
+        """
+
+        self._model = model
+        self._classes = classes
+        self._number_of_classes = len(classes)
+        self._label_dict = {label: (i+1) for i, label in enumerate(classes)}
+        
+    def _mlflow_predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
+        """Perform the inference using the wrapped MLflow model.
+
+        :param dataset: The dataset to predict on.
+        :type dataset: pandas.DataFrame
+        :return: The predicted data.
+        :rtype: pandas.DataFrame
+        """
+        predictions = self._model.predict(dataset)
+        return predictions
+
+    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.005, score_thresh: float = 0.5):
+        """Predict the output value using the wrapped MLflow model.
+
+        :param dataset: The dataset to predict on.
+        :type dataset: pandas.DataFrame
+        :return: The predicted values.
+        :rtype: numpy.ndarray
+        """
+        image_sizes = dataset['image_size']
+
+        dataset = dataset.drop(['image_size'], axis=1)
+
+        predictions = self._mlflow_predict(dataset)
+        assert len(predictions['boxes']) == len(image_sizes)
+
+        detections = []
+        for image_detections, img_size in zip(predictions['boxes'], image_sizes):
+            raw_detections = _process_mlflow_detections_to_raw_detections(
+                image_detections, self._label_dict, img_size)
+            raw_detections = _apply_nms(raw_detections, iou_thresh)
+            raw_detections = _filter_score(raw_detections, score_thresh)
+
+            # Note that FasterRCNN doesn't return a score for each class, only
+            # the predicted class. DRISE requires a score for each class.
+            # We approximate the score for each class
+            # by dividing (class score) evenly among the other classes.
+            expanded_class_scores = od_common.expand_class_scores(
+                raw_detections[SCORES],
+                raw_detections[LABELS],
+                self._number_of_classes)
+
+            detections.append(
+                od_common.DetectionRecord(
+                    bounding_boxes=raw_detections[BOXES],
+                    class_scores=expanded_class_scores,
+                    objectness_scores=torch.tensor(
+                        [1.0]*raw_detections[BOXES].shape[0]),
+                ))
+
         return detections

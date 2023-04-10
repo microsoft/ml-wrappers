@@ -6,6 +6,7 @@
 
 import logging
 import warnings
+from typing import Union
 
 from ml_wrappers.model.wrapped_classification_model import \
     WrappedClassificationModel
@@ -38,7 +39,7 @@ except ImportError:
     module_logger.debug('Could not import torch, required if using a PyTorch model')
 
 
-def wrap_model(model, examples, model_task=ModelTask.UNKNOWN, num_classes=None):
+def wrap_model(model, examples, model_task=ModelTask.UNKNOWN, classes=None, num_classes=None):
     """If needed, wraps the model in a common API based on model task and prediction function contract.
 
     :param model: The model to evaluate on the examples.
@@ -67,7 +68,7 @@ def wrap_model(model, examples, model_task=ModelTask.UNKNOWN, num_classes=None):
     if model_task in text_model_tasks:
         return _wrap_text_model(model, examples, model_task, False)[0]
     if model_task in image_model_tasks:
-        return _wrap_image_model(model, examples, model_task, False, num_classes)[0]
+        return _wrap_image_model(model, examples, model_task, False, classes, num_classes)[0]
     return _wrap_model(model, examples, model_task, False)[0]
 
 
