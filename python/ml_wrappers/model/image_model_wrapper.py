@@ -29,9 +29,11 @@ except ImportError:
                         'PyTorch model')
 
 try:
-    from vision_explanation_methods.explanations import common as od_common
-    from vision_explanation_methods.explanations.common import \
-        GeneralObjectDetectionModelWrapper
+    # from vision_explanation_methods.explanations import common as od_common
+    # from vision_explanation_methods.explanations.common import \
+    #     GeneralObjectDetectionModelWrapper
+    from responsibleai_vision.vision_explanation_methods_new.python.vision_explanation_methods.explanations import common as od_common
+    from responsibleai_vision.vision_explanation_methods_new.python.vision_explanation_methods.explanations.common import GeneralObjectDetectionModelWrapper
 except ImportError:
     GeneralObjectDetectionModelWrapper = object
     module_logger.debug('Could not import vision_explanation_methods,' +
@@ -605,6 +607,7 @@ class MLflowDRiseWrapper():
             # the predicted class. DRISE requires a score for each class.
             # We approximate the score for each class
             # by dividing (class score) evenly among the other classes.
+
             expanded_class_scores = od_common.expand_class_scores(
                 raw_detections[SCORES],
                 raw_detections[LABELS],
