@@ -138,8 +138,10 @@ def get_base64_string_from_path(img_path: str, return_image_size=False) -> Union
 
     :param img_path: image path
     :type img_path: str
-    :return: base64-encoded image
-    :rtype: str
+    :param return_image_size: true if image sizes should be returned in dataframe
+    :type data: bool
+    :return: base64-encoded image OR a tuple containing a base64-encoded image and a tuple with the image size
+    :rtype: Union[str, Tuple[str, Tuple[int, int]]]
     """
     img = Image.open(img_path)
     imgio = BytesIO()
@@ -151,10 +153,12 @@ def get_base64_string_from_path(img_path: str, return_image_size=False) -> Union
 
 
 def load_base64_images(data: pd.DataFrame, return_image_size=False) -> pd.DataFrame:
-    """Create dataframe of images encoded in base64 format
+    """Create dataframe of images encoded in base64 format (and optionally their sizes)
 
     :param data: input data with image paths and lables
     :type data: pandas.DataFrame
+    :param return_image_size: true if image sizes should be returned in dataframe
+    :type data: bool
     :return: base64-encoded image
     :rtype: pandas.DataFrame
     """

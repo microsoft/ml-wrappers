@@ -54,6 +54,9 @@ def wrap_model(model, examples, model_task=ModelTask.UNKNOWN, classes=None, num_
         In most cases, the type of the model can be inferred based on the shape of the output, where a classifier
         has a predict_proba method and outputs a 2 dimensional array, while a regressor has a predict method and
         outputs a 1 dimensional array.
+    :param classes: optional parameter specifying a list of class names
+        the dataset
+    :type classes: list or np.ndarray
     :param num_classes: optional parameter specifying the number of classes in
         the dataset
     :type num_classes: int

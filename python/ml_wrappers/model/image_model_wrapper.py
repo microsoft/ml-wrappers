@@ -110,6 +110,45 @@ def _apply_nms(orig_prediction: dict, iou_thresh: float = 0.5):
     return nms_prediction
 
 
+def _process_mlflow_detections_to_raw_detections(image_detections, label_dict: dict, image_size: tuple):
+    """Process AutoML mlflow object detections.
+
+    :param image_detections: AutoML mlflow detections
+    :type image_detections: list
+    :param label_dict: Label dictionary mapping class names to an index
+    :type label_dict: dict
+    :param image_size: Image size
+    :type image_size: tuple(int, int)
+    :return: Raw detections
+    :rtype: dict
+    """
+
+    x, y = image_size
+
+    boxes = []
+    scores = []
+    labels = []
+    for detection in image_detections:
+        label = detection['label']
+        score = detection['score']
+        box = detection["box"]
+
+        ymin, xmin, ymax, xmax = (
+            box["topY"], box["topX"], box["bottomY"], box["bottomX"])
+        x_min_scaled, y_min_scaled = x * xmin, y * ymin
+        x_max_scaled, y_max_scaled = x * xmax, y * ymax
+
+        scores.append(score)
+        labels.append(label)
+        boxes.append([x_min_scaled, y_min_scaled, x_max_scaled, y_max_scaled])
+    try:
+        labels = [int(x) for x in labels]
+    except:
+        labels = [label_dict[x] for x in labels]
+
+    return {"boxes": torch.Tensor(boxes), "labels": torch.Tensor(labels), "scores": torch.Tensor(scores)}
+
+
 def _wrap_image_model(model, examples, model_task, is_function, classes = None, number_of_classes = None):
     """If needed, wraps the model or function in a common API.
 
@@ -124,6 +163,9 @@ def _wrap_image_model(model, examples, model_task, is_function, classes = None, 
     :param model_task: Parameter to specify whether the model is an
         'image_classification' or another type of image model.
     :type model_task: str
+    :param classes: optional parameter specifying a list of class names
+        the dataset
+    :type classes: list or np.ndarray
     :param number_of_classes: optional parameter specifying the number of classes in
         the dataset
     :type number_of_classes: int
@@ -268,7 +310,7 @@ class WrappedFastAIImageClassificationModel(object):
 
 
 class WrappedMlflowAutomlImagesClassificationModel:
-    """A class for wrapping an AutoML for images MLflow model in the scikit-learn style."""
+    """A class for wrapping an AutoML for images MLflow classification model in the scikit-learn style."""
 
     def __init__(self, model: PyFuncModel) -> None:
         """Initialize the WrappedMlflowAutomlImagesClassificationModel.
@@ -310,113 +352,6 @@ class WrappedMlflowAutomlImagesClassificationModel:
         """
         predictions = self._mlflow_predict(dataset)
         return np.stack(predictions.probs.values)
-
-def _process_mlflow_detections_to_raw_detections(image_detections, label_dict: dict, image_size: tuple):
-
-    x, y = image_size
-
-    boxes = []
-    scores = []
-    labels = []
-    for detection in image_detections:
-        label = detection['label']
-        score = detection['score']
-        box = detection["box"]
-
-        # if score > 0.25:
-        ymin, xmin, ymax, xmax = (
-            box["topY"],
-            box["topX"],
-            box["bottomY"],
-            box["bottomX"],
-        )
-        topleft_x, topleft_y = x * xmin, y * ymin
-        width, height = x * (xmax - xmin), y * (ymax - ymin)
-
-        scores.append(score)
-        labels.append(label)
-        boxes.append([topleft_x, topleft_y, width, height])
-    try:
-        labels = [int(x) for x in labels]
-    except:
-        labels = [label_dict[x] for x in labels]
-    
-    print("PRINTING labels")
-    print(labels)
-
-    return {"boxes": torch.Tensor(boxes), "labels": torch.Tensor(labels), "scores": torch.Tensor(scores)}
-
-
-class WrappedMlflowAutomlObjectDetectionModel:
-    """A class for wrapping an AutoML for images MLflow model in the scikit-learn style."""
-
-    def __init__(self, model: PyFuncModel, classes: Union[list, np.ndarray]) -> None:
-        """Initialize the WrappedMlflowAutomlObjectDetectionModel.
-
-        :param model: mlflow model
-        :type model: mlflow.pyfunc.PyFuncModel
-        """
-
-        self._model = model
-        self._classes = classes
-        self._label_dict = {label: (i+1) for i, label in enumerate(classes)}
-
-    def _mlflow_predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
-        """Perform the inference using the wrapped MLflow model.
-
-        :param dataset: The dataset to predict on.
-        :type dataset: pandas.DataFrame
-        :return: The predicted data.
-        :rtype: pandas.DataFrame
-        """
-        predictions = self._model.predict(dataset)
-        return predictions
-
-    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.5, score_thresh: float = 0.5):
-        """Predict the output value using the wrapped MLflow model.
-
-        :param dataset: The dataset to predict on.
-        :type dataset: pandas.DataFrame
-        :return: The predicted values.
-        :rtype: numpy.ndarray
-        """
-        image_sizes = dataset['image_size']
-
-        dataset = dataset.drop(['image_size'], axis = 1)
-
-        predictions = self._mlflow_predict(dataset)
-        assert len(predictions['boxes']) == len(image_sizes)
-
-        detections = []
-        for image_detections, img_size in zip(predictions['boxes'], image_sizes):
-            raw_detections = _process_mlflow_detections_to_raw_detections(
-                image_detections, self._label_dict, img_size)
-
-            raw_detections = _apply_nms(raw_detections, iou_thresh)
-            raw_detections = _filter_score(raw_detections, score_thresh)
-        
-            image_predictions = torch.cat((raw_detections["labels"].unsqueeze(1), 
-                                           raw_detections["boxes"], 
-                                           raw_detections["scores"].unsqueeze(1)
-                                           ), 
-                                           dim=1)
-
-            detections.append(image_predictions.detach().cpu().numpy().tolist())
-        
-        return detections
-
-    def predict_proba(self, dataset: pd.DataFrame, iou_thresh=0.1) -> np.ndarray:
-        """Predict the output probability using the MLflow model.
-
-        :param dataset: The dataset to predict_proba on.
-        :type dataset: pandas.DataFrame
-        :return: The predicted probabilities.
-        :rtype: numpy.ndarray
-        """
-
-        predictions = self.predict(dataset, iou_thresh=iou_thresh)
-        prob_scores = [[pred[-1] for pred in image_prediction] for image_prediction in predictions]
-        return prob_scores
 
 
 class WrappedObjectDetectionModel:
@@ -487,12 +422,93 @@ class WrappedObjectDetectionModel:
 
         :param dataset: The dataset to predict_proba on.
         :type dataset: ml_wrappers.DatasetWrapper
-        param iou_threshold: amount of acceptable error.
+        :param iou_threshold: amount of acceptable error.
             objects with error scores higher than the threshold will be removed
-        type iou_threshold: float
+        :type iou_threshold: float
         """
         predictions = self.predict(dataset, iou_threshold)
         prob_scores = [[pred.class_scores for pred in image_prediction] for image_prediction in predictions]
+        return prob_scores
+
+
+class WrappedMlflowAutomlObjectDetectionModel:
+    """A class for wrapping an AutoML for images MLflow object detection model in the scikit-learn style."""
+
+    def __init__(self, model: PyFuncModel, classes: Union[list, np.ndarray]) -> None:
+        """Initialize the WrappedMlflowAutomlObjectDetectionModel.
+
+        :param model: mlflow model
+        :type model: mlflow.pyfunc.PyFuncModel
+        :param classes: list of class names
+        :type classes: list or np.ndarray
+        """
+
+        self._model = model
+        self._classes = classes
+        self._label_dict = {label: (i+1) for i, label in enumerate(classes)}
+
+    def _mlflow_predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
+        """Perform the inference using the wrapped MLflow model.
+
+        :param dataset: The dataset to predict on.
+        :type dataset: pandas.DataFrame
+        :return: The predicted data.
+        :rtype: pandas.DataFrame
+        """
+        predictions = self._model.predict(dataset)
+        return predictions
+
+    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.5, score_thresh: float = 0.5):
+        """Create a list of detection records from the image predictions.
+
+        :param dataset: The dataset to predict on.
+        :type dataset: pandas.DataFrame
+        :param iou_thresh: iou_threshold for nms - amount of acceptable error.
+            objects with error scores higher than the threshold will be removed
+        :type iou_thresh: float
+        :param score_thresh: Score threshold to filter by
+        :type score_thresh: float
+        :return: The predicted values.
+        :rtype: numpy.ndarray
+        """
+        image_sizes = dataset['image_size']
+
+        dataset = dataset.drop(['image_size'], axis = 1)
+
+        predictions = self._mlflow_predict(dataset)
+        assert len(predictions['boxes']) == len(image_sizes)
+
+        detections = []
+        for image_detections, img_size in zip(predictions['boxes'], image_sizes):
+            raw_detections = _process_mlflow_detections_to_raw_detections(
+                image_detections, self._label_dict, img_size)
+
+            raw_detections = _apply_nms(raw_detections, iou_thresh)
+            raw_detections = _filter_score(raw_detections, score_thresh)
+        
+            image_predictions = torch.cat((raw_detections["labels"].unsqueeze(1), 
+                                           raw_detections["boxes"], 
+                                           raw_detections["scores"].unsqueeze(1)
+                                           ), 
+                                           dim=1)
+            detections.append(image_predictions.detach().cpu().numpy().tolist())
+        
+        return detections
+
+    def predict_proba(self, dataset: pd.DataFrame, iou_thresh=0.1) -> np.ndarray:
+        """Predict the output probability using the MLflow model.
+
+        :param dataset: The dataset to predict_proba on.
+        :type dataset: pandas.DataFrame
+        :param iou_thresh: amount of acceptable error.
+            objects with error scores higher than the threshold will be removed
+        :type iou_thresh: float
+        :return: The predicted probabilities.
+        :rtype: numpy.ndarray
+        """
+
+        predictions = self.predict(dataset, iou_thresh=iou_thresh)
+        prob_scores = [[pred[-1] for pred in image_prediction] for image_prediction in predictions]
         return prob_scores
 
 

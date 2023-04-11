@@ -30,7 +30,7 @@ from wrapper_validator import validate_wrapped_object_detection_model
 
 @pytest.mark.usefixtures('_clean_dir')
 class TestImageModelWrapper(object):
-    # Skip for older versions of python as azureml-automl-dnn-vision works with ">=3.7,<3.8"
+    # Skip for older versions of python as azureml-automl-dnn-vision works with ">=3.7,<3.9"
     @pytest.mark.skipif(sys.version_info < (3, 7),
                         reason='azureml-automl-dnn-vision not supported for older versions')
     @pytest.mark.skipif(sys.version_info >= (3, 9),
