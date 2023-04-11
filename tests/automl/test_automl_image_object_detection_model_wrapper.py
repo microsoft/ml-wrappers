@@ -16,7 +16,6 @@ import pytest
 import torch
 from azureml.automl.dnn.vision.object_detection.common.constants import \
     ModelNames
-# from azureml.automl.dnn.vision.object_detection.models import ObjectDetectionModelFactory
 from azureml.automl.dnn.vision.object_detection.models import object_detection_model_wrappers
 from azureml.automl.dnn.vision.common.mlflow.mlflow_model_wrapper import \
     MLFlowImagesModelWrapper
