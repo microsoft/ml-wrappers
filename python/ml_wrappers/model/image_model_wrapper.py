@@ -5,7 +5,7 @@
 """Defines wrappers for vision-based models."""
 
 import logging
-from typing import Any, Union, Dict, Tuple
+from typing import Any, Dict, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -182,7 +182,8 @@ def _process_automl_detections_to_raw_detections(
 
 
 def _wrap_image_model(model, examples, model_task, is_function,
-                      classes=None, number_of_classes=None):
+                      number_of_classes: int = None,
+                      classes: Union[list, np.array] = None):
     """If needed, wraps the model or function in a common API.
 
     Wraps the model based on model task and prediction function contract.

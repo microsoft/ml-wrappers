@@ -7,8 +7,8 @@
 import logging
 import warnings
 from typing import Union
-import numpy as np
 
+import numpy as np
 from ml_wrappers.model.wrapped_classification_model import \
     WrappedClassificationModel
 from ml_wrappers.model.wrapped_classification_without_proba_model import \
@@ -43,7 +43,7 @@ except ImportError:
 
 
 def wrap_model(model, examples, model_task: str = ModelTask.UNKNOWN,
-               classes: Union[list, np.array] = None, num_classes: int = None):
+               num_classes: int = None, classes: Union[list, np.array] = None):
     """If needed, wraps the model in a common API based on model task and
         prediction function contract.
 
