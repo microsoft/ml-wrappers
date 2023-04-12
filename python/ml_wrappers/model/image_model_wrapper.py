@@ -9,6 +9,7 @@ from typing import Any, Dict, Tuple, Union
 
 import numpy as np
 import pandas as pd
+
 from ml_wrappers.common.constants import ModelTask
 from ml_wrappers.dataset.dataset_wrapper import DatasetWrapper
 from ml_wrappers.model.evaluator import _eval_model
@@ -111,7 +112,7 @@ def _apply_nms(orig_prediction: dict, iou_thresh: float = 0.5):
 def _process_automl_detections_to_raw_detections(
         image_detections,
         label_dict: Dict[str, int],
-        image_size: Tuple[int, int]) -> Dict[str, torch.Tensor]:
+        image_size: Tuple[int, int]) -> Dict[str, Tensor]:
     """Process AutoML mlflow object detections from a single image.
 
     :param image_detections: AutoML mlflow detections
@@ -176,9 +177,9 @@ def _process_automl_detections_to_raw_detections(
         labels = [label_dict[x] for x in labels]
 
     return {
-        "boxes": torch.Tensor(boxes),
-        "labels": torch.Tensor(labels),
-        "scores": torch.Tensor(scores)}
+        "boxes": Tensor(boxes),
+        "labels": Tensor(labels),
+        "scores": Tensor(scores)}
 
 
 def _wrap_image_model(model, examples, model_task, is_function,
@@ -494,8 +495,6 @@ class WrappedMlflowAutomlObjectDetectionModel:
 
         self._model = model
         self._classes = classes
-        print("PRINTING")
-        print(classes)
         self._label_dict = {label: (i+1) for i, label in enumerate(classes)}
 
     def _mlflow_predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
