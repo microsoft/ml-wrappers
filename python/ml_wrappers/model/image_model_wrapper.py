@@ -5,7 +5,7 @@
 """Defines wrappers for vision-based models."""
 
 import logging
-from typing import Any, Union
+from typing import Any, Union, Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -108,8 +108,11 @@ def _apply_nms(orig_prediction: dict, iou_thresh: float = 0.5):
     return nms_prediction
 
 
-def _process_mlflow_detections_to_raw_detections(image_detections, label_dict: dict, image_size: tuple):
-    """Process AutoML mlflow object detections.
+def _process_automl_detections_to_raw_detections(
+        image_detections,
+        label_dict: Dict[str, int],
+        image_size: Tuple[int, int]) -> Dict[str, torch.Tensor]:
+    """Process AutoML mlflow object detections from a single image.
 
     :param image_detections: AutoML mlflow detections
     :type image_detections: list
@@ -119,6 +122,28 @@ def _process_mlflow_detections_to_raw_detections(image_detections, label_dict: d
     :type image_size: tuple(int, int)
     :return: Raw detections
     :rtype: dict
+
+    The length of image_detections list will be equal to the number
+    of objects the AutoML MLflow model detected in a single image.
+    Below is an example of image_detections when the model detected
+    two objects:
+
+    [{'box': {'topX': 0.645,
+              'topY': 0.373,
+              'bottomX': 0.8276,
+              'bottomY': 0.6102
+                },
+      'label': 'can',
+      'score': 0.945},
+     {'box': {'topX': 0.324,
+              'topY': 0.5643,
+              'bottomX': 0.6511,
+              'bottomY': 0.865
+                },
+      'label': 'milk_bottle',
+      'score': 0.93}
+    ]
+    The bbox coordinates need to be scaled by the image dimensions.
     """
 
     x, y = image_size
@@ -127,12 +152,18 @@ def _process_mlflow_detections_to_raw_detections(image_detections, label_dict: d
     scores = []
     labels = []
     for detection in image_detections:
+        # predicted class label
         label = detection['label']
+        # confidence score from model
         score = detection['score']
+        # predicted bbox coordinates
         box = detection["box"]
 
         ymin, xmin, ymax, xmax = (
             box["topY"], box["topX"], box["bottomY"], box["bottomX"])
+
+        # the automl mlflow model generates normalized bbox coordinates
+        # they need to be scaled by the size of the image
         x_min_scaled, y_min_scaled = x * xmin, y * ymin
         x_max_scaled, y_max_scaled = x * xmax, y * ymax
 
@@ -141,13 +172,17 @@ def _process_mlflow_detections_to_raw_detections(image_detections, label_dict: d
         boxes.append([x_min_scaled, y_min_scaled, x_max_scaled, y_max_scaled])
     try:
         labels = [int(x) for x in labels]
-    except:
+    except BaseException:
         labels = [label_dict[x] for x in labels]
 
-    return {"boxes": torch.Tensor(boxes), "labels": torch.Tensor(labels), "scores": torch.Tensor(scores)}
+    return {
+        "boxes": torch.Tensor(boxes),
+        "labels": torch.Tensor(labels),
+        "scores": torch.Tensor(scores)}
 
 
-def _wrap_image_model(model, examples, model_task, is_function, classes = None, number_of_classes = None):
+def _wrap_image_model(model, examples, model_task, is_function,
+                      classes=None, number_of_classes=None):
     """If needed, wraps the model or function in a common API.
 
     Wraps the model based on model task and prediction function contract.
@@ -155,17 +190,20 @@ def _wrap_image_model(model, examples, model_task, is_function, classes = None, 
     :param model: The model or function to evaluate on the examples.
     :type model: function or model to wrap
     :param examples: The model evaluation examples.
-    :type examples: ml_wrappers.DatasetWrapper or numpy.ndarray
-        or pandas.DataFrame or panads.Series or scipy.sparse.csr_matrix
-        or shap.DenseData or torch.Tensor
+    :type examples: ml_wrappers.DatasetWrapper
+                    or numpy.ndarray
+                    or pandas.DataFrame or panads.Series
+                    or scipy.sparse.csr_matrix
+                    or shap.DenseData
+                    or torch.Tensor
     :param model_task: Parameter to specify whether the model is an
-        'image_classification' or another type of image model.
+                       image_classification' or another type of image model.
     :type model_task: str
     :param classes: optional parameter specifying a list of class names
-        the dataset
+                    the dataset
     :type classes: list or np.ndarray
-    :param number_of_classes: optional parameter specifying the number of classes in
-        the dataset
+    :param number_of_classes: optional parameter specifying the
+                                number of classes in the dataset
     :type number_of_classes: int
     :return: The function chosen from given model and chosen domain, or
         model wrapping the function and chosen domain.
@@ -178,7 +216,8 @@ def _wrap_image_model(model, examples, model_task, is_function, classes = None, 
                 model = WrappedPytorchModel(model, image_to_tensor=True)
                 if not isinstance(examples, DatasetWrapper):
                     examples = DatasetWrapper(examples)
-                eval_function, eval_ml_domain = _eval_model(model, examples, model_task)
+                eval_function, eval_ml_domain = _eval_model(
+                    model, examples, model_task)
                 return (
                     WrappedClassificationModel(model, eval_function, examples),
                     eval_ml_domain,
@@ -192,9 +231,11 @@ def _wrap_image_model(model, examples, model_task, is_function, classes = None, 
             _wrapped_model = WrappedFastAIImageClassificationModel(model)
         elif hasattr(model, '_model_impl'):
             if str(type(model._model_impl.python_model)).endswith(
-                "azureml.automl.dnn.vision.common.mlflow.mlflow_model_wrapper.MLFlowImagesModelWrapper'>"
+                ("azureml.automl.dnn.vision.common.mlflow." +
+                    "mlflow_model_wrapper.MLFlowImagesModelWrapper'>")
             ):
-                _wrapped_model = WrappedMlflowAutomlImagesClassificationModel(model)
+                _wrapped_model = WrappedMlflowAutomlImagesClassificationModel(
+                    model)
         else:
             _wrapped_model = WrappedTransformerImageClassificationModel(model)
     elif model_task == ModelTask.MULTILABEL_IMAGE_CLASSIFICATION:
@@ -205,11 +246,14 @@ def _wrap_image_model(model, examples, model_task, is_function, classes = None, 
     elif model_task == ModelTask.OBJECT_DETECTION:
         if hasattr(model, '_model_impl'):
             if str(type(model._model_impl.python_model)).endswith(
-                "azureml.automl.dnn.vision.common.mlflow.mlflow_model_wrapper.MLFlowImagesModelWrapper'>"
+                ("azureml.automl.dnn.vision.common.mlflow." +
+                    "mlflow_model_wrapper.MLFlowImagesModelWrapper'>")
             ):
-                _wrapped_model = WrappedMlflowAutomlObjectDetectionModel(model, classes)
+                _wrapped_model = WrappedMlflowAutomlObjectDetectionModel(
+                    model, classes)
         else:
-            _wrapped_model = WrappedObjectDetectionModel(model, number_of_classes)
+            _wrapped_model = WrappedObjectDetectionModel(
+                model, number_of_classes)
     return _wrapped_model, model_task
 
 
@@ -308,7 +352,8 @@ class WrappedFastAIImageClassificationModel(object):
 
 
 class WrappedMlflowAutomlImagesClassificationModel:
-    """A class for wrapping an AutoML for images MLflow classification model in the scikit-learn style."""
+    """A class for wrapping an AutoML for images MLflow classification
+        model in the scikit-learn style."""
 
     def __init__(self, model: PyFuncModel) -> None:
         """Initialize the WrappedMlflowAutomlImagesClassificationModel.
@@ -353,10 +398,12 @@ class WrappedMlflowAutomlImagesClassificationModel:
 
 
 class WrappedObjectDetectionModel:
-    """A class for wrapping a object detection model in the scikit-learn style."""
+    """A class for wrapping a object detection model in the scikit-learn
+        style."""
 
     def __init__(self, model: Any, number_of_classes: int) -> None:
-        """Initialize the WrappedObjectDetectionModel with the model and evaluation function.
+        """Initialize the WrappedObjectDetectionModel with the model
+            and evaluation function.
 
         :param model: mlflow model
         :type model: Any
@@ -425,14 +472,17 @@ class WrappedObjectDetectionModel:
         :type iou_threshold: float
         """
         predictions = self.predict(dataset, iou_threshold)
-        prob_scores = [[pred.class_scores for pred in image_prediction] for image_prediction in predictions]
+        prob_scores = [[pred.class_scores for pred in image_prediction]
+                       for image_prediction in predictions]
         return prob_scores
 
 
 class WrappedMlflowAutomlObjectDetectionModel:
-    """A class for wrapping an AutoML for images MLflow object detection model in the scikit-learn style."""
+    """A class for wrapping an AutoML for images MLflow object detection model
+        in the scikit-learn style."""
 
-    def __init__(self, model: PyFuncModel, classes: Union[list, np.ndarray]) -> None:
+    def __init__(self, model: PyFuncModel,
+                 classes: Union[list, np.ndarray]) -> None:
         """Initialize the WrappedMlflowAutomlObjectDetectionModel.
 
         :param model: mlflow model
@@ -443,7 +493,7 @@ class WrappedMlflowAutomlObjectDetectionModel:
 
         self._model = model
         self._classes = classes
-        self._label_dict = {label: (i+1) for i, label in enumerate(classes)}
+        self._label_dict = {label: i for i, label in enumerate(classes, 1)}
 
     def _mlflow_predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
         """Perform the inference using the wrapped MLflow model.
@@ -453,47 +503,77 @@ class WrappedMlflowAutomlObjectDetectionModel:
         :return: The predicted data.
         :rtype: pandas.DataFrame
         """
+
         predictions = self._model.predict(dataset)
         return predictions
 
-    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.5, score_thresh: float = 0.5):
+    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.5,
+                score_thresh: float = 0.5):
         """Create a list of detection records from the image predictions.
 
         :param dataset: The dataset to predict on.
         :type dataset: pandas.DataFrame
-        :param iou_thresh: iou_threshold for nms - amount of acceptable error.
-            objects with error scores higher than the threshold will be removed
+        :param iou_thresh: Intersection-over-Union (IoU) threshold for NMS (or
+                           the amount of acceptable error). Objects with error
+                           cores higher than the threshold will be removed.
         :type iou_thresh: float
-        :param score_thresh: Score threshold to filter by
+        :param score_thresh: Threshold to filter detections based on
+                            predicted confidence scores.
         :type score_thresh: float
-        :return: The predicted values.
-        :rtype: numpy.ndarray
+        :return: Final detections from the object detector
+        :rtype: List of Detection Records
+
+
+        Below is example Label (y) representation for a cohort of 2 images,
+        with 3 objects detected for the first image and 1 for the second image.
+
+        [
+         [
+            [class, topX, topY, bottomX, bottomY, (optional) confidence_score],
+            [class, topX, topY, bottomX, bottomY, (optional) confidence_score],
+            [class, topX, topY, bottomX, bottomY, (optional) confidence_score],
+         ],
+         [
+            [class, topX, topY, bottomX, bottomY, (optional) confidence_score],
+         ]
+
+        ]
         """
         image_sizes = dataset['image_size']
 
-        dataset = dataset.drop(['image_size'], axis = 1)
+        dataset = dataset.drop(['image_size'], axis=1)
 
         predictions = self._mlflow_predict(dataset)
-        assert len(predictions['boxes']) == len(image_sizes), "Number of predictions does not match number of images"
+        assert len(predictions['boxes']) == len(
+            image_sizes), ("{Internal/User} Error: Number of predictions" +
+                           "does not match number of images")
 
         detections = []
-        for image_detections, img_size in zip(predictions['boxes'], image_sizes):
-            raw_detections = _process_mlflow_detections_to_raw_detections(
+        for image_detections, img_size in \
+                zip(predictions['boxes'], image_sizes):
+
+            # process automl mlflow detection outputs
+            raw_detections = _process_automl_detections_to_raw_detections(
                 image_detections, self._label_dict, img_size)
 
             raw_detections = _apply_nms(raw_detections, iou_thresh)
             raw_detections = _filter_score(raw_detections, score_thresh)
-        
-            image_predictions = torch.cat((raw_detections["labels"].unsqueeze(1), 
-                                           raw_detections["boxes"], 
-                                           raw_detections["scores"].unsqueeze(1)
-                                           ), 
-                                           dim=1)
-            detections.append(image_predictions.detach().cpu().numpy().tolist())
-        
+
+            image_predictions = torch.cat((
+                raw_detections["labels"].unsqueeze(1),
+                raw_detections["boxes"],
+                raw_detections["scores"].unsqueeze(1)
+            ),
+                dim=1
+            )
+
+            detections.append(
+                image_predictions.detach().cpu().numpy().tolist())
+
         return detections
 
-    def predict_proba(self, dataset: pd.DataFrame, iou_thresh=0.1) -> np.ndarray:
+    def predict_proba(self, dataset: pd.DataFrame,
+                      iou_thresh=0.1) -> np.ndarray:
         """Predict the output probability using the MLflow model.
 
         :param dataset: The dataset to predict_proba on.
@@ -506,7 +586,8 @@ class WrappedMlflowAutomlObjectDetectionModel:
         """
 
         predictions = self.predict(dataset, iou_thresh=iou_thresh)
-        prob_scores = [[pred[-1] for pred in image_prediction] for image_prediction in predictions]
+        prob_scores = [[pred[-1] for pred in image_prediction]
+                       for image_prediction in predictions]
         return prob_scores
 
 
@@ -565,4 +646,5 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
                         [1.0]*raw_detection[BOXES].shape[0]),
                 )
             )
+
         return detections
