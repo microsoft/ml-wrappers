@@ -48,7 +48,7 @@ class PredictionsModelWrapper:
         :rtype: pd.DataFrame
         """
         queries = []
-        for column_name, column_data in query_test_data_row.squeeze().iteritems():
+        for column_name, column_data in query_test_data_row.squeeze().items():
             if isinstance(column_data, str):
                 queries.append("`{}` == '{}'".format(
                     column_name, column_data))
