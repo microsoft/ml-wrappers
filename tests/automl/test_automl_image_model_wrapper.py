@@ -22,10 +22,10 @@ from azureml.automl.dnn.vision.common.mlflow.mlflow_model_wrapper import \
 from azureml.automl.dnn.vision.common.model_export_utils import (
     _get_mlflow_signature, _get_scoring_method)
 from common_vision_utils import load_base64_images, load_fridge_dataset
+from ml_wrappers.common.constants import ModelTask
 from wrapper_validator import validate_wrapped_classification_model
 
 from ml_wrappers import wrap_model
-from ml_wrappers.common.constants import ModelTask
 
 
 @pytest.mark.usefixtures('_clean_dir')
