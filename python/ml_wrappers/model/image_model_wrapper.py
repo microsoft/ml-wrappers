@@ -483,18 +483,20 @@ class WrappedMlflowAutomlObjectDetectionModel:
         in the scikit-learn style."""
 
     def __init__(self, model: PyFuncModel,
-                 classes: Union[list, np.ndarray]) -> None:
+                 classes: Union[list, np.array]) -> None:
         """Initialize the WrappedMlflowAutomlObjectDetectionModel.
 
         :param model: mlflow model
         :type model: mlflow.pyfunc.PyFuncModel
         :param classes: list of class names
-        :type classes: list or np.ndarray
+        :type classes: list or np.array
         """
 
         self._model = model
         self._classes = classes
-        self._label_dict = {label: i for i, label in enumerate(classes, 1)}
+        print("PRINTING")
+        print(classes)
+        self._label_dict = {label: (i+1) for i, label in enumerate(classes)}
 
     def _mlflow_predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
         """Perform the inference using the wrapped MLflow model.
