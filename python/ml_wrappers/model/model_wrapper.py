@@ -10,13 +10,12 @@ import warnings
 from typing import Union
 
 import numpy as np
-from sklearn.linear_model import SGDClassifier
-
 from ml_wrappers.model.wrapped_classification_model import \
     WrappedClassificationModel
 from ml_wrappers.model.wrapped_classification_without_proba_model import \
     WrappedClassificationWithoutProbaModel
 from ml_wrappers.model.wrapped_regression_model import WrappedRegressionModel
+from sklearn.linear_model import SGDClassifier
 
 from ..common.constants import (ModelTask, SKLearn, image_model_tasks,
                                 text_model_tasks)

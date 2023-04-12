@@ -23,10 +23,10 @@ from azureml.automl.dnn.vision.object_detection.common.constants import \
 from azureml.automl.dnn.vision.object_detection.models import \
     object_detection_model_wrappers
 from common_vision_utils import load_base64_images, load_object_fridge_dataset
+from ml_wrappers.common.constants import ModelTask
 from wrapper_validator import validate_wrapped_object_detection_model
 
 from ml_wrappers import wrap_model
-from ml_wrappers.common.constants import ModelTask
 
 
 @pytest.mark.usefixtures('_clean_dir')
