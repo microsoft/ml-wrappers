@@ -7,8 +7,8 @@ import os
 import sys
 import xml.etree.ElementTree as ET
 from io import BytesIO
+from typing import Tuple, Union
 from zipfile import ZipFile
-from typing import Union, Tuple
 
 import numpy as np
 import pandas as pd
