@@ -7,6 +7,7 @@
 import logging
 import warnings
 from typing import Union
+import numpy as np
 
 from ml_wrappers.model.wrapped_classification_model import \
     WrappedClassificationModel
@@ -26,7 +27,8 @@ from .tensorflow_wrapper import WrappedTensorflowModel, is_sequential
 from .text_model_wrapper import _is_transformers_pipeline, _wrap_text_model
 
 with warnings.catch_warnings():
-    warnings.filterwarnings('ignore', 'Starting from version 2.2.1', UserWarning)
+    warnings.filterwarnings(
+        'ignore', 'Starting from version 2.2.1', UserWarning)
 
 
 module_logger = logging.getLogger(__name__)
@@ -36,11 +38,14 @@ module_logger.setLevel(logging.INFO)
 try:
     import torch.nn as nn
 except ImportError:
-    module_logger.debug('Could not import torch, required if using a PyTorch model')
+    module_logger.debug(
+        'Could not import torch, required if using a PyTorch model')
 
 
-def wrap_model(model, examples, model_task=ModelTask.UNKNOWN, classes=None, num_classes=None):
-    """If needed, wraps the model in a common API based on model task and prediction function contract.
+def wrap_model(model, examples, model_task: str = ModelTask.UNKNOWN,
+               classes: Union[list, np.array] = None, num_classes: int = None):
+    """If needed, wraps the model in a common API based on model task and
+        prediction function contract.
 
     :param model: The model to evaluate on the examples.
     :type model: model with a predict or predict_proba function.
@@ -71,7 +76,8 @@ def wrap_model(model, examples, model_task=ModelTask.UNKNOWN, classes=None, num_
     if model_task in text_model_tasks:
         return _wrap_text_model(model, examples, model_task, False)[0]
     if model_task in image_model_tasks:
-        return _wrap_image_model(model, examples, model_task, False, classes, num_classes)[0]
+        return _wrap_image_model(model, examples, model_task,
+                                 False, classes, num_classes)[0]
     return _wrap_model(model, examples, model_task, False)[0]
 
 
@@ -105,14 +111,16 @@ def _wrap_model(model, examples, model_task, is_function):
                 # to pytorch Variable and adds predict and predict_proba functions
                 model = WrappedPytorchModel(model)
         except (NameError, AttributeError):
-            module_logger.debug('Could not import torch, required if using a pytorch model')
+            module_logger.debug(
+                'Could not import torch, required if using a pytorch model')
         if _is_fastai_tabular_model(model):
             model = WrappedFastAITabularModel(model)
         if is_sequential(model):
             model = WrappedTensorflowModel(model)
         if _classifier_without_proba(model):
             model = WrappedClassificationWithoutProbaModel(model)
-        eval_function, eval_ml_domain = _eval_model(model, examples, model_task)
+        eval_function, eval_ml_domain = _eval_model(
+            model, examples, model_task)
         if eval_ml_domain == ModelTask.CLASSIFICATION:
             return WrappedClassificationModel(model, eval_function, examples), eval_ml_domain
         else:
