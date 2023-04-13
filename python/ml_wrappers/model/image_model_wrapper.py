@@ -170,8 +170,6 @@ class WrappedTransformerImageClassificationModel(object):
 
     def __init__(self, model):
         """Initialize the WrappedTransformerImageClassificationModel."""
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        model.to(device)
         self._model = model
 
     def predict(self, dataset):
