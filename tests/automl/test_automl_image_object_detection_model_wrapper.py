@@ -2,7 +2,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # ---------------------------------------------------------
 
-"""Tests for wrap_model function on vision-based models"""
+"""Tests for wrap_model function on AutoML Object Detection models"""
 
 import copy
 import json
@@ -34,12 +34,12 @@ class TestImageModelWrapper(object):
     # works with ">=3.7,<3.9"
     @pytest.mark.skipif(
         sys.version_info < (3, 7),
-        reason='azureml-automl-dnn-vision not supported for older versions'
-    )
+        reason=('azureml-automl-dnn-vision not supported ' +
+                'for older versions of python'))
     @pytest.mark.skipif(
         sys.version_info >= (3, 9),
-        reason='azureml-automl-dnn-vision not supported for newer versions'
-    )
+        reason=('azureml-automl-dnn-vision not supported ' +
+                'for newer versions of python'))
     def test_wrap_automl_object_detection_model(self):
         data = load_object_fridge_dataset()[1:4]
         model_name = ModelNames.FASTER_RCNN_RESNET50_FPN

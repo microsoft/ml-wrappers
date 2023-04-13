@@ -151,9 +151,10 @@ def get_base64_string_from_path(img_path: str,
     imgio = BytesIO()
     img.save(imgio, img.format)
     img_str = base64.b64encode(imgio.getvalue())
+    decoded_img = img_str.decode("utf-8")
     if return_image_size:
-        return img_str.decode("utf-8"), img.size
-    return img_str.decode("utf-8")
+        return decoded_img, img.size
+    return decoded_img
 
 
 def load_base64_images(data: pd.DataFrame, return_image_size: bool = False) \

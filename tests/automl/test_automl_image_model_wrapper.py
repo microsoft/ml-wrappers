@@ -33,10 +33,12 @@ class TestImageModelWrapper(object):
     # works with ">=3.7,<3.9"
     @pytest.mark.skipif(
         sys.version_info < (3, 7),
-        reason='azureml-automl-dnn-vision not supported for older versions')
+        reason=('azureml-automl-dnn-vision not supported ' +
+                'for newer versions of python'))
     @pytest.mark.skipif(
         sys.version_info >= (3, 9),
-        reason='azureml-automl-dnn-vision not supported for newer versions')
+        reason=('azureml-automl-dnn-vision not supported ' +
+                'for newer versions of python'))
     def test_wrap_automl_image_classification_model(self):
         data = load_fridge_dataset()
         model_name = ModelNames.SERESNEXT

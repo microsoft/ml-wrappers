@@ -25,7 +25,7 @@ try:
     from torch import Tensor
 except ImportError:
     Tensor = Any
-    module_logger.debug('Could not import torch, required if using a' +
+    module_logger.debug('Could not import torch, required if using a ' +
                         'PyTorch model')
 
 try:
@@ -34,21 +34,21 @@ try:
         GeneralObjectDetectionModelWrapper
 except ImportError:
     GeneralObjectDetectionModelWrapper = object
-    module_logger.debug('Could not import vision_explanation_methods,' +
+    module_logger.debug('Could not import vision_explanation_methods, ' +
                         'required if using PytorchDRiseWrapper')
 
 try:
     import torchvision
     from torchvision import transforms as T
 except ImportError:
-    module_logger.debug('Could not import torchvision, required if' +
+    module_logger.debug('Could not import torchvision, required if ' +
                         'using PytorchDRiseWrapper')
 
 try:
     from mlflow.pyfunc import PyFuncModel
 except ImportError:
     PyFuncModel = Any
-    module_logger.debug('Could not import mlflow, required if using an' +
+    module_logger.debug('Could not import mlflow, required if using an ' +
                         'mlflow model')
 
 FASTAI_MODEL_SUFFIX = "fastai.learner.Learner'>"
@@ -114,15 +114,6 @@ def _process_automl_detections_to_raw_detections(
         image_size: Tuple[int, int]) -> Dict[str, Tensor]:
     """Process AutoML mlflow object detections from a single image.
 
-    :param image_detections: AutoML mlflow detections
-    :type image_detections: list
-    :param label_dict: Label dictionary mapping class names to an index
-    :type label_dict: dict
-    :param image_size: Image size
-    :type image_size: tuple(int, int)
-    :return: Raw detections
-    :rtype: dict
-
     The length of image_detections list will be equal to the number
     of objects the AutoML MLflow model detected in a single image.
     Below is an example of image_detections when the model detected
@@ -144,6 +135,15 @@ def _process_automl_detections_to_raw_detections(
       'score': 0.93}
     ]
     The bbox coordinates need to be scaled by the image dimensions.
+
+    :param image_detections: AutoML mlflow detections
+    :type image_detections: list
+    :param label_dict: Label dictionary mapping class names to an index
+    :type label_dict: dict
+    :param image_size: Image size
+    :type image_size: tuple(int, int)
+    :return: Raw detections
+    :rtype: dict
     """
 
     x, y = image_size
@@ -192,22 +192,20 @@ def _wrap_image_model(model, examples, model_task, is_function,
     :type model: function or model to wrap
     :param examples: The model evaluation examples.
     :type examples: ml_wrappers.DatasetWrapper
-                    or numpy.ndarray
-                    or pandas.DataFrame or panads.Series
-                    or scipy.sparse.csr_matrix
-                    or shap.DenseData
-                    or torch.Tensor
+    or numpy.ndarray or pandas.DataFrame or panads.Series
+    or scipy.sparse.csr_matrix or shap.DenseData
+    or torch.Tensor.
     :param model_task: Parameter to specify whether the model is an
-                       image_classification' or another type of image model.
+    'image_classification' or another type of image model.
     :type model_task: str
     :param classes: optional parameter specifying a list of class names
-                    the dataset
+    the dataset
     :type classes: list or np.ndarray
     :param number_of_classes: optional parameter specifying the
-                                number of classes in the dataset
+    number of classes in the dataset
     :type number_of_classes: int
     :return: The function chosen from given model and chosen domain, or
-        model wrapping the function and chosen domain.
+    model wrapping the function and chosen domain.
     :rtype: (function, str) or (model, str)
     """
     _wrapped_model = model
@@ -512,19 +510,6 @@ class WrappedMlflowAutomlObjectDetectionModel:
                 score_thresh: float = 0.5):
         """Create a list of detection records from the image predictions.
 
-        :param dataset: The dataset to predict on.
-        :type dataset: pandas.DataFrame
-        :param iou_thresh: Intersection-over-Union (IoU) threshold for NMS (or
-                           the amount of acceptable error). Objects with error
-                           cores higher than the threshold will be removed.
-        :type iou_thresh: float
-        :param score_thresh: Threshold to filter detections based on
-                            predicted confidence scores.
-        :type score_thresh: float
-        :return: Final detections from the object detector
-        :rtype: List of Detection Records
-
-
         Below is example Label (y) representation for a cohort of 2 images,
         with 3 objects detected for the first image and 1 for the second image.
 
@@ -539,15 +524,27 @@ class WrappedMlflowAutomlObjectDetectionModel:
          ]
 
         ]
+
+        :param dataset: The dataset to predict on.
+        :type dataset: pandas.DataFrame
+        :param iou_thresh: Intersection-over-Union (IoU) threshold for NMS (or
+                           the amount of acceptable error). Objects with error
+                           cores higher than the threshold will be removed.
+        :type iou_thresh: float
+        :param score_thresh: Threshold to filter detections based on
+                            predicted confidence scores.
+        :type score_thresh: float
+        :return: Final detections from the object detector
+        :rtype: List of Detection Records
         """
         image_sizes = dataset['image_size']
 
         dataset = dataset.drop(['image_size'], axis=1)
 
         predictions = self._mlflow_predict(dataset)
-        assert len(predictions['boxes']) == len(
-            image_sizes), ("{Internal/User} Error: Number of predictions" +
-                           "does not match number of images")
+        if not len(predictions['boxes']) == len(image_sizes):
+            raise ValueError("Internal Error: Number of predictions " +
+                             "does not match number of images")
 
         detections = []
         for image_detections, img_size in \
