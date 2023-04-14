@@ -649,3 +649,84 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
             )
 
         return detections
+
+
+class MLflowDRiseWrapper():
+    """Wraps a Mlflow model with a predict API function.
+
+    To be compatible with the D-RISE explainability method,
+    all models must be wrapped to have the same output and input class and a
+    predict function for object detection. This wrapper is customized for the
+    FasterRCNN model from Pytorch, and can also be used with the RetinaNet or
+    any other models with the same output class.
+    """
+
+    def __init__(self, model: PyFuncModel,
+                 classes: Union[list, np.ndarray]) -> None:
+        """Initialize the MLflowDRiseWrapper.
+
+        :param model: mlflow model
+        :type model: mlflow.pyfunc.PyFuncModel
+        :param number_of_classes: Number of classes the model is predicting
+        :type number_of_classes: int
+        """
+
+        self._model = model
+        self._classes = classes
+        self._number_of_classes = len(classes)
+        self._label_dict = {label: (i+1) for i, label in enumerate(classes)}
+
+    def _mlflow_predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
+        """Perform the inference using the wrapped MLflow model.
+
+        :param dataset: The dataset to predict on.
+        :type dataset: pandas.DataFrame
+        :return: The predicted data.
+        :rtype: pandas.DataFrame
+        """
+        predictions = self._model.predict(dataset)
+        return predictions
+
+    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.005,
+                score_thresh: float = 0.5):
+        """Predict the output value using the wrapped MLflow model.
+
+        :param dataset: The dataset to predict on.
+        :type dataset: pandas.DataFrame
+        :return: The predicted values.
+        :rtype: numpy.ndarray
+        """
+        image_sizes = dataset['image_size']
+
+        dataset = dataset.drop(['image_size'], axis=1)
+
+        predictions = self._mlflow_predict(dataset)
+        assert len(predictions['boxes']) == len(image_sizes)
+
+        detections = []
+        for image_detections, img_size in \
+                zip(predictions['boxes'], image_sizes):
+            raw_detections = _process_automl_detections_to_raw_detections(
+                image_detections, self._label_dict, img_size)
+            raw_detections = _apply_nms(raw_detections, iou_thresh)
+            raw_detections = _filter_score(raw_detections, score_thresh)
+
+            # Note that FasterRCNN doesn't return a score for each class, only
+            # the predicted class. DRISE requires a score for each class.
+            # We approximate the score for each class
+            # by dividing (class score) evenly among the other classes.
+
+            expanded_class_scores = od_common.expand_class_scores(
+                raw_detections[SCORES],
+                raw_detections[LABELS],
+                self._number_of_classes)
+
+            detections.append(
+                od_common.DetectionRecord(
+                    bounding_boxes=raw_detections[BOXES],
+                    class_scores=expanded_class_scores,
+                    objectness_scores=torch.tensor(
+                        [1.0]*raw_detections[BOXES].shape[0]),
+                ))
+
+        return detections
