@@ -410,6 +410,7 @@ class WrappedObjectDetectionModel:
         self._device = torch.device("cuda" if torch.cuda.is_available()
                                     else "cpu")
         model.eval()
+        model.to(self._device)
         self._model = model
         self._number_of_classes = number_of_classes
 
@@ -607,6 +608,8 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
         :param number_of_classes: Number of classes the model is predicting
         :type number_of_classes: int
         """
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        model.to(device)
         model.eval()
         self._model = model
         self._number_of_classes = number_of_classes
