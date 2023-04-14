@@ -7,6 +7,7 @@ import os
 import sys
 import xml.etree.ElementTree as ET
 from io import BytesIO
+from typing import Tuple, Union
 from zipfile import ZipFile
 
 import numpy as np
@@ -132,29 +133,51 @@ def load_images(data):
     return np.array(images)
 
 
-def get_base64_string_from_path(img_path: str) -> str:
+def get_base64_string_from_path(img_path: str,
+                                return_image_size: bool = False) \
+        -> Union[str, Tuple[str, Tuple[int, int]]]:
     """Load and convert pillow image to base64-encoded image
 
     :param img_path: image path
     :type img_path: str
-    :return: base64-encoded image
-    :rtype: str
+    :param return_image_size: true if image sizes should be returned in
+                            dataframe
+    :type data: bool
+    :return: base64-encoded image OR a tuple containing a base64-encoded image
+            and a tuple with the image size
+    :rtype: Union[str, Tuple[str, Tuple[int, int]]]
     """
     img = Image.open(img_path)
     imgio = BytesIO()
     img.save(imgio, img.format)
     img_str = base64.b64encode(imgio.getvalue())
-    return img_str.decode("utf-8")
+    decoded_img = img_str.decode("utf-8")
+    if return_image_size:
+        return decoded_img, img.size
+    return decoded_img
 
 
-def load_base64_images(data: pd.DataFrame) -> pd.DataFrame:
-    """Create dataframe of images encoded in base64 format
+def load_base64_images(data: pd.DataFrame, return_image_size: bool = False) \
+        -> pd.DataFrame:
+    """Create dataframe of images encoded in base64 format (and optionally
+        their sizes)
 
     :param data: input data with image paths and lables
     :type data: pandas.DataFrame
+    :param return_image_size: true if image sizes should be returned in
+                              dataframe
+    :type data: bool
     :return: base64-encoded image
     :rtype: pandas.DataFrame
     """
+    if return_image_size:
+        dataset = pd.DataFrame(
+            data=[[x for x in get_base64_string_from_path(
+                img_path, return_image_size=True)] for img_path in
+                data.loc[:, IMAGE]],
+            columns=[IMAGE, "image_size"],
+        )
+        return dataset
     data.loc[:, IMAGE] = data.loc[:, IMAGE].map(
         lambda img_path: get_base64_string_from_path(img_path))
     return data.loc[:, [IMAGE]]

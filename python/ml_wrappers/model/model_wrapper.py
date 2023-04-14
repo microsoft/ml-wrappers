@@ -2,11 +2,14 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # ---------------------------------------------------------
 
-"""Defines helpful model wrapper and utils for implicitly rewrapping the model to conform to explainer contracts."""
+"""Defines helpful model wrapper and utils for implicitly rewrapping the model
+    to conform to explainer contracts."""
 
 import logging
 import warnings
+from typing import Union
 
+import numpy as np
 from ml_wrappers.model.wrapped_classification_model import \
     WrappedClassificationModel
 from ml_wrappers.model.wrapped_classification_without_proba_model import \
@@ -25,7 +28,8 @@ from .tensorflow_wrapper import WrappedTensorflowModel, is_sequential
 from .text_model_wrapper import _is_transformers_pipeline, _wrap_text_model
 
 with warnings.catch_warnings():
-    warnings.filterwarnings('ignore', 'Starting from version 2.2.1', UserWarning)
+    warnings.filterwarnings(
+        'ignore', 'Starting from version 2.2.1', UserWarning)
 
 
 module_logger = logging.getLogger(__name__)
@@ -35,11 +39,14 @@ module_logger.setLevel(logging.INFO)
 try:
     import torch.nn as nn
 except ImportError:
-    module_logger.debug('Could not import torch, required if using a PyTorch model')
+    module_logger.debug(
+        'Could not import torch, required if using a PyTorch model')
 
 
-def wrap_model(model, examples, model_task=ModelTask.UNKNOWN, num_classes=None):
-    """If needed, wraps the model in a common API based on model task and prediction function contract.
+def wrap_model(model, examples, model_task: str = ModelTask.UNKNOWN,
+               num_classes: int = None, classes: Union[list, np.array] = None):
+    """If needed, wraps the model in a common API based on model task and
+        prediction function contract.
 
     :param model: The model to evaluate on the examples.
     :type model: model with a predict or predict_proba function.
@@ -49,10 +56,16 @@ def wrap_model(model, examples, model_task=ModelTask.UNKNOWN, num_classes=None):
     :type examples: ml_wrappers.DatasetWrapper or numpy.ndarray
         or pandas.DataFrame or panads.Series or scipy.sparse.csr_matrix
         or shap.DenseData or torch.Tensor
-    :param model_task: Optional parameter to specify whether the model is a classification or regression model.
-        In most cases, the type of the model can be inferred based on the shape of the output, where a classifier
-        has a predict_proba method and outputs a 2 dimensional array, while a regressor has a predict method and
-        outputs a 1 dimensional array.
+    :param model_task: Optional parameter to specify whether the model
+                       is a classification or regression model.
+                       In most cases, the type of the model can be inferred
+                       based on the shape of the output, where a classifier
+                       has a predict_proba method and outputs a 2 dimensional
+                       array, while a regressor has a predict method and
+                       outputs a 1 dimensional array.
+    :param classes: optional parameter specifying a list of class names
+        the dataset
+    :type classes: list or np.ndarray
     :param num_classes: optional parameter specifying the number of classes in
         the dataset
     :type num_classes: int
@@ -67,12 +80,14 @@ def wrap_model(model, examples, model_task=ModelTask.UNKNOWN, num_classes=None):
     if model_task in text_model_tasks:
         return _wrap_text_model(model, examples, model_task, False)[0]
     if model_task in image_model_tasks:
-        return _wrap_image_model(model, examples, model_task, False, num_classes)[0]
+        return _wrap_image_model(model, examples, model_task,
+                                 False,  num_classes, classes)[0]
     return _wrap_model(model, examples, model_task, False)[0]
 
 
 def _wrap_model(model, examples, model_task, is_function):
-    """If needed, wraps the model or function in a common API based on model task and prediction function contract.
+    """If needed, wraps the model or function in a common API based on model
+        task and prediction function contract.
 
     :param model: The model or function to evaluate on the examples.
     :type model: function or model with a predict or predict_proba function
@@ -82,12 +97,16 @@ def _wrap_model(model, examples, model_task, is_function):
     :type examples: ml_wrappers.DatasetWrapper or numpy.ndarray
         or pandas.DataFrame or panads.Series or scipy.sparse.csr_matrix
         or shap.DenseData or torch.Tensor
-    :param model_task: Optional parameter to specify whether the model is a classification or regression model.
-        In most cases, the type of the model can be inferred based on the shape of the output, where a classifier
-        has a predict_proba method and outputs a 2 dimensional array, while a regressor has a predict method and
-        outputs a 1 dimensional array.
+    :param model_task: Optional parameter to specify whether the model
+                       is a classification or regression model.
+                       In most cases, the type of the model can be inferred
+                       based on the shape of the output, where a classifier
+                       has a predict_proba method and outputs a 2 dimensional
+                       array, while a regressor has a predict method and
+                       outputs a 1 dimensional array.
     :type model_task: str
-    :return: The function chosen from given model and chosen domain, or model wrapping the function and chosen domain.
+    :return: The function chosen from given model and chosen domain, or
+             model wrapping the function and chosen domain.
     :rtype: (function, str) or (model, str)
     """
     if not isinstance(examples, DatasetWrapper):
@@ -97,30 +116,39 @@ def _wrap_model(model, examples, model_task, is_function):
     else:
         try:
             if isinstance(model, nn.Module):
-                # Wrap the model in an extra layer that converts the numpy array
-                # to pytorch Variable and adds predict and predict_proba functions
+                # Wrap the model in an extra layer that
+                # converts the numpy array
+
+                # to pytorch Variable and adds predict and
+                # predict_proba functions
                 model = WrappedPytorchModel(model)
         except (NameError, AttributeError):
-            module_logger.debug('Could not import torch, required if using a pytorch model')
+            module_logger.debug(
+                'Could not import torch, required if using a pytorch model')
         if _is_fastai_tabular_model(model):
             model = WrappedFastAITabularModel(model)
         if is_sequential(model):
             model = WrappedTensorflowModel(model)
         if _classifier_without_proba(model):
             model = WrappedClassificationWithoutProbaModel(model)
-        eval_function, eval_ml_domain = _eval_model(model, examples, model_task)
+        eval_function, eval_ml_domain = _eval_model(
+            model, examples, model_task)
         if eval_ml_domain == ModelTask.CLASSIFICATION:
-            return WrappedClassificationModel(model, eval_function, examples), eval_ml_domain
+            return WrappedClassificationModel(model, eval_function, examples),\
+                eval_ml_domain
         else:
-            return WrappedRegressionModel(model, eval_function, examples), eval_ml_domain
+            return WrappedRegressionModel(model, eval_function, examples), \
+                eval_ml_domain
 
 
 def _classifier_without_proba(model):
-    """Returns True if the given model is a classifier without predict_proba, eg SGDClassifier.
+    """Returns True if the given model is a classifier without predict_proba,
+        eg SGDClassifier.
 
     :param model: The model to evaluate on the examples.
     :type model: model with a predict or predict_proba function
     :return: True if the given model is a classifier without predict_proba.
     :rtype: bool
     """
-    return isinstance(model, SGDClassifier) and not hasattr(model, SKLearn.PREDICT_PROBA)
+    return isinstance(model, SGDClassifier) and not \
+        hasattr(model, SKLearn.PREDICT_PROBA)
