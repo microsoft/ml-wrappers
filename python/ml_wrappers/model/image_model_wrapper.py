@@ -97,6 +97,8 @@ def _apply_nms(orig_prediction: dict, iou_thresh: float = 0.5):
     :return: Model prediction after nms is applied
     :rtype: dict
     """
+    print("PRINTING ORIG PRED BOXES")
+    print(orig_prediction[BOXES])
     keep = torchvision.ops.nms(orig_prediction[BOXES],
                                orig_prediction[SCORES],
                                iou_thresh)
@@ -650,6 +652,10 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
 
         return detections
 
+# Unlike the Pytorch wrapper, this wrapper does not inherit from
+# GeneralObjectDetectionModelWrapper as this super class requires
+# predict to take a tensor input
+
 
 class MLflowDRiseWrapper():
     """Wraps a Mlflow model with a predict API function.
@@ -701,13 +707,28 @@ class MLflowDRiseWrapper():
         dataset = dataset.drop(['image_size'], axis=1)
 
         predictions = self._mlflow_predict(dataset)
-        assert len(predictions['boxes']) == len(image_sizes)
+        if not len(predictions['boxes']) == len(image_sizes):
+            raise ValueError("Internal Error: Number of predictions " +
+                             "does not match number of images")
 
         detections = []
         for image_detections, img_size in \
                 zip(predictions['boxes'], image_sizes):
+
             raw_detections = _process_automl_detections_to_raw_detections(
                 image_detections, self._label_dict, img_size)
+
+            print("SHAPE OF RAW DETECTIONS BOXES: ",
+                  raw_detections[BOXES].shape)
+            print("PRINTING RAW DETS BOXES")
+            print(raw_detections[BOXES])
+
+            # No detections found - most likely in masked image
+            if not raw_detections[BOXES].nelement() == 0:
+                detections.append([None])
+                print("HERE NOW")
+                continue
+
             raw_detections = _apply_nms(raw_detections, iou_thresh)
             raw_detections = _filter_score(raw_detections, score_thresh)
 
