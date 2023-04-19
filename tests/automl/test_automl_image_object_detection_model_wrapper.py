@@ -26,8 +26,8 @@ from common_vision_utils import load_base64_images, load_object_fridge_dataset
 from ml_wrappers import wrap_model
 from ml_wrappers.common.constants import ModelTask
 from ml_wrappers.model.image_model_wrapper import MLflowDRiseWrapper
-from wrapper_validator import (validate_wrapped_object_detection_model,
-                               validate_wrapped_object_detection_custom_model)
+from wrapper_validator import (validate_wrapped_object_detection_custom_model,
+                               validate_wrapped_object_detection_model)
 
 
 @pytest.mark.usefixtures('_clean_dir')

@@ -690,8 +690,8 @@ class MLflowDRiseWrapper():
         predictions = self._model.predict(dataset)
         return predictions
 
-    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.005,
-                score_thresh: float = 0.1):
+    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.25,
+                score_thresh: float = 0.5):
         """Predict the output value using the wrapped MLflow model.
 
         :param dataset: The dataset to predict on.
@@ -708,14 +708,9 @@ class MLflowDRiseWrapper():
             raise ValueError("Internal Error: Number of predictions " +
                              "does not match number of images")
 
-        print("PRINTING Num of PREDICTIONS")
-        print(len(predictions['boxes']))
-        assert len(predictions['boxes']) > 0
-        print("PRINTING One PREDICTIONS")
-        print(predictions['boxes'][0])
-        # pr = predictions['boxes'][0]
-        # for t in pr:
-        #     print(t)
+        if not len(predictions['boxes']) == 1:
+            raise ValueError(
+                "TypeError: Image needs to be a torch.Tensor or pd.DataFrame")
 
         detections = []
         for image_detections, img_size in \
@@ -724,6 +719,7 @@ class MLflowDRiseWrapper():
             raw_detections = _process_automl_detections_to_raw_detections(
                 image_detections, self._label_dict, img_size)
 
+            # TODO: check if this is needed
             # No detections found - most likely in masked image
             if raw_detections[BOXES].nelement() == 0:
                 detections.append(None)
