@@ -663,8 +663,7 @@ class MLflowDRiseWrapper():
     To be compatible with the D-RISE explainability method,
     all models must be wrapped to have the same output and input class and a
     predict function for object detection. This wrapper is customized for the
-    FasterRCNN model from Pytorch, and can also be used with the RetinaNet or
-    any other models with the same output class.
+    FasterRCNN model from AutoML.
     """
 
     def __init__(self, model: PyFuncModel,
@@ -693,7 +692,7 @@ class MLflowDRiseWrapper():
         predictions = self._model.predict(dataset)
         return predictions
 
-    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.005,
+    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.5,
                 score_thresh: float = 0.5):
         """Predict the output value using the wrapped MLflow model.
 
