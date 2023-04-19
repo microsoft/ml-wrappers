@@ -97,8 +97,6 @@ def _apply_nms(orig_prediction: dict, iou_thresh: float = 0.5):
     :return: Model prediction after nms is applied
     :rtype: dict
     """
-    print("PRINTING ORIG PRED BOXES")
-    print(orig_prediction[BOXES])
     keep = torchvision.ops.nms(orig_prediction[BOXES],
                                orig_prediction[SCORES],
                                iou_thresh)
@@ -692,8 +690,8 @@ class MLflowDRiseWrapper():
         predictions = self._model.predict(dataset)
         return predictions
 
-    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.5,
-                score_thresh: float = 0.5):
+    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.005,
+                score_thresh: float = 0.1):
         """Predict the output value using the wrapped MLflow model.
 
         :param dataset: The dataset to predict on.
@@ -709,6 +707,15 @@ class MLflowDRiseWrapper():
         if not len(predictions['boxes']) == len(image_sizes):
             raise ValueError("Internal Error: Number of predictions " +
                              "does not match number of images")
+
+        print("PRINTING Num of PREDICTIONS")
+        print(len(predictions['boxes']))
+        assert len(predictions['boxes']) > 0
+        print("PRINTING One PREDICTIONS")
+        print(predictions['boxes'][0])
+        # pr = predictions['boxes'][0]
+        # for t in pr:
+        #     print(t)
 
         detections = []
         for image_detections, img_size in \
