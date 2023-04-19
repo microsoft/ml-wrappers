@@ -693,7 +693,7 @@ class MLflowDRiseWrapper():
         predictions = self._model.predict(dataset)
         return predictions
 
-    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.5,
+    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.005,
                 score_thresh: float = 0.5):
         """Predict the output value using the wrapped MLflow model.
 
@@ -714,25 +714,14 @@ class MLflowDRiseWrapper():
         detections = []
         for image_detections, img_size in \
                 zip(predictions['boxes'], image_sizes):
-            c = 0
+
             raw_detections = _process_automl_detections_to_raw_detections(
                 image_detections, self._label_dict, img_size)
 
             # No detections found - most likely in masked image
             if raw_detections[BOXES].nelement() == 0:
                 detections.append(None)
-                c = 5
-                print("HERE NOW, Five C = ", c)
                 continue
-            c += 1
-            print("One C = ", c)
-            print("NUMBER OF ELEMS IN BOXES ",
-                  raw_detections[BOXES].nelement())
-
-            print("SHAPE OF RAW DETECTIONS BOXES: ",
-                  raw_detections[BOXES].shape)
-            print("PRINTING RAW DETS BOXES")
-            print(raw_detections[BOXES])
 
             raw_detections = _apply_nms(raw_detections, iou_thresh)
             raw_detections = _filter_score(raw_detections, score_thresh)
