@@ -133,7 +133,7 @@ class TestImageModelWrapper(object):
         reason=('azureml-automl-dnn-vision not supported ' +
                 'for newer versions of python'))
     def test_wrap_automl_object_detection_model_drise(self):
-        data = load_object_fridge_dataset()[:1]
+        data = load_object_fridge_dataset()[:2]
         model_name = ModelNames.FASTER_RCNN_RESNET50_FPN
 
         with tempfile.TemporaryDirectory() as tmp_output_dir:
