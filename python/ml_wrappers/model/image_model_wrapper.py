@@ -181,6 +181,43 @@ def _process_automl_detections_to_raw_detections(
         "scores": Tensor(scores)}
 
 
+def expand_class_scores(
+        scores: Tensor,
+        labels: Tensor,
+        number_of_classes: int,
+) -> torch.Tensor:
+    """Extrapolate a full set of class scores.
+
+    Many object detection models don't return a full set of class scores, but
+    rather just a score for the predicted class. This is a helper function
+    that approximates a full set of class scores by dividing the difference
+    between 1.0 and the predicted class score among the remaning classes.
+
+    :param scores: Set of class specific scores. Shape [D] where D is number
+        of detections
+    :type scores: torch.Tensor
+    :param labels: Set of label indices corresponding to predicted class.
+        Shape [D] where D is number of detections
+    :type labels: torch.Tensor (ints)
+    :param number_of_classes: Number of classes model predicts
+    :type number_of_classes: int
+    :return: A set of expanded scores, of shape [D, C], where C is number of
+        classes
+    :type: torch.Tensor
+    """
+    number_of_detections = scores.shape[0]
+
+    expanded_scores = torch.ones(number_of_detections, number_of_classes + 1)
+
+    for i, (score, label) in enumerate(zip(scores, labels)):
+
+        residual = (1. - score.item()) / (number_of_classes)
+        expanded_scores[i, :] *= residual
+        expanded_scores[i, int(label.item())] = score
+
+    return expanded_scores
+
+
 def _wrap_image_model(model, examples, model_task, is_function,
                       number_of_classes: int = None,
                       classes: Union[list, np.array] = None):
@@ -634,7 +671,7 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
             # by dividing (class score) evenly among the other classes.
 
             raw_detection = _filter_score(raw_detection, 0.5)
-            expanded_class_scores = od_common.expand_class_scores(
+            expanded_class_scores = expand_class_scores(
                 raw_detection[SCORES],
                 raw_detection[LABELS],
                 self._number_of_classes)
@@ -650,10 +687,6 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
 
         return detections
 
-# Unlike the Pytorch wrapper, this wrapper does not inherit from
-# GeneralObjectDetectionModelWrapper as this super class requires
-# predict to take a tensor input
-
 
 class MLflowDRiseWrapper():
     """Wraps a Mlflow model with a predict API function.
@@ -661,7 +694,9 @@ class MLflowDRiseWrapper():
     To be compatible with the D-RISE explainability method,
     all models must be wrapped to have the same output and input class and a
     predict function for object detection. This wrapper is customized for the
-    FasterRCNN model from AutoML.
+    FasterRCNN model from AutoML. Unlike the Pytorch wrapper, this wrapper
+    does not inherit from GeneralObjectDetectionModelWrapper as this super
+    class requires predict to take a tensor input.
     """
 
     def __init__(self, model: PyFuncModel,
@@ -733,7 +768,7 @@ class MLflowDRiseWrapper():
             # We approximate the score for each class
             # by dividing (class score) evenly among the other classes.
 
-            expanded_class_scores = od_common.expand_class_scores(
+            expanded_class_scores = expand_class_scores(
                 raw_detections[SCORES],
                 raw_detections[LABELS],
                 self._number_of_classes)
