@@ -185,7 +185,7 @@ def expand_class_scores(
         scores: Tensor,
         labels: Tensor,
         number_of_classes: int,
-) -> torch.Tensor:
+) -> Tensor:
     """Extrapolate a full set of class scores.
 
     Many object detection models don't return a full set of class scores, but
