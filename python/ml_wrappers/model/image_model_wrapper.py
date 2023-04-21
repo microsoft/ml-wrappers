@@ -745,7 +745,7 @@ class MLflowDRiseWrapper():
 
         if not len(predictions['boxes']) == 1:
             raise ValueError(
-                "TypeError: Image needs to be a torch.Tensor or pd.DataFrame")
+                "Currently, only 1 image can be passed to predict")
 
         detections = []
         for image_detections, img_size in \

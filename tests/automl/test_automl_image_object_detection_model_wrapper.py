@@ -26,8 +26,9 @@ from common_vision_utils import load_base64_images, load_object_fridge_dataset
 from ml_wrappers import wrap_model
 from ml_wrappers.common.constants import ModelTask
 from ml_wrappers.model.image_model_wrapper import MLflowDRiseWrapper
-from wrapper_validator import (validate_wrapped_object_detection_custom_model,
-                               validate_wrapped_object_detection_model)
+from wrapper_validator import (
+    validate_wrapped_object_detection_mlflow_drise_model,
+    validate_wrapped_object_detection_model)
 
 
 @pytest.mark.usefixtures('_clean_dir')
@@ -133,7 +134,7 @@ class TestImageModelWrapper(object):
         reason=('azureml-automl-dnn-vision not supported ' +
                 'for newer versions of python'))
     def test_wrap_automl_object_detection_model_drise(self):
-        data = load_object_fridge_dataset()[:2]
+        data = load_object_fridge_dataset()[3:4]
         model_name = ModelNames.FASTER_RCNN_RESNET50_FPN
 
         with tempfile.TemporaryDirectory() as tmp_output_dir:
@@ -211,4 +212,5 @@ class TestImageModelWrapper(object):
 
             wrapped_model = MLflowDRiseWrapper(mlflow_model,
                                                classes=class_names)
-            validate_wrapped_object_detection_custom_model(wrapped_model, data)
+            validate_wrapped_object_detection_mlflow_drise_model(
+                wrapped_model, data)
