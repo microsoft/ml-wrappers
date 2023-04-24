@@ -181,6 +181,43 @@ def _process_automl_detections_to_raw_detections(
         "scores": Tensor(scores)}
 
 
+def expand_class_scores(
+        scores: Tensor,
+        labels: Tensor,
+        number_of_classes: int,
+) -> Tensor:
+    """Extrapolate a full set of class scores.
+
+    Many object detection models don't return a full set of class scores, but
+    rather just a score for the predicted class. This is a helper function
+    that approximates a full set of class scores by dividing the difference
+    between 1.0 and the predicted class score among the remaning classes.
+
+    :param scores: Set of class specific scores. Shape [D] where D is number
+        of detections
+    :type scores: torch.Tensor
+    :param labels: Set of label indices corresponding to predicted class.
+        Shape [D] where D is number of detections
+    :type labels: torch.Tensor (ints)
+    :param number_of_classes: Number of classes model predicts
+    :type number_of_classes: int
+    :return: A set of expanded scores, of shape [D, C], where C is number of
+        classes
+    :type: torch.Tensor
+    """
+    number_of_detections = scores.shape[0]
+
+    expanded_scores = torch.ones(number_of_detections, number_of_classes + 1)
+
+    for i, (score, label) in enumerate(zip(scores, labels)):
+
+        residual = (1. - score.item()) / (number_of_classes)
+        expanded_scores[i, :] *= residual
+        expanded_scores[i, int(label.item())] = score
+
+    return expanded_scores
+
+
 def _wrap_image_model(model, examples, model_task, is_function,
                       number_of_classes: int = None,
                       classes: Union[list, np.array] = None):
@@ -634,7 +671,7 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
             # by dividing (class score) evenly among the other classes.
 
             raw_detection = _filter_score(raw_detection, 0.5)
-            expanded_class_scores = od_common.expand_class_scores(
+            expanded_class_scores = expand_class_scores(
                 raw_detection[SCORES],
                 raw_detection[LABELS],
                 self._number_of_classes)
@@ -647,5 +684,101 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
                         [1.0]*raw_detection[BOXES].shape[0]),
                 )
             )
+
+        return detections
+
+
+class MLflowDRiseWrapper():
+    """Wraps a Mlflow model with a predict API function.
+
+    To be compatible with the D-RISE explainability method,
+    all models must be wrapped to have the same output and input class and a
+    predict function for object detection. This wrapper is customized for the
+    FasterRCNN model from AutoML. Unlike the Pytorch wrapper, this wrapper
+    does not inherit from GeneralObjectDetectionModelWrapper as this super
+    class requires predict to take a tensor input.
+    """
+
+    def __init__(self, model: PyFuncModel,
+                 classes: Union[list, np.ndarray]) -> None:
+        """Initialize the MLflowDRiseWrapper.
+
+        :param model: mlflow model
+        :type model: mlflow.pyfunc.PyFuncModel
+        :param number_of_classes: Number of classes the model is predicting
+        :type number_of_classes: int
+        """
+
+        self._model = model
+        self._classes = classes
+        self._number_of_classes = len(classes)
+        self._label_dict = {label: (i+1) for i, label in enumerate(classes)}
+
+    def _mlflow_predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
+        """Perform the inference using the wrapped MLflow model.
+
+        :param dataset: The dataset to predict on.
+        :type dataset: pandas.DataFrame
+        :return: The predicted data.
+        :rtype: pandas.DataFrame
+        """
+        predictions = self._model.predict(dataset)
+        return predictions
+
+    def predict(self, dataset: pd.DataFrame, iou_thresh: float = 0.25,
+                score_thresh: float = 0.5):
+        """Predict the output value using the wrapped MLflow model.
+
+        :param dataset: The dataset to predict on.
+        :type dataset: pandas.DataFrame
+        :return: The predicted values.
+        :rtype: numpy.ndarray
+        """
+        image_sizes = dataset['image_size']
+
+        dataset = dataset.drop(['image_size'], axis=1)
+
+        predictions = self._mlflow_predict(dataset)
+        if not len(predictions['boxes']) == len(image_sizes):
+            raise ValueError("Internal Error: Number of predictions " +
+                             "does not match number of images")
+
+        if not len(predictions['boxes']) == 1:
+            raise ValueError(
+                "Currently, only 1 image can be passed to predict")
+
+        detections = []
+        for image_detections, img_size in \
+                zip(predictions['boxes'], image_sizes):
+
+            raw_detections = _process_automl_detections_to_raw_detections(
+                image_detections, self._label_dict, img_size)
+
+            # TODO: check if this is needed
+            # No detections found - most likely in masked image
+            if raw_detections[BOXES].nelement() == 0:
+                detections.append(None)
+                continue
+
+            raw_detections = _apply_nms(raw_detections, iou_thresh)
+            raw_detections = _filter_score(raw_detections, score_thresh)
+
+            # Note that FasterRCNN doesn't return a score for each class, only
+            # the predicted class. DRISE requires a score for each class.
+            # We approximate the score for each class
+            # by dividing (class score) evenly among the other classes.
+
+            expanded_class_scores = expand_class_scores(
+                raw_detections[SCORES],
+                raw_detections[LABELS],
+                self._number_of_classes)
+
+            detections.append(
+                od_common.DetectionRecord(
+                    bounding_boxes=raw_detections[BOXES],
+                    class_scores=expanded_class_scores,
+                    objectness_scores=torch.tensor(
+                        [1.0]*raw_detections[BOXES].shape[0]),
+                ))
 
         return detections

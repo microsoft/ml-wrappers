@@ -29,7 +29,19 @@ def validate_wrapped_object_detection_custom_model(wrapped_model, X_test):
     # validate we can call the model on the dataset
     predictions = wrapped_model.predict(X_test)
     # validate predictions and probabilities have correct shape
-    assert len(predictions) == 2
+    assert len(predictions) == 2, "Expected number of predictions to be 2." + \
+        f"Got {len(predictions)} predictions"
+
+
+def validate_wrapped_object_detection_mlflow_drise_model(
+        wrapped_model, X_test):
+    # validate wrapped model has predict and predict_proba functions
+    function_names = [SKLearn.PREDICT]
+    validate_functions(wrapped_model, function_names)
+    # validate we can call the model on the dataset
+    predictions = wrapped_model.predict(X_test)
+    # validate predictions and probabilities have correct shape
+    assert len(predictions) == 1
 
 
 def validate_wrapped_object_detection_model(wrapped_model, X_test):
@@ -86,7 +98,8 @@ def validate_wrapped_tf_model(wrapped_tf_model, X_test, model_task):
 
 def validate_wrapped_pytorch_model(wrapped_pytorch_model, X_test, model_task):
     assert isinstance(wrapped_pytorch_model, WrappedPytorchModel)
-    validate_wrapped_pred_classes_model(wrapped_pytorch_model, X_test, model_task)
+    validate_wrapped_pred_classes_model(
+        wrapped_pytorch_model, X_test, model_task)
 
 
 def validate_wrapped_pred_classes_model(wrapped_model, X_test, model_task):
