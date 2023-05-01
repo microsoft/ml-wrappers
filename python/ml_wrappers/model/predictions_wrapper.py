@@ -144,6 +144,12 @@ class PredictionsModelWrapperClassification(PredictionsModelWrapper):
             if not isinstance(y_pred_proba, np.ndarray):
                 raise DataValidationException(
                     "Expecting a numpy array for y_pred_proba")
+
+            if len(test_data) != len(y_pred_proba):
+                raise DataValidationException(
+                    "The number of instances in test data "
+                    "do not match with number of prediction probabilities")
+
             for i in range(0, len(y_pred_proba[0])):
                 self._combined_data[
                     TARGET + '_' + str(i)] = y_pred_proba[:, i]
