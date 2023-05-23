@@ -118,6 +118,14 @@ class TestPredictionsWrapperClassification(TestPredictionsWrapper):
                 X_test.iloc[0:len(X_test) - 1], model_predict, model_predict_proba
             )
 
+        with pytest.raises(
+                DataValidationException,
+                match="The number of instances in test data "
+                      "do not match with number of prediction probabilities"):
+            PredictionsModelWrapperClassification(
+                X_test.iloc[0:len(X_test) - 1], model_predict[0:len(X_test) - 1], model_predict_proba
+            )
+
     def test_prediction_wrapper_unsupported_predict_scenarios(self, iris):
         dataset = iris
         X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
