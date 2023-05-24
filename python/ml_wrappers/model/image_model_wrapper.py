@@ -222,7 +222,8 @@ def expand_class_scores(
 
 def _wrap_image_model(model, examples, model_task, is_function,
                       number_of_classes: int = None,
-                      classes: Union[list, np.array] = None):
+                      classes: Union[list, np.array] = None,
+                      device='cpu'):
     """If needed, wraps the model or function in a common API.
 
     Wraps the model based on model task and prediction function contract.
@@ -243,6 +244,9 @@ def _wrap_image_model(model, examples, model_task, is_function,
     :param number_of_classes: optional parameter specifying the
     number of classes in the dataset
     :type number_of_classes: int
+    :param device: optional parameter specifying the device to move the model
+        to. If not specified, then cpu is the default
+    :type device: str, 'cpu' or 'cuda'
     :return: The function chosen from given model and chosen domain, or
     model wrapping the function and chosen domain.
     :rtype: (function, str) or (model, str)
@@ -291,7 +295,7 @@ def _wrap_image_model(model, examples, model_task, is_function,
                     model, classes)
         else:
             _wrapped_model = WrappedObjectDetectionModel(
-                model, number_of_classes)
+                model, number_of_classes, device)
     return _wrapped_model, model_task
 
 
@@ -439,17 +443,22 @@ class WrappedObjectDetectionModel:
     """A class for wrapping a object detection model in the scikit-learn
         style."""
 
-    def __init__(self, model: Any, number_of_classes: int) -> None:
+    def __init__(self, model: Any, number_of_classes: int, device='cpu') -> None:
         """Initialize the WrappedObjectDetectionModel with the model
             and evaluation function.
 
         :param model: mlflow model
         :type model: Any
+        :param number_of_classes: number of distinct labels
+        :type number_of_classes: int
+        :param device: optional parameter specifying the device to move the
+            model to. If not specified, then cpu is the default
+        :type device: str, 'cpu' or 'cuda'
         """
-        self._device = torch.device("cuda" if torch.cuda.is_available()
-                                    else "cpu")
+        self._device = device
         model.eval()
         model.to(self._device)
+
         self._model = model
         self._number_of_classes = number_of_classes
 
@@ -639,17 +648,21 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
     any other models with the same output class.
     """
 
-    def __init__(self, model, number_of_classes: int):
+    def __init__(self, model, number_of_classes: int, device='cpu'):
         """Initialize the PytorchDRiseWrapper.
 
         :param model: Object detection model
         :type model: PytorchFasterRCNN model
         :param number_of_classes: Number of classes the model is predicting
         :type number_of_classes: int
+        :param device: optional parameter specifying the device to move the
+            model to. If not specified, then cpu is the default
+        :type device: str, 'cpu' or 'cuda'
         """
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        model.to(device)
+        self._device = device
+        model.to(self._device)
         model.eval()
+
         self._model = model
         self._number_of_classes = number_of_classes
 
