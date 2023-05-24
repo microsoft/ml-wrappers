@@ -73,7 +73,7 @@ def wrap_model(model, examples, model_task: str = ModelTask.UNKNOWN,
     :type model_task: str
     :param device: optional parameter specifying the device to move the model
         to. If not specified, then cpu is the default
-    :type device: str, 'cpu' or 'cuda'
+    :type device: str, for instance: 'cpu', 'cuda'
     :return: The wrapper model.
     :rtype: model
     """

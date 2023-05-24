@@ -246,7 +246,7 @@ def _wrap_image_model(model, examples, model_task, is_function,
     :type number_of_classes: int
     :param device: optional parameter specifying the device to move the model
         to. If not specified, then cpu is the default
-    :type device: str, 'cpu' or 'cuda'
+    :type device: str, for instance: 'cpu', 'cuda'
     :return: The function chosen from given model and chosen domain, or
     model wrapping the function and chosen domain.
     :rtype: (function, str) or (model, str)
@@ -453,7 +453,7 @@ class WrappedObjectDetectionModel:
         :type number_of_classes: int
         :param device: optional parameter specifying the device to move the
             model to. If not specified, then cpu is the default
-        :type device: str, 'cpu' or 'cuda'
+        :type device: str, for instance: 'cpu', 'cuda'
         """
         self._device = device
         model.eval()
@@ -657,7 +657,7 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
         :type number_of_classes: int
         :param device: optional parameter specifying the device to move the
             model to. If not specified, then cpu is the default
-        :type device: str, 'cpu' or 'cuda'
+        :type device: str, for instance: 'cpu', 'cuda'
         """
         self._device = device
         model.to(self._device)
