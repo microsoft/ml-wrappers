@@ -532,7 +532,12 @@ class WrappedMlflowAutomlObjectDetectionModel:
 
         self._model = model
         self._classes = classes
-        self._label_dict = {label: (i+1) for i, label in enumerate(classes)}
+        try:
+            if type(classes[0] == str):
+                self._label_dict = {label: (i+1)
+                                    for i, label in enumerate(classes)}
+        except KeyError:
+            raise KeyError("classes parameter not a list of class labels")
 
     def _mlflow_predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
         """Perform the inference using the wrapped MLflow model.
