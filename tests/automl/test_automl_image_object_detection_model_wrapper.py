@@ -133,7 +133,7 @@ class TestImageModelWrapper(object):
                 wrap_model(mlflow_model,
                            data,
                            ModelTask.OBJECT_DETECTION,
-                           class_names=label_dict)
+                           classes=label_dict)
 
     @pytest.mark.skipif(
         sys.version_info < (3, 7),
