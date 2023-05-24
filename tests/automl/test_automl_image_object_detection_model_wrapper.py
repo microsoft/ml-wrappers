@@ -128,7 +128,7 @@ class TestImageModelWrapper(object):
             # Now test what happens when an invalid classes input is given
             label_dict = {'can': 1, 'carton': 2,
                           'milk_bottle': 3, 'water_bottle': 4}
-            with pytest.raises(ValueError,
+            with pytest.raises(KeyError,
                  match="classes parameter not a list of class labels"):
                 wrap_model(mlflow_model,
                            data,
