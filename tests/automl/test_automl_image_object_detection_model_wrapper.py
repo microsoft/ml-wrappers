@@ -125,6 +125,15 @@ class TestImageModelWrapper(object):
                 classes=class_names)
             validate_wrapped_object_detection_model(wrapped_model, data)
 
+            # Now test what happens when an invalid classes input is given
+            label_dict = {'can': 1, 'carton': 2,
+                          'milk_bottle': 3, 'water_bottle': 4}
+            with pytest.raises(TypeError):
+                wrap_model(mlflow_model,
+                           data,
+                           ModelTask.OBJECT_DETECTION,
+                           class_names=label_dict)
+
     @pytest.mark.skipif(
         sys.version_info < (3, 7),
         reason=('azureml-automl-dnn-vision not supported ' +

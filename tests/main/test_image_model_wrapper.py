@@ -6,8 +6,6 @@
 
 import sys
 
-import mlflow
-import mlflow.pytorch
 import numpy as np
 import pandas as pd
 import pytest
@@ -134,46 +132,6 @@ class TestImageModelWrapper(object):
                                    data,
                                    ModelTask.OBJECT_DETECTION)
         validate_wrapped_object_detection_model(wrapped_model, data)
-
-    # Skip for older versions of pytorch due to missing classes
-    @pytest.mark.skipif(sys.version_info.minor <= 6,
-                        reason='Older versions of pytorch not supported')
-    def test_automl_object_detection_model_pandas(self):
-        data = load_object_fridge_dataset()[:3]
-        data = load_images(data)
-
-        mlflow.start_run()
-
-        # Create the Faster R-CNN model
-        model = torchvision.models.detection.fasterrcnn_resnet50_fpn(
-            pretrained=True)
-
-        # Log the model
-        mlflow.pytorch.log_model(model, "fasterrcnn_resnet50_fpn")
-        loaded_model = mlflow.pytorch.load_model("fasterrcnn_resnet50_fpn")
-
-        in_features = (loaded_model.roi_heads
-                       .box_predictor.cls_score.in_features)
-        loaded_model.roi_heads.box_predictor = FastRCNNPredictor(in_features,
-                                                                 5)
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        wrapped_model = wrap_model(loaded_model.to(device),
-                                   data,
-                                   ModelTask.OBJECT_DETECTION,
-                                   class_names=np.array(['can',
-                                                         'carton',
-                                                         'milk_bottle',
-                                                         'water_bottle']))
-        validate_wrapped_object_detection_model(wrapped_model, data)
-
-        # Now test what happens when an invalid classes input is given
-        label_dict = {'can': 1, 'carton': 2,
-                      'milk_bottle': 3, 'water_bottle': 4}
-        with pytest.raises(TypeError):
-            wrap_model(loaded_model.to(device),
-                       data,
-                       ModelTask.OBJECT_DETECTION,
-                       class_names=label_dict)
 
     # Skip for older versions of pytorch due to missing classes
     @pytest.mark.skipif(sys.version_info.minor <= 6,
