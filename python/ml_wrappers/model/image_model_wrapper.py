@@ -533,8 +533,9 @@ class WrappedMlflowAutomlObjectDetectionModel:
         self._model = model
         self._classes = classes
         try:
-            self._label_dict = {label: (i+1)
-                                for i, label in enumerate(classes)}
+            if type(classes[0] == str):
+                self._label_dict = {label: (i+1)
+                                    for i, label in enumerate(classes)}
         except KeyError:
             raise KeyError("classes parameter not a list of class labels")
 
