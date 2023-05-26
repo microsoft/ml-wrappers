@@ -37,8 +37,8 @@ module_logger.setLevel(logging.INFO)
 
 
 try:
-    import torch.nn as nn
     import torch
+    import torch.nn as nn
 except ImportError:
     module_logger.debug(
         'Could not import torch, required if using a PyTorch model')

@@ -17,7 +17,8 @@ from ml_wrappers.model.model_utils import (_is_callable_pipeline,
 from ml_wrappers.model.pytorch_wrapper import WrappedPytorchModel
 from ml_wrappers.model.wrapped_classification_model import \
     WrappedClassificationModel
-from model_wrapper import auto_device
+
+from .model_wrapper import auto_device
 
 module_logger = logging.getLogger(__name__)
 module_logger.setLevel(logging.INFO)
