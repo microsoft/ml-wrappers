@@ -44,7 +44,8 @@ except ImportError:
 
 
 def wrap_model(model, examples, model_task: str = ModelTask.UNKNOWN,
-               num_classes: int = None, classes: Union[list, np.array] = None):
+               num_classes: int = None, classes: Union[list, np.array] = None,
+               device='cpu'):
     """If needed, wraps the model in a common API based on model task and
         prediction function contract.
 
@@ -70,6 +71,9 @@ def wrap_model(model, examples, model_task: str = ModelTask.UNKNOWN,
         the dataset
     :type num_classes: int
     :type model_task: str
+    :param device: optional parameter specifying the device to move the model
+        to. If not specified, then cpu is the default
+    :type device: str, for instance: 'cpu', 'cuda'
     :return: The wrapper model.
     :rtype: model
     """
@@ -81,7 +85,8 @@ def wrap_model(model, examples, model_task: str = ModelTask.UNKNOWN,
         return _wrap_text_model(model, examples, model_task, False)[0]
     if model_task in image_model_tasks:
         return _wrap_image_model(model, examples, model_task,
-                                 False,  num_classes, classes)[0]
+                                 False,  num_classes, classes,
+                                 device)[0]
     return _wrap_model(model, examples, model_task, False)[0]
 
 
