@@ -18,8 +18,6 @@ from ml_wrappers.model.pytorch_wrapper import WrappedPytorchModel
 from ml_wrappers.model.wrapped_classification_model import \
     WrappedClassificationModel
 
-from .model_wrapper import auto_device
-
 module_logger = logging.getLogger(__name__)
 module_logger.setLevel(logging.INFO)
 
@@ -59,6 +57,7 @@ FASTAI_MODEL_SUFFIX = "fastai.learner.Learner'>"
 BOXES = 'boxes'
 LABELS = 'labels'
 SCORES = 'scores'
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def _is_fastai_model(model):
@@ -225,7 +224,7 @@ def expand_class_scores(
 def _wrap_image_model(model, examples, model_task, is_function,
                       number_of_classes: int = None,
                       classes: Union[list, np.array] = None,
-                      device=auto_device()):
+                      device=DEVICE):
     """If needed, wraps the model or function in a common API.
 
     Wraps the model based on model task and prediction function contract.
@@ -448,7 +447,7 @@ class WrappedObjectDetectionModel:
     def __init__(self,
                  model: Any,
                  number_of_classes: int,
-                 device=auto_device()) -> None:
+                 device=DEVICE) -> None:
         """Initialize the WrappedObjectDetectionModel with the model
             and evaluation function.
 
@@ -658,7 +657,7 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
     any other models with the same output class.
     """
 
-    def __init__(self, model, number_of_classes: int, device=auto_device()):
+    def __init__(self, model, number_of_classes: int, device=DEVICE):
         """Initialize the PytorchDRiseWrapper.
 
         :param model: Object detection model
