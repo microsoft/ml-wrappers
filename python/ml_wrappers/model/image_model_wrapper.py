@@ -17,6 +17,7 @@ from ml_wrappers.model.model_utils import (_is_callable_pipeline,
 from ml_wrappers.model.pytorch_wrapper import WrappedPytorchModel
 from ml_wrappers.model.wrapped_classification_model import \
     WrappedClassificationModel
+from model_wrapper import auto_device
 
 module_logger = logging.getLogger(__name__)
 module_logger.setLevel(logging.INFO)
@@ -223,7 +224,7 @@ def expand_class_scores(
 def _wrap_image_model(model, examples, model_task, is_function,
                       number_of_classes: int = None,
                       classes: Union[list, np.array] = None,
-                      device='cpu'):
+                      device=auto_device()):
     """If needed, wraps the model or function in a common API.
 
     Wraps the model based on model task and prediction function contract.
@@ -443,7 +444,10 @@ class WrappedObjectDetectionModel:
     """A class for wrapping a object detection model in the scikit-learn
         style."""
 
-    def __init__(self, model: Any, number_of_classes: int, device='cpu') -> None:
+    def __init__(self,
+                 model: Any,
+                 number_of_classes: int,
+                 device=auto_device()) -> None:
         """Initialize the WrappedObjectDetectionModel with the model
             and evaluation function.
 
@@ -653,7 +657,7 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
     any other models with the same output class.
     """
 
-    def __init__(self, model, number_of_classes: int, device='cpu'):
+    def __init__(self, model, number_of_classes: int, device=auto_device()):
         """Initialize the PytorchDRiseWrapper.
 
         :param model: Object detection model

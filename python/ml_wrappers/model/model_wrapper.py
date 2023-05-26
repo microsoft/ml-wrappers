@@ -38,14 +38,22 @@ module_logger.setLevel(logging.INFO)
 
 try:
     import torch.nn as nn
+    import torch
 except ImportError:
     module_logger.debug(
         'Could not import torch, required if using a PyTorch model')
 
 
+def auto_device():
+    """
+    Determines available device. If GPU is available, then cuda. Else, cpu.
+    """
+    return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
 def wrap_model(model, examples, model_task: str = ModelTask.UNKNOWN,
                num_classes: int = None, classes: Union[list, np.array] = None,
-               device='cpu'):
+               device=auto_device()):
     """If needed, wraps the model in a common API based on model task and
         prediction function contract.
 
