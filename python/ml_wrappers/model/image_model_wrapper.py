@@ -9,7 +9,7 @@ from typing import Any, Dict, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from ml_wrappers.common.constants import ModelTask
+from ml_wrappers.common.constants import ModelTask, Device
 from ml_wrappers.dataset.dataset_wrapper import DatasetWrapper
 from ml_wrappers.model.evaluator import _eval_model
 from ml_wrappers.model.model_utils import (_is_callable_pipeline,
@@ -223,7 +223,7 @@ def expand_class_scores(
 def _wrap_image_model(model, examples, model_task, is_function,
                       number_of_classes: int = None,
                       classes: Union[list, np.array] = None,
-                      device="auto"):
+                      device=Device.AUTO):
     """If needed, wraps the model or function in a common API.
 
     Wraps the model based on model task and prediction function contract.
@@ -246,7 +246,7 @@ def _wrap_image_model(model, examples, model_task, is_function,
     :type number_of_classes: int
     :param device: optional parameter specifying the device to move the model
         to.
-    :type device: str, for instance: 'cpu', 'cuda'
+    :type device: str
     :return: The function chosen from given model and chosen domain, or
     model wrapping the function and chosen domain.
     :rtype: (function, str) or (model, str)
@@ -300,7 +300,7 @@ def _wrap_image_model(model, examples, model_task, is_function,
     return _wrapped_model, model_task
 
 
-def _get_device(device: str):
+def _get_device(device: str) -> str:
     """Sets the device to run computations on to the desired value.
 
     If device was set to "auto", then the desired device will be cuda (GPU)
@@ -308,10 +308,14 @@ def _get_device(device: str):
 
     :param device: parameter specifying the device to move the model
         to
-    :type device: str, for instance: 'cpu', 'cuda'
+    :type device: str
+    :return: selected device to run computations on
+    :rtype: str
     """
-    if device == "auto":
-        return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = device.lower()
+    if device == Device.AUTO:
+        return torch.device(Device.CUDA if torch.cuda.is_available()
+                            else Device.CPU)
     return device
 
 
@@ -462,7 +466,7 @@ class WrappedObjectDetectionModel:
     def __init__(self,
                  model: Any,
                  number_of_classes: int,
-                 device="auto") -> None:
+                 device=Device.AUTO) -> None:
         """Initialize the WrappedObjectDetectionModel with the model
             and evaluation function.
 
@@ -472,7 +476,7 @@ class WrappedObjectDetectionModel:
         :type number_of_classes: int
         :param device: optional parameter specifying the device to move the
             model to. If not specified, then cpu is the default
-        :type device: str, for instance: 'cpu', 'cuda'
+        :type device: str
         """
         self._device = _get_device(device)
         model.eval()
@@ -672,7 +676,7 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
     any other models with the same output class.
     """
 
-    def __init__(self, model, number_of_classes: int, device="auto"):
+    def __init__(self, model, number_of_classes: int, device=Device.AUTO):
         """Initialize the PytorchDRiseWrapper.
 
         :param model: Object detection model
@@ -681,7 +685,7 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
         :type number_of_classes: int
         :param device: optional parameter specifying the device to move the
             model to. If not specified, then cpu is the default
-        :type device: str, for instance: 'cpu', 'cuda'
+        :type device: str
         """
         self._device = _get_device(device)
         model.to(self._device)
