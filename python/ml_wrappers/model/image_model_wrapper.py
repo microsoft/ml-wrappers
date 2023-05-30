@@ -9,7 +9,7 @@ from typing import Any, Dict, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from ml_wrappers.common.constants import ModelTask, Device
+from ml_wrappers.common.constants import Device, ModelTask
 from ml_wrappers.dataset.dataset_wrapper import DatasetWrapper
 from ml_wrappers.model.evaluator import _eval_model
 from ml_wrappers.model.model_utils import (_is_callable_pipeline,
