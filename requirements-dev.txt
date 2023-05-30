@@ -9,3 +9,4 @@ raiutils
 fastai
 vision_explanation_methods
 mlflow
+torch
