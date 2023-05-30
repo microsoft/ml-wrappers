@@ -307,7 +307,7 @@ def _get_device(device: str) -> str:
     if available. Otherwise, the device should be set to cpu.
 
     :param device: parameter specifying the device to move the model
-        to
+        to.
     :type device: str
     :return: selected device to run computations on
     :rtype: str
