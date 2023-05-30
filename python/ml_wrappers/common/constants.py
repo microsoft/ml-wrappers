@@ -313,7 +313,7 @@ class ResetIndex(str, Enum):
     ResetTeacher = 'reset_teacher'
 
 
-class Device(str, Enum):
+class Device(Enum):
     """Specifies all possible device types."""
 
     CPU = 'cpu'
