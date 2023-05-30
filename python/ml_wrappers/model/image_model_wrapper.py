@@ -308,7 +308,8 @@ def _get_device(device: str):
 
     :param device: parameter specifying the device to move the model
         to
-    :type device: str, for instance: 'cpu', 'cuda'
+    :type device: str
+    :param device: torch device. Accepted values are 'auto', 'cpu', and 'cuda'.
     """
     if device == "auto":
         return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
