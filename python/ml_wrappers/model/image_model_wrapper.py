@@ -312,11 +312,13 @@ def _get_device(device: str) -> str:
     :return: selected device to run computations on
     :rtype: str
     """
-    device = device.lower()
-    if device == Device.AUTO:
-        return torch.device(Device.CUDA if torch.cuda.is_available()
-                            else Device.CPU)
-    return device
+    if device in [member.name for member in Device]:
+        if device == Device.AUTO:
+            return torch.device(Device.CUDA if torch.cuda.is_available()
+                                else Device.CPU)
+        return device
+    else:
+        raise ValueError("Selected device is invalid")
 
 
 class WrappedTransformerImageClassificationModel(object):
