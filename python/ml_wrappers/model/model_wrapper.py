@@ -37,7 +37,6 @@ module_logger.setLevel(logging.INFO)
 
 
 try:
-    import torch
     import torch.nn as nn
 except ImportError:
     module_logger.debug(
