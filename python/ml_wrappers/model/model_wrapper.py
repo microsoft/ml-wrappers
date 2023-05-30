@@ -43,12 +43,10 @@ except ImportError:
     module_logger.debug(
         'Could not import torch, required if using a PyTorch model')
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 
 def wrap_model(model, examples, model_task: str = ModelTask.UNKNOWN,
                num_classes: int = None, classes: Union[list, np.array] = None,
-               device=DEVICE):
+               device="auto"):
     """If needed, wraps the model in a common API based on model task and
         prediction function contract.
 
