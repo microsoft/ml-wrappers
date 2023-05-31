@@ -316,8 +316,8 @@ def _get_device(device: str) -> str:
        or type(device) == int
        or device is None):
         if device == Device.AUTO.value:
-            return torch.device(Device.CUDA.value if torch.cuda.is_available()
-                                else Device.CPU.value)
+            return (Device.CUDA.value if torch.cuda.is_available()
+                    else Device.CPU.value)
         return device
     else:
         raise ValueError("Selected device is invalid")
@@ -482,7 +482,7 @@ class WrappedObjectDetectionModel:
             model to. If not specified, then cpu is the default
         :type device: str
         """
-        self._device = _get_device(device)
+        self._device = torch.device(_get_device(device))
         model.eval()
         model.to(self._device)
 
@@ -692,7 +692,7 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
             model to. If not specified, then cpu is the default
         :type device: str
         """
-        self._device = _get_device(device)
+        self._device = torch.device(_get_device(device))
         model.to(self._device)
         model.eval()
 
