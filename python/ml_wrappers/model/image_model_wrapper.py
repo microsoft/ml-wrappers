@@ -303,7 +303,7 @@ def _wrap_image_model(model, examples, model_task, is_function,
 def _get_device(device: str) -> str:
     """Sets the device to run computations on to the desired value.
 
-    If device was set to "auto", then the desired device will be cuda (GPU)
+    If device were set to "auto", then the desired device will be cuda (GPU)
     if available. Otherwise, the device should be set to cpu.
 
     :param device: parameter specifying the device to move the model
@@ -312,7 +312,7 @@ def _get_device(device: str) -> str:
     :return: selected device to run computations on
     :rtype: str
     """
-    if device in [member.name for member in Device]:
+    if device in Device.__members__:
         if device == Device.AUTO:
             return torch.device(Device.CUDA if torch.cuda.is_available()
                                 else Device.CPU)
