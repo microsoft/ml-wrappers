@@ -312,7 +312,7 @@ def _get_device(device: str) -> str:
     :return: selected device to run computations on
     :rtype: str
     """
-    if device in Device.__members__.values():
+    if device in [member.value for member in Device]:
         if device == Device.AUTO.value:
             return torch.device(Device.CUDA.value if torch.cuda.is_available()
                                 else Device.CPU.value)
