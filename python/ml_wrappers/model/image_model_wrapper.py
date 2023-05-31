@@ -223,7 +223,7 @@ def expand_class_scores(
 def _wrap_image_model(model, examples, model_task, is_function,
                       number_of_classes: int = None,
                       classes: Union[list, np.array] = None,
-                      device=Device.AUTO):
+                      device=Device.AUTO.value):
     """If needed, wraps the model or function in a common API.
 
     Wraps the model based on model task and prediction function contract.
@@ -312,7 +312,9 @@ def _get_device(device: str) -> str:
     :return: selected device to run computations on
     :rtype: str
     """
-    if device in [member.value for member in Device]:
+    if (device in [member.value for member in Device]
+       or type(device) == int
+       or device is None):
         if device == Device.AUTO.value:
             return torch.device(Device.CUDA.value if torch.cuda.is_available()
                                 else Device.CPU.value)
@@ -468,7 +470,7 @@ class WrappedObjectDetectionModel:
     def __init__(self,
                  model: Any,
                  number_of_classes: int,
-                 device=Device.AUTO) -> None:
+                 device=Device.AUTO.value) -> None:
         """Initialize the WrappedObjectDetectionModel with the model
             and evaluation function.
 
@@ -678,7 +680,8 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
     any other models with the same output class.
     """
 
-    def __init__(self, model, number_of_classes: int, device=Device.AUTO):
+    def __init__(self, model, number_of_classes: int,
+                 device=Device.AUTO.value):
         """Initialize the PytorchDRiseWrapper.
 
         :param model: Object detection model
