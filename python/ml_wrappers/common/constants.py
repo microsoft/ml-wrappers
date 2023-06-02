@@ -313,6 +313,14 @@ class ResetIndex(str, Enum):
     ResetTeacher = 'reset_teacher'
 
 
+class Device(Enum):
+    """Specifies all possible device types."""
+
+    CPU = 'cpu'
+    GPU = 'gpu'
+    AUTO = 'auto'
+
+
 text_model_tasks = {ModelTask.TEXT_CLASSIFICATION,
                     ModelTask.MULTILABEL_TEXT_CLASSIFICATION,
                     ModelTask.SENTIMENT_ANALYSIS,

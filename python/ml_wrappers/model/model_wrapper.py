@@ -17,7 +17,7 @@ from ml_wrappers.model.wrapped_classification_without_proba_model import \
 from ml_wrappers.model.wrapped_regression_model import WrappedRegressionModel
 from sklearn.linear_model import SGDClassifier
 
-from ..common.constants import (ModelTask, SKLearn, image_model_tasks,
+from ..common.constants import (Device, ModelTask, SKLearn, image_model_tasks,
                                 text_model_tasks)
 from ..dataset.dataset_wrapper import DatasetWrapper
 from .evaluator import _eval_function, _eval_model
@@ -45,7 +45,7 @@ except ImportError:
 
 def wrap_model(model, examples, model_task: str = ModelTask.UNKNOWN,
                num_classes: int = None, classes: Union[list, np.array] = None,
-               device='cpu'):
+               device=Device.AUTO.value):
     """If needed, wraps the model in a common API based on model task and
         prediction function contract.
 
