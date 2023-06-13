@@ -8,9 +8,6 @@ import sys
 
 import pandas as pd
 import pytest
-from ml_wrappers import wrap_model
-from ml_wrappers.dataset.dataset_wrapper import DatasetWrapper
-
 from common_utils import (create_catboost_classifier,
                           create_catboost_regressor,
                           create_fastai_tabular_classifier,
@@ -27,6 +24,8 @@ from common_utils import (create_catboost_classifier,
                           create_sklearn_logistic_regressor, create_tf_model,
                           create_xgboost_classifier, create_xgboost_regressor)
 from constants import DatasetConstants
+from ml_wrappers import wrap_model
+from ml_wrappers.dataset.dataset_wrapper import DatasetWrapper
 from train_wrapper_utils import (train_classification_model_numpy,
                                  train_classification_model_pandas,
                                  train_regression_model_numpy,

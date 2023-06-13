@@ -7,12 +7,11 @@
 import numpy as np
 import pandas as pd
 import pytest
+from common_utils import assert_batch_equal, assert_sparse_equal
 from ml_wrappers.dataset.dataset_utils import _summarize_data
 from ml_wrappers.dataset.dataset_wrapper import DatasetWrapper
 from pandas.testing import assert_frame_equal, assert_series_equal
 from scipy.sparse import csr_matrix
-
-from common_utils import assert_batch_equal, assert_sparse_equal
 
 try:
     import torch
