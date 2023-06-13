@@ -12,6 +12,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.datasets import (fetch_20newsgroups, fetch_california_housing,
                               load_breast_cancer, load_diabetes, load_iris,
                               load_wine, make_classification)
+from rai_test_utils.utilities import retrieve_dataset
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.impute import SimpleImputer
@@ -617,62 +618,6 @@ def create_dnn_classifier_unfit(feature_number):
     return model
 
 
-def create_diabetes_data():
-    diabetes_data = load_diabetes()
-    X = diabetes_data.data
-    y = diabetes_data.target
-    feature_names = diabetes_data.feature_names
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=0)
-    return X_train, X_test, y_train, y_test, feature_names
-
-
-def create_iris_data():
-    # Import Iris dataset
-    iris = load_iris()
-    # Split data into train and test
-    x_train, x_test, y_train, y_validation = train_test_split(iris.data, iris.target,
-                                                              test_size=0.2, random_state=0)
-    feature_names = [name.replace(' (cm)', '') for name in iris.feature_names]
-    return x_train, x_test, y_train, y_validation, feature_names, iris.target_names
-
-
-def create_energy_data():
-    # Import energy data
-    energy_data = retrieve_dataset('energyefficiency2012_data.train.csv')
-    # Get the Y1 column
-    target = energy_data.iloc[:, len(energy_data.columns) - 2]
-    energy_data = energy_data.iloc[:, :len(energy_data.columns) - 3]
-    feature_names = energy_data.columns.values
-    # Split data into train and test
-    x_train, x_test, y_train, y_validation = train_test_split(energy_data, target,
-                                                              test_size=0.2, random_state=0)
-    return x_train, x_test, y_train, y_validation, feature_names
-
-
-def create_housing_data():
-    # Import California housing dataset
-    housing = fetch_california_housing()
-    # Split data into train and test
-    x_train, x_test, y_train, y_validation = train_test_split(housing.data, housing.target,
-                                                              test_size=0.2, random_state=7)
-    return x_train, x_test, y_train, y_validation, housing.feature_names
-
-
-def create_cancer_data():
-    # Import cancer dataset
-    cancer = retrieve_dataset('breast-cancer.train.csv', na_values='?').interpolate().astype('int64')
-    cancer_target = cancer.iloc[:, 0]
-    cancer_data = cancer.iloc[:, 1:]
-    feature_names = cancer_data.columns.values
-    target_names = ['no_cancer', 'cancer']
-    # Split data into train and test
-    x_train, x_test, y_train, y_validation = train_test_split(cancer_data, cancer_target,
-                                                              test_size=0.2, random_state=0)
-    return x_train, x_test, y_train, y_validation, feature_names, target_names
-
-
 def create_cancer_data_booleans():
     # Import cancer dataset
     cancer = retrieve_dataset('breast-cancer.train.csv', na_values='?').interpolate().astype('int64')
@@ -685,127 +630,6 @@ def create_cancer_data_booleans():
     x_train, x_test, y_train, y_validation = train_test_split(cancer_data, cancer_target,
                                                               test_size=0.2, random_state=0)
     return x_train, x_test, y_train, y_validation, feature_names, target_names
-
-
-def create_scikit_cancer_data():
-    breast_cancer_data = load_breast_cancer()
-    classes = breast_cancer_data.target_names.tolist()
-
-    # Split data into train and test
-    x_train, x_test, y_train, y_test = train_test_split(breast_cancer_data.data,
-                                                        breast_cancer_data.target,
-                                                        test_size=0.2,
-                                                        random_state=0)
-    feature_names = breast_cancer_data.feature_names
-    classes = breast_cancer_data.target_names.tolist()
-    return x_train, x_test, y_train, y_test, feature_names, classes
-
-
-def create_wine_data():
-    wine = load_wine()
-    X = wine.data
-    y = wine.target
-    classes = wine.target_names
-    feature_names = wine.feature_names
-    X_train, X_test, y_train, y_test = train_test_split(X,
-                                                        y,
-                                                        test_size=0.5,
-                                                        random_state=0)
-    return X_train, X_test, y_train, y_test, feature_names, classes
-
-
-def create_msx_data(test_size):
-    sparse_matrix = retrieve_dataset('msx_transformed_2226.npz')
-    sparse_matrix_x = sparse_matrix[:, :sparse_matrix.shape[1] - 2]
-    sparse_matrix_y = sparse_matrix[:, (sparse_matrix.shape[1] - 2):(sparse_matrix.shape[1] - 1)]
-    return train_test_split(sparse_matrix_x, sparse_matrix_y, test_size=test_size, random_state=7)
-
-
-def create_binary_classification_dataset():
-    return create_multiclass_classification_dataset(num_classes=2)
-
-
-def create_multiclass_classification_dataset(num_classes=5, num_features=20, num_informative=10):
-    X, y = make_classification(n_classes=num_classes,
-                               n_features=num_features,
-                               n_informative=num_informative)
-
-    # Split data into train and test
-    x_train, x_test, y_train, y_test = train_test_split(X,
-                                                        y,
-                                                        test_size=0.2,
-                                                        random_state=0)
-    feature_names = ["col" + str(i) for i in list(range(x_train.shape[1]))]
-    classes = np.unique(y_train).tolist()
-
-    return x_train, x_test, y_train, y_test, feature_names, classes
-
-
-def create_reviews_data(test_size):
-    reviews_data = retrieve_dataset('reviews.json')
-    papers = reviews_data['paper']
-    reviews = []
-    evaluation = []
-    for paper in papers:
-        if paper['review'] is None or not paper['review']:
-            continue
-        reviews.append(paper['review'][0]['text'])
-        evaluation.append(paper['review'][0]['evaluation'])
-    return train_test_split(reviews, evaluation, test_size=test_size, random_state=7)
-
-
-def create_simple_titanic_data():
-    titanic_url = ('https://raw.githubusercontent.com/amueller/'
-                   'scipy-2017-sklearn/091d371/notebooks/datasets/titanic3.csv')
-    data = read_csv(titanic_url)
-    # fill missing values
-    data = data.fillna(method="ffill")
-    data = data.fillna(method="bfill")
-    numeric_features = ['age', 'fare']
-    categorical_features = ['embarked', 'sex', 'pclass']
-
-    y = data['survived'].values
-    X = data[categorical_features + numeric_features]
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    return X_train, X_test, y_train, y_test, numeric_features, categorical_features
-
-
-def create_complex_titanic_data():
-    titanic_url = ('https://raw.githubusercontent.com/amueller/'
-                   'scipy-2017-sklearn/091d371/notebooks/datasets/titanic3.csv')
-    data = read_csv(titanic_url)
-    X = data.drop('survived', axis=1)
-    y = data['survived']
-
-    return train_test_split(X, y, test_size=0.2, random_state=42)
-
-
-def create_timeseries_data(sample_cnt_per_grain,
-                           time_column_name,
-                           target_column_name,
-                           grains_dict=None,
-                           freq='D'):
-    data = []
-    if grains_dict is None:
-        grains_dict = {}
-    for grain_comb in _get_all_combinations(grains_dict):
-        row_data = {
-            time_column_name: pd.date_range(start='2000-01-01',
-                                            periods=sample_cnt_per_grain,
-                                            freq=freq),
-            target_column_name: np.sin(np.arange(sample_cnt_per_grain)).astype(float),
-            'universal_answer': np.repeat(42, sample_cnt_per_grain),
-            'orderdate': pd.date_range('1992-08-01', periods=sample_cnt_per_grain, freq='D')
-        }
-        row_data.update(grain_comb)
-
-        X = pd.DataFrame(row_data)
-        data.append(X)
-
-    X = pd.concat(data).set_index([time_column_name] + list(grains_dict.keys()))
-    y = X.pop(target_column_name).values
-    return X, y
 
 
 def assert_sparse_equal(actual, expected):
@@ -835,40 +659,6 @@ def assert_batch_equal(actual, expected):
     for ((c_data, c_label), (data, label)) in zipped_batches:
         assert np.array_equal(c_data, data)
         assert np.array_equal(c_label, label)
-
-
-def _get_all_combinations(input_dict):
-    input_list = [(k, v) for k, v in input_dict.items()]
-    len_list = [len(kv[1]) for kv in input_list]
-
-    input_idx = [0] * len(input_dict)
-    if len(input_dict) == 0:
-        return [{}]
-
-    output = []
-
-    done = False
-    while True:
-        new_combination = {input_list[i][0]: input_list[i][1][idx] for i, idx in enumerate(input_idx)}
-        output.append(new_combination)
-
-        input_idx[-1] += 1
-        carry_check_pos = -1
-        while True:
-            if input_idx[carry_check_pos] == len_list[carry_check_pos]:
-                if carry_check_pos == -len(input_dict):
-                    done = True
-                    break
-                input_idx[carry_check_pos] = 0
-                input_idx[carry_check_pos - 1] += 1
-                carry_check_pos -= 1
-            else:
-                break
-
-        if done:
-            break
-
-    return output
 
 
 def _common_model_generator(feature_number, output_length=1):

@@ -9,15 +9,19 @@ import tempfile
 import pytest
 
 try:
-    from common_utils import (create_cancer_data, create_cancer_data_booleans,
-                              create_complex_titanic_data,
-                              create_diabetes_data, create_energy_data,
-                              create_housing_data, create_iris_data,
-                              create_multiclass_classification_dataset,
-                              create_simple_titanic_data, create_wine_data)
+    from common_utils import (create_cancer_data_booleans)
 except ModuleNotFoundError:
     print("Could not import common_utils, may be running minimal tests")
     pass
+
+from rai_test_utils.datasets.tabular import (
+    create_cancer_data,
+    create_complex_titanic_data,
+    create_diabetes_data, create_energy_data,
+    create_housing_data, create_iris_data,
+    create_multiclass_classification_dataset,
+    create_simple_titanic_data, create_wine_data
+)
 
 from constants import DatasetConstants
 
@@ -110,14 +114,16 @@ def wine():
 
 @pytest.fixture(scope='session')
 def multiclass_classification():
-    x_train, x_test, y_train, y_test, features, classes = \
+    x_train, y_train, x_test, y_test, classes = \
         create_multiclass_classification_dataset()
+    feature_names = ["col" + str(i) for i in list(range(x_train.shape[1]))]
+
     return {
-        DatasetConstants.X_TRAIN: x_train,
-        DatasetConstants.X_TEST: x_test,
+        DatasetConstants.X_TRAIN: x_train.values,
+        DatasetConstants.X_TEST: x_test.values,
         DatasetConstants.Y_TRAIN: y_train,
         DatasetConstants.Y_TEST: y_test,
-        DatasetConstants.FEATURES: features,
+        DatasetConstants.FEATURES: feature_names,
         DatasetConstants.CLASSES: classes
     }
 

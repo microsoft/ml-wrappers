@@ -1,2 +1,3 @@
 pytest
 pytest-cov
+rai-test-utils==0.3.0

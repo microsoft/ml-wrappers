@@ -6,12 +6,10 @@ import logging
 
 import pandas as pd
 import pytest
-from common_utils import create_timeseries_data
+from rai_test_utils.datasets.tabular import create_timeseries_data
 from constants import DatasetConstants
 from ml_wrappers.dataset import CustomTimestampFeaturizer
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
-
-test_logger = logging.getLogger(__name__)
 
 
 @pytest.mark.usefixtures('_clean_dir')
