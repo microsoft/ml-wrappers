@@ -6,15 +6,15 @@
 import numpy as np
 import pandas as pd
 from catboost import CatBoostClassifier, CatBoostRegressor
+from rai_test_utils.utilities import retrieve_dataset
 from sklearn import linear_model, svm
 from sklearn.base import TransformerMixin
 from sklearn.compose import ColumnTransformer
-from sklearn.datasets import (fetch_20newsgroups, fetch_california_housing,
-                              load_breast_cancer, load_diabetes, load_iris,
-                              load_wine, make_classification)
-from rai_test_utils.utilities import retrieve_dataset
+from sklearn.datasets import fetch_20newsgroups
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.feature_extraction.text import (CountVectorizer,
+                                             HashingVectorizer,
+                                             TfidfVectorizer)
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import roc_auc_score
@@ -61,9 +61,6 @@ except (ImportError, SyntaxError):
     # Skip for older versions of python due to breaking changes in fastai
     pass
 
-from datasets_utils import retrieve_dataset
-from pandas import read_csv
-
 LIGHTGBM_METHOD = 'mimic.lightgbm'
 LINEAR_METHOD = 'mimic.linear'
 SGD_METHOD = 'mimic.sgd'
@@ -99,7 +96,6 @@ def create_binary_sparse_newsgroups_data():
     x_test = newsgroups_test.data
     y_train = newsgroups_train.target
     y_validation = newsgroups_test.target
-    from sklearn.feature_extraction.text import HashingVectorizer
     vectorizer = HashingVectorizer(stop_words='english', alternate_sign=False,
                                    n_features=2**16)
     x_train = vectorizer.transform(x_train)
@@ -110,12 +106,10 @@ def create_binary_sparse_newsgroups_data():
 def create_multiclass_sparse_newsgroups_data():
     remove = ('headers', 'footers', 'quotes')
     categories = ['alt.atheism', 'talk.religion.misc', 'comp.graphics', 'sci.space']
-    from sklearn.datasets import fetch_20newsgroups
     ngroups = fetch_20newsgroups(subset='train', categories=categories,
                                  shuffle=True, random_state=42, remove=remove)
     x_train, x_test, y_train, y_validation = train_test_split(ngroups.data, ngroups.target,
                                                               test_size=0.02, random_state=42)
-    from sklearn.feature_extraction.text import HashingVectorizer
     vectorizer = HashingVectorizer(stop_words='english', alternate_sign=False,
                                    n_features=2**16)
     x_train = vectorizer.transform(x_train)

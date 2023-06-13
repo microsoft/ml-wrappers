@@ -5,10 +5,11 @@
 """Tests for WrappedTensorflowModel"""
 
 import pytest
-from common_utils import (create_keras_classifier, create_keras_regressor,
-                          create_scikit_keras_regressor)
 from ml_wrappers.common.constants import ModelTask
 from ml_wrappers.model import WrappedTensorflowModel
+
+from common_utils import (create_keras_classifier, create_keras_regressor,
+                          create_scikit_keras_regressor)
 from train_wrapper_utils import (train_classification_model_numpy,
                                  train_classification_model_pandas,
                                  train_regression_model_numpy,

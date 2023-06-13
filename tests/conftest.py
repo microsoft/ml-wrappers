@@ -9,19 +9,16 @@ import tempfile
 import pytest
 
 try:
-    from common_utils import (create_cancer_data_booleans)
+    from common_utils import create_cancer_data_booleans
 except ModuleNotFoundError:
     print("Could not import common_utils, may be running minimal tests")
     pass
 
 from rai_test_utils.datasets.tabular import (
-    create_cancer_data,
-    create_complex_titanic_data,
-    create_diabetes_data, create_energy_data,
-    create_housing_data, create_iris_data,
-    create_multiclass_classification_dataset,
-    create_simple_titanic_data, create_wine_data
-)
+    create_cancer_data, create_complex_titanic_data, create_diabetes_data,
+    create_energy_data, create_housing_data, create_iris_data,
+    create_multiclass_classification_dataset, create_simple_titanic_data,
+    create_wine_data)
 
 from constants import DatasetConstants
 
