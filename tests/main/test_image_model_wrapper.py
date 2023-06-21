@@ -20,7 +20,8 @@ from common_vision_utils import (IMAGE, create_image_classification_pipeline,
                                  retrieve_or_train_fridge_model)
 from ml_wrappers import wrap_model
 from ml_wrappers.common.constants import ModelTask
-from ml_wrappers.model.image_model_wrapper import PytorchDRiseWrapper
+from ml_wrappers.model.image_model_wrapper import (PytorchDRiseWrapper,
+                                                   _get_device)
 from wrapper_validator import (validate_wrapped_classification_model,
                                validate_wrapped_multilabel_model,
                                validate_wrapped_object_detection_custom_model,
@@ -31,7 +32,8 @@ try:
     from torchvision import transforms as T
     from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 except ImportError:
-    print('Could not import torchvision, required if using a vision PyTorch model')
+    print('Could not import torchvision, \
+    required if using a vision PyTorch model')
 
 
 @pytest.mark.usefixtures('_clean_dir')
@@ -146,3 +148,11 @@ class TestImageModelWrapper(object):
         validate_wrapped_object_detection_custom_model(wrapped_model,
                                                        T.ToTensor()(data[0])
                                                        .repeat(2, 1, 1, 1))
+
+    def test_get_device(self):
+        # default value as per the wrap_model
+        # invocation in RAIVisionInsights
+        device = _get_device("auto")
+        assert device == torch.device(
+            "cuda:0" if torch.cuda.is_available()
+            else "cpu")
