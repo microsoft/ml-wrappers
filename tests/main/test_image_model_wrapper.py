@@ -164,10 +164,6 @@ class TestImageModelWrapper(object):
             with pytest.raises(ValueError,
                                match="Selected device is invalid"):
                 wrapped_model = PytorchDRiseWrapper(model, 1, 'cuda')
-                validate_wrapped_object_detection_custom_model(
-                    wrapped_model,
-                    T.ToTensor()(data[0])
-                    .repeat(2, 1, 1, 1))
 
     # Skip for older versions of pytorch due to missing classes
     @pytest.mark.skipif(sys.version_info.minor <= 6,
@@ -188,10 +184,6 @@ class TestImageModelWrapper(object):
             with pytest.raises(ValueError,
                                match="Selected device is invalid"):
                 wrapped_model = WrappedObjectDetectionModel(model, 1, 'cuda')
-                validate_wrapped_object_detection_custom_model(
-                    wrapped_model,
-                    T.ToTensor()(data[0])
-                    .repeat(2, 1, 1, 1))
 
     def _set_up_OD_model(self):
         """Returns generic model and dataset for OD testing (FastRCNN)"""
