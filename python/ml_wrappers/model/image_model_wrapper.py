@@ -303,7 +303,7 @@ def _wrap_image_model(model, examples, model_task, is_function,
 def _get_device(device: str) -> str:
     """Sets the device to run computations on to the desired value.
 
-    If device were set to "auto", then the desired device will be cuda (GPU)
+    If device were set to "auto", then the desired device will be gpu (CUDA)
     if available. Otherwise, the device should be set to cpu.
 
     :param device: parameter specifying the device to move the model
@@ -316,14 +316,12 @@ def _get_device(device: str) -> str:
        or type(device) == int
        or device is None):
         if device == Device.AUTO.value:
-            return Device.CPU.value
-            # TODO replace line above with the following return statement
-            # once CUDA has been enabled
-            # return (Device.CUDA.value if torch.cuda.is_available()
-            #         else Device.CPU.value)
+            if torch.cuda.is_available():
+                return Device.CUDA.value
+            else:
+                return Device.CPU.value
         return device
-    else:
-        raise ValueError("Selected device is invalid")
+    raise ValueError("Selected device is invalid")
 
 
 class WrappedTransformerImageClassificationModel(object):

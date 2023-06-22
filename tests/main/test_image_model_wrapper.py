@@ -21,7 +21,8 @@ from common_vision_utils import (IMAGE, create_image_classification_pipeline,
 from ml_wrappers import wrap_model
 from ml_wrappers.common.constants import ModelTask
 from ml_wrappers.model.image_model_wrapper import (PytorchDRiseWrapper,
-                                                   WrappedObjectDetectionModel)
+                                                   WrappedObjectDetectionModel,
+                                                   _get_device)
 from wrapper_validator import (validate_wrapped_classification_model,
                                validate_wrapped_multilabel_model,
                                validate_wrapped_object_detection_custom_model,
@@ -32,7 +33,8 @@ try:
     from torchvision import transforms as T
     from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 except ImportError:
-    print('Could not import torchvision, required if using a vision PyTorch model')
+    print('Could not import torchvision, \
+    required if using a vision PyTorch model')
 
 
 @pytest.mark.usefixtures('_clean_dir')
@@ -184,6 +186,12 @@ class TestImageModelWrapper(object):
             with pytest.raises(ValueError,
                                match="Selected device is invalid"):
                 wrapped_model = WrappedObjectDetectionModel(model, 1, 'cuda')
+
+    def test_get_device(self):
+        # default value as per the wrap_model
+        # invocation in RAIVisionInsights
+        device = _get_device("auto")
+        assert device == "cpu"
 
     def _set_up_OD_model(self):
         """Returns generic model and dataset for OD testing (FastRCNN)"""
