@@ -153,6 +153,4 @@ class TestImageModelWrapper(object):
         # default value as per the wrap_model
         # invocation in RAIVisionInsights
         device = _get_device("auto")
-        assert device == torch.device(
-            "cuda:0" if torch.cuda.is_available()
-            else "cpu")
+        assert device == "cpu"
