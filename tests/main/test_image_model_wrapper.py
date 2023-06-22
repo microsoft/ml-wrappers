@@ -191,7 +191,7 @@ class TestImageModelWrapper(object):
         # test default invocation of _get_device as it would be during the
         # wrap_model invocation in RAIVisionInsights
         device = _get_device("auto")
-        assert device == "cpu"
+        assert device == "cpu" or device == "cuda"
 
     def _set_up_OD_model(self):
         """Returns generic model and dataset for OD testing (FastRCNN)"""
