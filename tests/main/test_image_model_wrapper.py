@@ -156,7 +156,7 @@ class TestImageModelWrapper(object):
         validate_wrapped_object_detection_custom_model(wrapped_model,
                                                        T.ToTensor()(data[0])
                                                        .repeat(2, 1, 1, 1))
-        if (torch.cuda.is_available()):
+        if torch.cuda.is_available():
             wrapped_model = PytorchDRiseWrapper(model, 1, 'cuda')
             validate_wrapped_object_detection_custom_model(
                 wrapped_model,
@@ -176,7 +176,7 @@ class TestImageModelWrapper(object):
         validate_wrapped_object_detection_custom_model(wrapped_model,
                                                        T.ToTensor()(data[0])
                                                        .repeat(2, 1, 1, 1))
-        if (torch.cuda.is_available()):
+        if torch.cuda.is_available():
             wrapped_model = WrappedObjectDetectionModel(model, 1, 'cuda')
             validate_wrapped_object_detection_custom_model(
                 wrapped_model,
@@ -188,8 +188,8 @@ class TestImageModelWrapper(object):
                 wrapped_model = WrappedObjectDetectionModel(model, 1, 'cuda')
 
     def test_get_device(self):
-        # default value as per the wrap_model
-        # invocation in RAIVisionInsights
+        # test default invocation of _get_device as it would be during the
+        # wrap_model invocation in RAIVisionInsights
         device = _get_device("auto")
         assert device == "cpu"
 
