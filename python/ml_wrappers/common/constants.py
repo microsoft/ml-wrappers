@@ -317,7 +317,7 @@ class Device(Enum):
     """Specifies all possible device types."""
 
     CPU = 'cpu'
-    GPU = 'gpu'
+    CUDA = 'cuda'
     AUTO = 'auto'
 
 
