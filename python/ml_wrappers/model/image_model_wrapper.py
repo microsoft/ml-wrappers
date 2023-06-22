@@ -320,8 +320,7 @@ def _get_device(device: str) -> str:
             return (Device.CUDA.value if torch.cuda.is_available()
                     else Device.CPU.value)
         return device
-    else:
-        raise ValueError("Selected device is invalid")
+    raise ValueError("Selected device is invalid")
 
 
 class WrappedTransformerImageClassificationModel(object):
