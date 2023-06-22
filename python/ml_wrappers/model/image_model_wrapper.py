@@ -317,8 +317,11 @@ def _get_device(device: str) -> str:
        or type(device) == int
        or device is None):
         if device == Device.AUTO.value:
-            return (Device.CUDA.value if torch.cuda.is_available()
-                    else Device.CPU.value)
+            return Device.CPU.value
+            # TODO replace line above with the following return statement
+            # once CUDA has been enabled
+            # return (Device.CUDA.value if torch.cuda.is_available()
+            #         else Device.CPU.value)
         return device
     else:
         raise ValueError("Selected device is invalid")
