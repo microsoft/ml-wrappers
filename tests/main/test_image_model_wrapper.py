@@ -161,7 +161,8 @@ class TestImageModelWrapper(object):
                 T.ToTensor()(data[0])
                 .repeat(2, 1, 1, 1))
         else:
-            with pytest.raises(ValueError("Selected device is invalid")):
+            with pytest.raises(ValueError,
+                               match="Selected device is invalid"):
                 wrapped_model = PytorchDRiseWrapper(model, 1, 'cuda')
                 validate_wrapped_object_detection_custom_model(
                     wrapped_model,
@@ -184,7 +185,8 @@ class TestImageModelWrapper(object):
                 T.ToTensor()(data[0])
                 .repeat(2, 1, 1, 1))
         else:
-            with pytest.raises(ValueError("Selected device is invalid")):
+            with pytest.raises(ValueError,
+                               match="Selected device is invalid"):
                 wrapped_model = WrappedObjectDetectionModel(model, 1, 'cuda')
                 validate_wrapped_object_detection_custom_model(
                     wrapped_model,
