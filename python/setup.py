@@ -41,7 +41,8 @@ DEPENDENCIES = [
     'numpy',
     'pandas<2.0.0',
     'scipy',
-    'scikit-learn'
+    'scikit-learn',
+    joblib<1.3.0; python_version <= '3.7'
 ]
 
 with open(README_FILE, 'r', encoding='utf-8') as f:
