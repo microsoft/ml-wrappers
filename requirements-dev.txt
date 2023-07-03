@@ -9,3 +9,4 @@ raiutils
 fastai
 vision_explanation_methods
 mlflow
+joblib<1.3.0; python_version <= '3.7'
