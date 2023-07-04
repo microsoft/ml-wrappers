@@ -224,8 +224,8 @@ class TestPredictionsWrapperRegression(TestPredictionsWrapper):
         assert not hasattr(model_wrapper, "predict_proba")
         self.verify_pickle_serialization(model, model_wrapper, X_test)
 
-    @pytest.mark.parametrize('len', [10, 100, 200, 300, 400, 500, 1000])
-    def test_prediction_wrapper_regression_perf(self, housing, len, should_construct_pandas_query):
+    @pytest.mark.parametrize('length_test_set', [10, 100, 200, 300, 400, 500, 1000])
+    def test_prediction_wrapper_regression_perf(self, housing, length_test_set, should_construct_pandas_query):
         dataset = housing
 
         X_train = pd.DataFrame(data=dataset[DatasetConstants.X_TRAIN],
@@ -236,11 +236,11 @@ class TestPredictionsWrapperRegression(TestPredictionsWrapper):
         y_train = dataset[DatasetConstants.Y_TRAIN]
         model = create_lightgbm_regressor(X_train, y_train)
 
-        model_predict = model.predict(X_test[0:len])
+        model_predict = model.predict(X_test[0:length_test_set])
 
         model_wrapper = PredictionsModelWrapperRegression(
-            X_test[0:len], model_predict, should_construct_pandas_query=should_construct_pandas_query)
+            X_test[0:length_test_set], model_predict, should_construct_pandas_query=should_construct_pandas_query)
 
-        self.verify_predict_outputs(model, model_wrapper, X_test[0:len])
+        self.verify_predict_outputs(model, model_wrapper, X_test[0:length_test_set])
         assert not hasattr(model_wrapper, "predict_proba")
-        self.verify_pickle_serialization(model, model_wrapper, X_test[0:len])
+        self.verify_pickle_serialization(model, model_wrapper, X_test[0:length_test_set])
