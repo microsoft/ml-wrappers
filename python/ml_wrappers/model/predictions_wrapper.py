@@ -26,7 +26,7 @@ class PredictionsModelWrapper:
         :param y_pred: Predictions of the model.
         :type y_pred: np.ndarray
         :param should_construct_pandas_query: Whether to use pandas query()
-            function to filter the data. If set to False, the data will 
+            function to filter the data. If set to False, the data will
             be filtered using iloc(). Defaults to True.
         :type should_construct_pandas_query: Optional[bool]
         """
@@ -52,7 +52,7 @@ class PredictionsModelWrapper:
         :type query_test_data_row: pd.DataFrame
         :return: The filtered dataframe based on the values in query data.
         :rtype: pd.DataFrame
-        """        
+        """
         if self._should_construct_pandas_query:
             data_copy = self._combined_data
             for column_name, column_data in query_test_data_row.squeeze().items():
@@ -133,7 +133,7 @@ class PredictionsModelWrapperRegression(PredictionsModelWrapper):
         :param y_pred: Predictions of the model.
         :type y_pred: np.ndarray
         :param should_construct_pandas_query: Whether to use pandas query()
-            function to filter the data. If set to False, the data will 
+            function to filter the data. If set to False, the data will
             be filtered using iloc(). Defaults to True.
         :type should_construct_pandas_query: Optional[bool]
         """
@@ -157,7 +157,7 @@ class PredictionsModelWrapperClassification(PredictionsModelWrapper):
         :param y_pred_proba: Prediction probabilities of the model.
         :type y_pred_proba: np.ndarray
         :param should_construct_pandas_query: Whether to use pandas query()
-            function to filter the data. If set to False, the data will 
+            function to filter the data. If set to False, the data will
             be filtered using iloc(). Defaults to True.
         :type should_construct_pandas_query: Optional[bool]
         """

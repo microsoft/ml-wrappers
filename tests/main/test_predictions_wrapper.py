@@ -35,6 +35,7 @@ class TestPredictionsWrapper:
         if hasattr(new_model_wrapper, "predict_proba"):
             self.verify_predict_proba_outputs(model, new_model_wrapper, test_data)
 
+
 @pytest.mark.parametrize('should_construct_pandas_query', [True, False])
 class TestPredictionsWrapperClassification(TestPredictionsWrapper):
     @pytest.mark.parametrize('dataset_name', ['iris', 'titanic', 'cancer', 'wine', 'multiclass'])
