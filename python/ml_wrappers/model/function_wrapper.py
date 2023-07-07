@@ -35,15 +35,26 @@ def _convert_to_two_cols(function, examples):
     # Add wrapper function to convert output to 2D array, check values to decide on whether
     # to throw, or create two columns [1-p, p], or leave just one in multiclass one-class edge-case
     result = function(examples)
+    single_row_result = function(examples[0:1])
+    is_single_row_1d_result = len(single_row_result.shape) == 1
     # If the function gives a 2D array of one column, we will need to reshape it prior to concat
     is_2d_result = len(result.shape) == 2
+    is_multi_row_multi_cols = result.shape[1] > 1
+    reshape_1_row_1d = is_single_row_1d_result and is_2d_result and is_multi_row_multi_cols
+    wrapper = _FunctionWrapper(function)
+    if reshape_1_row_1d:
+        # special weird case for multiclass KerasClassifier where single
+        # row result is 1D but multi row result is 2D, even when passing
+        # a single row as either a 1D or 2D array
+        return (wrapper._function_2D_single_row_wrapper_2D_result, ModelTask.CLASSIFICATION)
     convert_to_two_cols = False
     for value in result:
         if value < 0 or value > 1:
-            raise Exception("Probability values outside of valid range: " + str(value))
+            error = "Probability values outside of valid range: "
+            error += str(value)
+            raise Exception(error)
         if value < 1:
             convert_to_two_cols = True
-    wrapper = _FunctionWrapper(function)
     if convert_to_two_cols:
         # Create two cols, [1-p, p], from evaluation result
         if is_2d_result:
@@ -145,6 +156,25 @@ class _FunctionWrapper(object):
         """
         result = self._function(dataset)
         return result.reshape(result.shape[0], 1)
+
+    def _function_2D_single_row_wrapper_2D_result(self, dataset):
+        """Wraps a single row result in rare multiclass case.
+
+        In this rare multiclass case the single row result
+        is 1D but multi row result is 2D.  The single row,
+        even when formatted as a 1D or 2D array, gives similar
+        consistent 1D array result, but as soon more than 2
+        rows are given the result is a 2D array.
+
+        :param dataset: The model evaluation examples.
+        :type dataset: numpy.ndarray
+        :return: A wrapped function.
+        :rtype: function
+        """
+        result = self._function(dataset)
+        if dataset.shape[0] == 1:
+            return result.reshape(1, result.shape[0])
+        return result
 
 
 class _MultiVsSingleInstanceFunctionResolver(object):

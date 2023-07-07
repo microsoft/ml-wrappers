@@ -33,12 +33,11 @@ except ImportError:
     pass
 
 try:
+    from scikeras.wrappers import KerasClassifier, KerasRegressor
     from tensorflow import keras
     from tensorflow.keras import Input, Model
     from tensorflow.keras.layers import Activation, Dense, Dropout, concatenate
     from tensorflow.keras.models import Sequential
-    from tensorflow.keras.wrappers.scikit_learn import (KerasClassifier,
-                                                        KerasRegressor)
 except (ImportError, TypeError):
     pass
 
@@ -305,9 +304,9 @@ def create_scikit_keras_model_func(feature_number, num_classes=None):
                           metrics=['accuracy'])
         else:
             model.add(Dense(num_classes, activation=Activation('softmax')))
-            model.compile(loss=keras.losses.categorical_crossentropy,
+            model.compile(loss=keras.losses.sparse_categorical_crossentropy,
                           optimizer=keras.optimizers.Adadelta(),
-                          metrics=['accuracy'])
+                          metrics=['sparse_categorical_accuracy'])
         return model
     return common_scikit_keras_model
 
@@ -317,7 +316,7 @@ def create_scikit_keras_regressor(X, y):
     batch_size = 500
     epochs = 10
     model_func = create_scikit_keras_model_func(X.shape[1])
-    model = KerasRegressor(build_fn=model_func, nb_epoch=epochs, batch_size=batch_size, verbose=1)
+    model = KerasRegressor(model=model_func, epochs=epochs, batch_size=batch_size, verbose=1)
     model.fit(X, y)
     return model
 
@@ -327,7 +326,7 @@ def create_scikit_keras_binary_classifier(X, y):
     batch_size = 500
     epochs = 10
     model_func = create_scikit_keras_model_func(X.shape[1], num_classes=2)
-    model = KerasClassifier(build_fn=model_func, nb_epoch=epochs, batch_size=batch_size, verbose=1)
+    model = KerasClassifier(model=model_func, epochs=epochs, batch_size=batch_size, verbose=1)
     model.fit(X, y)
     return model
 
@@ -338,7 +337,7 @@ def create_scikit_keras_multiclass_classifier(X, y):
     epochs = 10
     num_classes = len(np.unique(y))
     model_func = create_scikit_keras_model_func(X.shape[1], num_classes=num_classes)
-    model = KerasClassifier(build_fn=model_func, nb_epoch=epochs, batch_size=batch_size, verbose=1)
+    model = KerasClassifier(model=model_func, epochs=epochs, batch_size=batch_size, verbose=1)
     model.fit(X, y)
     return model
 
