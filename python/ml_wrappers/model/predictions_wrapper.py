@@ -53,7 +53,7 @@ class PredictionsModelWrapper:
         :return: The filtered dataframe based on the values in query data.
         :rtype: pd.DataFrame
         """
-        if self._should_construct_pandas_query:
+        if not self._should_construct_pandas_query:
             data_copy = self._combined_data
             for column_name, column_data in query_test_data_row.squeeze().items():
                 data_copy = data_copy[data_copy[column_name] == column_data]
