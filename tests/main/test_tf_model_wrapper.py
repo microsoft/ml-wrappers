@@ -5,10 +5,12 @@
 """Tests for WrappedTensorflowModel"""
 
 import pytest
+import tensorflow as tf
 from common_utils import (create_keras_classifier, create_keras_regressor,
                           create_scikit_keras_regressor)
 from ml_wrappers.common.constants import ModelTask
 from ml_wrappers.model import WrappedTensorflowModel
+from ml_wrappers.model.tensorflow_wrapper import is_sequential
 from train_wrapper_utils import (train_classification_model_numpy,
                                  train_classification_model_pandas,
                                  train_regression_model_numpy,
@@ -35,6 +37,10 @@ class TestTensorflowModelWrapper(object):
             create_scikit_keras_regressor, model_task=ModelTask.REGRESSION)
         train_regression_model_numpy(wrapped_init, housing)
         train_regression_model_pandas(wrapped_init, housing)
+
+    def test_validate_is_sequential(self):
+        sequential_layer = tf.keras.Sequential(layers=None, name=None)
+        assert is_sequential(sequential_layer)
 
 
 class TensorflowModelInitializer():

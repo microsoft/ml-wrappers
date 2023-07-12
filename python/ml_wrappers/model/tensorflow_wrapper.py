@@ -13,18 +13,26 @@ PREDICT_CLASSES = 'predict_classes'
 def is_sequential(model):
     """Returns True if the model is a sequential model.
 
-    Note the model class name can either be
+    Note the model class name can be
+    keras.src.engine.sequential.Sequential,
     keras.engine.sequential.Sequential or
     tensorflow.python.keras.engine.sequential.Sequential
     depending on the tensorflow version.
-    The check should include both of these cases.
+    In the latest 2.13 version, the namespace changed from
+    keras.engine to keras.src.engine.
+    The check should include all of these cases.
 
     :param model: The model to check.
     :type model: tf.keras.Model
     :return: True if the model is a sequential model.
     :rtype: bool
     """
-    return str(type(model)).endswith("keras.engine.sequential.Sequential'>")
+    model_type = str(type(model))
+    # the sequential namespace changed in tensorflow 2.13
+    old_sequential_ns = "keras.engine.sequential.Sequential'>"
+    new_sequential_ns = "keras.src.engine.sequential.Sequential'>"
+    return (model_type.endswith(old_sequential_ns) or
+            model_type.endswith(new_sequential_ns))
 
 
 class WrappedTensorflowModel(object):
