@@ -116,4 +116,4 @@ class WrappedQuestionAnsweringModel(object):
         for context, question in zip(dataset['context'], dataset['questions']):
             answer = self._model({'context': context, 'question': question})
             output.append(answer['answer'])
-        return output
+        return np.array(output)
