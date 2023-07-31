@@ -405,7 +405,7 @@ class WrappedFastAIImageClassificationModel(object):
         :return: The predicted values.
         :rtype: numpy.ndarray
         """
-        return self._fastai_predict(dataset, 1)
+        return np.array(self._fastai_predict(dataset, 1))
 
     def predict_proba(self, dataset):
         """Predict the output probability using the FastAI model.
@@ -496,7 +496,7 @@ class WrappedObjectDetectionModel:
         :param x: Tensor of the image
         :type x: torch.Tensor
         :return: Baseline detections to get saliency maps for
-        :rtype: List of Detection Records
+        :rtype: numpy array of Detection Records
 
         Example Label (y) representation for a cohort of 2 images:
 
@@ -536,7 +536,7 @@ class WrappedObjectDetectionModel:
 
                 detections.append(image_predictions.detach().cpu().numpy()
                                   .tolist())
-        return detections
+        return np.array(detections)
 
     def predict_proba(self, dataset, iou_threshold=0.1):
         """Predict the output probability using the wrapped model.
@@ -617,7 +617,7 @@ class WrappedMlflowAutomlObjectDetectionModel:
                             predicted confidence scores.
         :type score_thresh: float
         :return: Final detections from the object detector
-        :rtype: List of Detection Records
+        :rtype: numpy array of Detection Records
         """
         image_sizes = dataset['image_size']
 
@@ -650,7 +650,7 @@ class WrappedMlflowAutomlObjectDetectionModel:
             detections.append(
                 image_predictions.detach().cpu().numpy().tolist())
 
-        return detections
+        return np.array(detections)
 
     def predict_proba(self, dataset: pd.DataFrame,
                       iou_thresh=0.1) -> np.ndarray:
