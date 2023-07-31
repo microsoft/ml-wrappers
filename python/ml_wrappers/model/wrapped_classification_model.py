@@ -49,7 +49,7 @@ class WrappedClassificationModel(BaseWrappedModel):
         # Handle the case that the model predicts a two-dimensional array of one column
         if len(preds.shape) == 2 and preds.shape[1] == 1:
             preds = preds.ravel()
-        return preds
+        return np.array(preds)
 
     def predict_proba(self, dataset):
         """Predict the output probability using the wrapped model.
