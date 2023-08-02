@@ -548,7 +548,7 @@ class WrappedObjectDetectionModel:
         :type iou_threshold: float
         """
         predictions = self.predict(dataset, iou_threshold)
-        prob_scores = [[pred.class_scores for pred in image_prediction]
+        prob_scores = [[pred[-1] for pred in image_prediction]
                        for image_prediction in predictions]
         return prob_scores
 
