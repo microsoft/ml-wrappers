@@ -22,18 +22,19 @@ def validate_wrapped_classification_model(wrapped_model, X_test):
     assert len(probabilities.shape) == 2
 
 
-def validate_wrapped_object_detection_custom_model(wrapped_model, X_test):
+def validate_wrapped_object_detection_custom_model(wrapped_model, X_test, has_predict_proba=True):
     # validate wrapped model has predict and predict_proba functions
     function_names = [SKLearn.PREDICT, SKLearn.PREDICT_PROBA]
     validate_functions(wrapped_model, function_names)
     # validate we can call the model on the dataset
     predictions = wrapped_model.predict(X_test)
-    probabilities = wrapped_model.predict_proba(X_test)
     # validate predictions and probabilities have correct shape
     assert len(predictions) == 2, "Expected number of predictions to be 2." + \
         f"Got {len(predictions)} predictions"
-    assert len(probabilities) == 2, "Expected number of probabilities to be 2." + \
-        f"Got {len(probabilities)} probabilities"
+    if has_predict_proba:
+        probabilities = wrapped_model.predict_proba(X_test)
+        assert len(probabilities) == 2, "Expected number of probabilities to be 2." + \
+            f"Got {len(probabilities)} probabilities"
 
 
 def validate_wrapped_object_detection_mlflow_drise_model(
