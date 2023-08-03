@@ -244,3 +244,24 @@ class TestPredictionsWrapperRegression(TestPredictionsWrapper):
         self.verify_predict_outputs(model, model_wrapper, X_test[0:length_test_set])
         assert not hasattr(model_wrapper, "predict_proba")
         self.verify_pickle_serialization(model, model_wrapper, X_test[0:length_test_set])
+
+    def test_data_with_missing_values(self, should_construct_pandas_query):
+        data = {
+            'Age': [25, 30, 22, 28, np.nan],
+            'Income': [50000, 60000, 40000, np.nan, 75000],
+            'Education': ['Bachelor', 'Master', 'Bachelor', 'PhD', 'Master'],
+            'Employment': ['Full-time', 'Part-time', 'Unemployed', 'Full-time', 'Part-time'],
+            'Has_Car': [True, False, True, True, False],
+            'Credit_Score': [750, 800, np.nan, 720, 690],
+            'Loan_Approved': [1, 1, 0, 0, 1]  # 1 = Approved, 0 = Not Approved
+        }
+
+        df = pd.DataFrame(data)
+        X_train = df.drop('Loan_Approved', axis=1)
+        y_train = df['Loan_Approved'].values
+
+        model_wrapper = PredictionsModelWrapperRegression(
+            X_train, y_train, should_construct_pandas_query=should_construct_pandas_query)
+        self.verify_predict_outputs(model_wrapper, model_wrapper, X_train)
+        assert not hasattr(model_wrapper, "predict_proba")
+        self.verify_pickle_serialization(model_wrapper, model_wrapper, X_train)
