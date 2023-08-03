@@ -591,8 +591,8 @@ def create_titanic_pipeline(X_train, y_train):
         ("embarked", Pipeline(steps=[
             ("imputer",
                 SimpleImputer(strategy='constant', fill_value='missing')),
-            ("encoder", OneHotEncoder(sparse=False))]), ["embarked"]),
-        ("sex_pclass", OneHotEncoder(sparse=False), ["sex", "pclass"])
+            ("encoder", OneHotEncoder(sparse_output=False))]), ["embarked"]),
+        ("sex_pclass", OneHotEncoder(sparse_output=False), ["sex", "pclass"])
     ])
     clf = Pipeline(steps=[('preprocessor', transformations),
                           ('classifier',
