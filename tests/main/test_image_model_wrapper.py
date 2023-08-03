@@ -144,7 +144,8 @@ class TestImageModelWrapper(object):
         wrapped_model = PytorchDRiseWrapper(model, 1)
         validate_wrapped_object_detection_custom_model(wrapped_model,
                                                        T.ToTensor()(data[0])
-                                                       .repeat(2, 1, 1, 1))
+                                                       .repeat(2, 1, 1, 1),
+                                                       has_predict_proba=False)
 
     # Skip for older versions of pytorch due to missing classes
     @pytest.mark.skipif(sys.version_info.minor <= 6,
@@ -155,13 +156,15 @@ class TestImageModelWrapper(object):
         wrapped_model = PytorchDRiseWrapper(model, 1, 'cpu')
         validate_wrapped_object_detection_custom_model(wrapped_model,
                                                        T.ToTensor()(data[0])
-                                                       .repeat(2, 1, 1, 1))
+                                                       .repeat(2, 1, 1, 1),
+                                                       has_predict_proba=False)
         if torch.cuda.is_available():
             wrapped_model = PytorchDRiseWrapper(model, 1, 'cuda')
             validate_wrapped_object_detection_custom_model(
                 wrapped_model,
                 T.ToTensor()(data[0])
-                .repeat(2, 1, 1, 1))
+                .repeat(2, 1, 1, 1),
+                has_predict_proba=False)
         else:
             with pytest.raises(AssertionError,
                                match="Torch not compiled with CUDA enabled"):
