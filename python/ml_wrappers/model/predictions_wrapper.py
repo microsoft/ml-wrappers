@@ -56,12 +56,17 @@ class PredictionsModelWrapper:
         if not self._should_construct_pandas_query:
             data_copy = self._combined_data
             for column_name, column_data in query_test_data_row.squeeze().items():
-                data_copy = data_copy[data_copy[column_name] == column_data]
+                if pd.isnull(column_data):
+                    data_copy = data_copy[data_copy[column_name].isna()]
+                else:
+                    data_copy = data_copy[data_copy[column_name] == column_data]
             filtered_df = data_copy
         else:
             queries = []
             for column_name, column_data in query_test_data_row.squeeze().items():
-                if isinstance(column_data, str):
+                if pd.isnull(column_data):
+                    queries.append("`{}`.isna()".format(column_name))
+                elif isinstance(column_data, str):
                     queries.append("`{}` == '{}'".format(
                         column_name, column_data))
                 else:
