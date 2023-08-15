@@ -4,7 +4,9 @@
 
 """Tests for wrap_model function on AutoML Object Detection models"""
 
+import base64
 import copy
+import io
 import json
 import os
 import sys
@@ -13,7 +15,6 @@ import tempfile
 import azureml.automl.core.shared.constants as shared_constants
 import mlflow
 import pytest
-import torch
 from azureml.automl.dnn.vision.common.mlflow.mlflow_model_wrapper import \
     MLFlowImagesModelWrapper
 from azureml.automl.dnn.vision.common.model_export_utils import (
@@ -25,10 +26,19 @@ from azureml.automl.dnn.vision.object_detection.models import \
 from common_vision_utils import load_base64_images, load_object_fridge_dataset
 from ml_wrappers import wrap_model
 from ml_wrappers.common.constants import ModelTask
-from ml_wrappers.model.image_model_wrapper import MLflowDRiseWrapper
+from ml_wrappers.model.image_model_wrapper import (MLflowDRiseWrapper,
+                                                   PytorchDRiseWrapper)
+from PIL import Image
 from wrapper_validator import (
+    validate_wrapped_object_detection_custom_model,
     validate_wrapped_object_detection_mlflow_drise_model,
     validate_wrapped_object_detection_model)
+
+try:
+    import torch
+    from torchvision import transforms as T
+except ImportError:
+    print('Could not import torch, required if using a PyTorch model')
 
 
 @pytest.mark.usefixtures('_clean_dir')
@@ -143,7 +153,9 @@ class TestImageModelWrapper(object):
         sys.version_info >= (3, 9),
         reason=('azureml-automl-dnn-vision not supported ' +
                 'for newer versions of python'))
-    def test_wrap_automl_object_detection_model_drise(self):
+    @pytest.mark.parametrize('extract_raw_model',
+                             [True, False])
+    def test_wrap_automl_object_detection_model_drise(self, extract_raw_model):
         data = load_object_fridge_dataset()[3:4]
         model_name = ModelNames.FASTER_RCNN_RESNET50_FPN
 
@@ -220,7 +232,26 @@ class TestImageModelWrapper(object):
             # load the paths as base64 images
             data = load_base64_images(data, return_image_size=True)
 
-            wrapped_model = MLflowDRiseWrapper(mlflow_model,
-                                               classes=class_names)
-            validate_wrapped_object_detection_mlflow_drise_model(
-                wrapped_model, data)
+            if extract_raw_model:
+                python_model = mlflow_model._model_impl.python_model
+                automl_wrapper = python_model._model
+                inner_model = automl_wrapper._model
+                number_of_classes = automl_wrapper._number_of_classes
+                transforms = automl_wrapper.get_inference_transform()
+                wrapped_model = PytorchDRiseWrapper(
+                    inner_model, number_of_classes,
+                    transforms=transforms,
+                    iou_threshold=0.25,
+                    score_threshold=0.5)
+                base64str = data.iloc[0, 0]
+                base64bytes = base64.b64decode(base64str)
+                image = Image.open(io.BytesIO(base64bytes)).convert('RGB')
+                validate_wrapped_object_detection_custom_model(
+                    wrapped_model,
+                    T.ToTensor()(image).repeat(2, 1, 1, 1),
+                    has_predict_proba=False)
+            else:
+                wrapped_model = MLflowDRiseWrapper(mlflow_model,
+                                                   classes=class_names)
+                validate_wrapped_object_detection_mlflow_drise_model(
+                    wrapped_model, data)
