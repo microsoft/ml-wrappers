@@ -47,7 +47,7 @@ Example:
             self._model = model
             self._number_of_classes = number_of_classes
 
-        def predict(self, x, iou_thresh: float = 0.5, score_thresh: float = 0.5):
+        def predict(self, x, iou_threshold: float = 0.5, score_threshold: float = 0.5):
             """Create a list of detection records from the image predictions."""
             detections = []
             for image in x:
