@@ -543,7 +543,10 @@ class WrappedObjectDetectionModel:
 
                 detections.append(image_predictions.detach().cpu().numpy()
                                   .tolist())
-        return np.array(detections)
+        try:
+          return np.array(detections)
+        except ValueError:
+          return detections
 
     def predict_proba(self, dataset, iou_threshold=0.1):
         """Predict the output probability using the wrapped model.
@@ -657,7 +660,10 @@ class WrappedMlflowAutomlObjectDetectionModel:
             detections.append(
                 image_predictions.detach().cpu().numpy().tolist())
 
-        return np.array(detections)
+        try:
+          return np.array(detections)
+        except ValueError:
+          return detections
 
     def predict_proba(self, dataset: pd.DataFrame,
                       iou_threshold=0.1) -> np.ndarray:
