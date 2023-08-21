@@ -314,7 +314,7 @@ def _get_device(device: str) -> str:
     :rtype: str
     """
     if (device in [member.value for member in Device]
-       or type(device) == int
+       or type(device) is int
        or device.isdigit()
        or device is None):
         if device == Device.AUTO.value:
@@ -525,7 +525,7 @@ class WrappedObjectDetectionModel:
         """
         detections = []
         for image in x:
-            if type(image) == Tensor:
+            if type(image) is Tensor:
                 raw_detections = self._model(
                     image.to(self._device).unsqueeze(0))
             else:
@@ -544,9 +544,9 @@ class WrappedObjectDetectionModel:
                 detections.append(image_predictions.detach().cpu().numpy()
                                   .tolist())
         try:
-          return np.array(detections)
+            return np.array(detections)
         except ValueError:
-          return detections
+            return detections
 
     def predict_proba(self, dataset, iou_threshold=0.1):
         """Predict the output probability using the wrapped model.
@@ -661,9 +661,9 @@ class WrappedMlflowAutomlObjectDetectionModel:
                 image_predictions.detach().cpu().numpy().tolist())
 
         try:
-          return np.array(detections)
+            return np.array(detections)
         except ValueError:
-          return detections
+            return detections
 
     def predict_proba(self, dataset: pd.DataFrame,
                       iou_threshold=0.1) -> np.ndarray:
