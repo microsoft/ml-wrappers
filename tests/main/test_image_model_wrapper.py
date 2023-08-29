@@ -36,6 +36,48 @@ except ImportError:
     print('Could not import torch, required if using a PyTorch model')
 
 
+NUM_FRIDGE_CLASSES = 5
+NUM_TEST_IMAGES = 3
+
+
+class CustomObjectDetectionWrapper(WrappedObjectDetectionModel):
+    def __init__(self):
+        model = _set_up_OD_model()
+        device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        super(CustomObjectDetectionWrapper, self).__init__(
+            model, NUM_FRIDGE_CLASSES, device)
+
+    def predict(self, dataset, iou_threshold=0.5, score_threshold=0.5):
+        return super(CustomObjectDetectionWrapper, self).predict(
+            dataset, iou_threshold, score_threshold)
+
+    def predict_proba(self, dataset):
+        return super(CustomObjectDetectionWrapper, self).predict_proba(dataset)
+
+
+def _set_up_OD_data(num_images=1):
+    """Returns generic dataset for OD testing (FastRCNN)"""
+    data = load_object_fridge_dataset()[:num_images]
+    data = load_images(data)
+    return data
+
+
+def _set_up_OD_model():
+    """Returns generic model for OD testing (FastRCNN)"""
+    model = torchvision.models.detection.fasterrcnn_resnet50_fpn()
+    in_features = model.roi_heads.box_predictor.cls_score.in_features
+    model.roi_heads.box_predictor = FastRCNNPredictor(
+        in_features, NUM_FRIDGE_CLASSES)
+    return model
+
+
+def _set_up_OD_model_data(num_images=1):
+    """Returns generic model and dataset for OD testing (FastRCNN)"""
+    data = _set_up_OD_data(num_images)
+    model = _set_up_OD_model()
+    return model, data
+
+
 @pytest.mark.usefixtures('_clean_dir')
 class TestImageModelWrapper(object):
     def test_wrap_resnet_classification_model(self):
@@ -124,11 +166,7 @@ class TestImageModelWrapper(object):
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Older versions of pytorch not supported')
     def test_pytorch_object_detection_model_pandas(self):
-        data = load_object_fridge_dataset()[:3]
-        data = load_images(data)
-        model = torchvision.models.detection.fasterrcnn_resnet50_fpn()
-        in_features = model.roi_heads.box_predictor.cls_score.in_features
-        model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 5)
+        model, data = _set_up_OD_model_data(NUM_TEST_IMAGES)
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         wrapped_model = wrap_model(model.to(device),
                                    data,
@@ -139,7 +177,7 @@ class TestImageModelWrapper(object):
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Older versions of pytorch not supported')
     def test_pytorch_object_detection_custom_model_pandas(self):
-        model, data = self._set_up_OD_model()
+        model, data = _set_up_OD_model_data()
         wrapped_model = PytorchDRiseWrapper(model, 1)
         validate_wrapped_object_detection_custom_model(wrapped_model,
                                                        T.ToTensor()(data[0])
@@ -149,8 +187,20 @@ class TestImageModelWrapper(object):
     # Skip for older versions of pytorch due to missing classes
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Older versions of pytorch not supported')
+    def test_custom_object_detection_wrapper(self):
+        data = _set_up_OD_data(NUM_TEST_IMAGES)
+        model = CustomObjectDetectionWrapper()
+        wrapped_model = wrap_model(model,
+                                   data,
+                                   ModelTask.OBJECT_DETECTION)
+        assert isinstance(wrapped_model, CustomObjectDetectionWrapper)
+        validate_wrapped_object_detection_model(wrapped_model, data)
+
+    # Skip for older versions of pytorch due to missing classes
+    @pytest.mark.skipif(sys.version_info.minor <= 6,
+                        reason='Older versions of pytorch not supported')
     def test_PytorchDRiseWrapper_wrapper_device(self):
-        model, data = self._set_up_OD_model()
+        model, data = _set_up_OD_model_data()
 
         wrapped_model = PytorchDRiseWrapper(model, 1, 'cpu')
         validate_wrapped_object_detection_custom_model(wrapped_model,
@@ -173,7 +223,7 @@ class TestImageModelWrapper(object):
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Older versions of pytorch not supported')
     def test_WrappedObjectDetectionModel_wrapper_device(self):
-        model, data = self._set_up_OD_model()
+        model, data = _set_up_OD_model_data()
         wrapped_model = WrappedObjectDetectionModel(model, 1, 'cpu')
         validate_wrapped_object_detection_custom_model(wrapped_model,
                                                        T.ToTensor()(data[0])
@@ -198,12 +248,3 @@ class TestImageModelWrapper(object):
         assert device == "cuda:1"
         device = _get_device("cpu")
         assert device == "cpu"
-
-    def _set_up_OD_model(self):
-        """Returns generic model and dataset for OD testing (FastRCNN)"""
-        data = load_object_fridge_dataset()[:1]
-        data = load_images(data)
-        model = torchvision.models.detection.fasterrcnn_resnet50_fpn()
-        in_features = model.roi_heads.box_predictor.cls_score.in_features
-        model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 5)
-        return model, data

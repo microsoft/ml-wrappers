@@ -295,7 +295,7 @@ def _wrap_image_model(model, examples, model_task, is_function,
             ):
                 _wrapped_model = WrappedMlflowAutomlObjectDetectionModel(
                     model, classes)
-        else:
+        elif _is_transformers_pipeline(model) or _is_callable_pipeline(model):
             _wrapped_model = WrappedObjectDetectionModel(
                 model, number_of_classes, device)
     return _wrapped_model, model_task
