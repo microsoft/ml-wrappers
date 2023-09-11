@@ -43,12 +43,12 @@ class TestPredictionsWrapperClassification(TestPredictionsWrapper):
             self, iris, titanic_simple, cancer, cancer_booleans, wine,
             multiclass_classification, dataset_name, should_construct_pandas_query):
         dataset_to_fixture_dict = {
-           'iris': iris,
-           'titanic': titanic_simple,
-           'cancer': cancer,
-           'cancer_booleans': cancer_booleans,
-           'multiclass': multiclass_classification,
-           'wine': wine
+            'iris': iris,
+            'titanic': titanic_simple,
+            'cancer': cancer,
+            'cancer_booleans': cancer_booleans,
+            'multiclass': multiclass_classification,
+            'wine': wine
         }
         dataset = dataset_to_fixture_dict[dataset_name]
 
@@ -200,9 +200,9 @@ class TestPredictionsWrapperRegression(TestPredictionsWrapper):
             self, should_construct_pandas_query,
             dataset_name, housing, energy, diabetes):
         dataset_to_fixture_dict = {
-           'housing': housing,
-           'energy': energy,
-           'diabetes': diabetes
+            'housing': housing,
+            'energy': energy,
+            'diabetes': diabetes
         }
         dataset = dataset_to_fixture_dict[dataset_name]
 

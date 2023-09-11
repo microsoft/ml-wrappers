@@ -67,7 +67,7 @@ def load_imagenet_labels():
     # getting ImageNet 1000 class names
     url = "https://s3.amazonaws.com/deep-learning-models/image-models"
     url_ending = "/imagenet_class_index.json"
-    with open(shap.datasets.cache(url+url_ending)) as file:
+    with open(shap.datasets.cache(url + url_ending)) as file:
         class_names = [v[1] for v in json.load(file).values()]
     return class_names
 
@@ -89,7 +89,7 @@ def load_fridge_dataset():
     download_url = "https://cvbp-secondary.z19.web.core.windows.net/datasets/"
     download_url_end = "image_classification/fridgeObjects.zip"
     data_file = "./data/fridgeObjects.zip"
-    retrieve_unzip_file(download_url+download_url_end, data_file)
+    retrieve_unzip_file(download_url + download_url_end, data_file)
 
     # get all file names into a pandas dataframe with the labels
     data = pd.DataFrame(columns=[IMAGE,
@@ -108,8 +108,8 @@ def load_multilabel_fridge_dataset():
     os.makedirs("data", exist_ok=True)
 
     # download data
-    download_url = ("https://cvbp-secondary.z19.web.core.windows.net/" +
-                    "datasets/image_classification/" +
+    download_url = ("https://cvbp-secondary.z19.web.core.windows.net/"
+                    "datasets/image_classification/"
                     "multilabelFridgeObjects.zip")
     folder_path = './data/multilabelFridgeObjects'
     data_file = folder_path + '.zip'
@@ -255,8 +255,7 @@ class FetchModel(object):
                 model_name = MULTILABEL_FRIDGE_MODEL_NAME
             else:
                 model_name = FRIDGE_MODEL_NAME
-        url = ('https://publictestdatasets.blob.core.windows.net/models/' +
-               model_name)
+        url = ('https://publictestdatasets.blob.core.windows.net/models/' + model_name)
         saved_model_name = FRIDGE_MODEL_NAME
         if self.multilabel:
             saved_model_name = MULTILABEL_FRIDGE_MODEL_NAME
@@ -392,7 +391,7 @@ def load_object_fridge_dataset():
     os.makedirs("data", exist_ok=True)
 
     # download data
-    download_url = ("https://cvbp-secondary.z19.web.core.windows.net/" +
+    download_url = ("https://cvbp-secondary.z19.web.core.windows.net/"
                     "datasets/object_detection/odFridgeObjects.zip")
     data_file = "./odFridgeObjects.zip"
     urlretrieve(download_url, filename=data_file)

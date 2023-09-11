@@ -2,6 +2,7 @@
 max-line-length = 119
 max-complexity = 20
 exclude = .git/, __pycache__/, dist/
+ignore = G001, B023, B902
 show-source = True
 statistics = True
 count = True

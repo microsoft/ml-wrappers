@@ -83,9 +83,8 @@ def kmeans(X, k, round_values=True):
         kmeans.cluster_centers_,
         group_names,
         None,
-        1.0 *
-        np.bincount(
-            kmeans.labels_))
+        1.0 * np.bincount(kmeans.labels_)
+    )
 
 
 class Data:

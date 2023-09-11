@@ -23,9 +23,9 @@ class TestTimestampFeaturizer(object):
         featurizer = CustomTimestampFeaturizer(iris[DatasetConstants.FEATURES]).fit(x_train)
         result = featurizer.transform(x_test)
         # Assert result is same as before, pandas dataframe
-        assert(isinstance(result, pd.DataFrame))
+        assert (isinstance(result, pd.DataFrame))
         # Assert the result is the same as the original passed in data (no featurization was done)
-        assert(result.equals(x_test))
+        assert (result.equals(x_test))
 
     @pytest.mark.parametrize(("sample_cnt_per_grain", "grains_dict"), [
         (240, {}),
@@ -40,9 +40,9 @@ class TestTimestampFeaturizer(object):
         # Form a temporary dataframe for validation
         tmp_result = pd.DataFrame(result)
         # Assert there are no timestamp columns
-        assert([column for column in tmp_result.columns if is_datetime(tmp_result[column])] == [])
+        assert ([column for column in tmp_result.columns if is_datetime(tmp_result[column])] == [])
         # Assert we have the expected number of columns - 1 time columns * 6 featurized plus original
-        assert(result.shape[1] == len(original_cols) + 6)
+        assert (result.shape[1] == len(original_cols) + 6)
 
     @pytest.mark.parametrize(("return_pandas"), [True, False])
     def test_separate_fit_with_no_features(self, return_pandas):
@@ -64,6 +64,6 @@ class TestTimestampFeaturizer(object):
                 # Form a temporary dataframe for validation
                 result = pd.DataFrame(result)
             # Assert there are no timestamp columns
-            assert([column for column in result.columns if is_datetime(result[column])] == [])
+            assert ([column for column in result.columns if is_datetime(result[column])] == [])
             # Assert we have the expected number of columns - 1 time columns * 6 featurized plus original
-            assert(result.shape[1] == len(original_cols) + 6)
+            assert (result.shape[1] == len(original_cols) + 6)
