@@ -57,7 +57,7 @@ class WrappedTextClassificationModel(object):
         """Initialize the WrappedTextClassificationModel."""
         self._model = model
         if not shap_installed:
-            raise ImportError("SHAP is not installed. Please install it " +
+            raise ImportError("SHAP is not installed. Please install it "
                               "to use WrappedTextClassificationModel.")
         self._wrapped_model = models.TransformersPipeline(model)
         self._multilabel = multilabel

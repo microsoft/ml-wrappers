@@ -82,8 +82,7 @@ class FetchCovid19Model(object):
 
     def fetch(self):
         zipfilename = COVID19_EVENTS_MODEL_NAME + '.zip'
-        url = ('https://publictestdatasets.blob.core.windows.net/models/' +
-               COVID19_EVENTS_MODEL_NAME + '.zip')
+        url = ('https://publictestdatasets.blob.core.windows.net/models/' + COVID19_EVENTS_MODEL_NAME + '.zip')
         urlretrieve(url, zipfilename)
         with zipfile.ZipFile(zipfilename, 'r') as unzip:
             unzip.extractall(COVID19_EVENTS_MODEL_NAME)

@@ -45,12 +45,12 @@ class DatasetWrapper(object):
         :param clear_references: A memory optimization that clears all references after use in explainers.
         :type clear_references: bool
         """
-        if (not isinstance(dataset, pd.DataFrame) and not isinstance(dataset, pd.Series) and
-                not isinstance(dataset, np.ndarray) and not issparse(dataset) and
-                not str(type(dataset)).endswith(".DenseData'>") and
-                not str(type(dataset)).endswith("torch.Tensor'>") and
-                not str(type(dataset)).endswith("BatchDataset'>")):
-            raise TypeError("Got type {0} which is not not supported in DatasetWrapper".format(
+        if not isinstance(dataset, pd.DataFrame) and not isinstance(dataset, pd.Series) and \
+                not isinstance(dataset, np.ndarray) and not issparse(dataset) and \
+                not str(type(dataset)).endswith(".DenseData'>") and \
+                not str(type(dataset)).endswith("torch.Tensor'>") and \
+                not str(type(dataset)).endswith("BatchDataset'>"):
+            raise TypeError("Got type {0} which is not supported in DatasetWrapper".format(
                 type(dataset))
             )
         self._features = None
@@ -458,7 +458,7 @@ class DatasetWrapper(object):
                 module_logger.debug('Reducing normal data with StandardScaler and PCA')
                 normalized_examples = StandardScaler().fit_transform(self._dataset)
                 reducer = PCA(n_components=components)
-            module_logger.info('reducing dimensionality to {} components for clustering'.format(str(components)))
+            module_logger.info('reducing dimensionality to {0} components for clustering'.format(str(components)))
             reduced_examples = reducer.fit_transform(normalized_examples)
         return reduced_examples
 
@@ -507,7 +507,7 @@ class DatasetWrapper(object):
                 prev_highest_index = k_index
         opt_k = k_list[prev_highest_index]
         module_logger.info('best silhouette score: {}'.format(str(prev_highest_score)))
-        module_logger.info('found optimal k for KMeans: {}'.format(str(opt_k)))
+        module_logger.info('optimal k for KMeans: {}'.format(str(opt_k)))
         return opt_k
 
     def _find_k_hdbscan(self, max_dim_clustering=Defaults.MAX_DIM):

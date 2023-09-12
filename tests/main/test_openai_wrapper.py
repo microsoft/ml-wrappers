@@ -25,17 +25,17 @@ class TestOpenaiWrapperModel(object):
         api_key = "mock"
         context = ''
         questions = "How to convert 10^9/l to liter?"
-        answer = (' It seems there is some confusion with the units being' +
-                  ' used in your question. The symbol `10^9/l` is often' +
-                  ' used to represent a concentration of 10^9 molecules' +
-                  ' or particles per liter of a solution. However, it is' +
-                  ' not a unit of volume and cannot be directly converted' +
-                  ' to liters. If you are trying to convert a concentration' +
-                  ' from one unit to another, such as from micrograms per' +
-                  ' liter (µg/L) to milligrams per liter (mg/L), you can' +
-                  ' use the appropriate conversion factor. For example,' +
-                  ' 1 µg/L is equal to 0.001 mg/L. If you need help' +
-                  ' with a specific conversion, please provide more' +
+        answer = (' It seems there is some confusion with the units being'
+                  ' used in your question. The symbol `10^9/l` is often'
+                  ' used to represent a concentration of 10^9 molecules'
+                  ' or particles per liter of a solution. However, it is'
+                  ' not a unit of volume and cannot be directly converted'
+                  ' to liters. If you are trying to convert a concentration'
+                  ' from one unit to another, such as from micrograms per'
+                  ' liter (µg/L) to milligrams per liter (mg/L), you can'
+                  ' use the appropriate conversion factor. For example,'
+                  ' 1 µg/L is equal to 0.001 mg/L. If you need help'
+                  ' with a specific conversion, please provide more'
                   ' details and I will do my best to assist you.')
         test_data = pd.DataFrame(data=[[context, questions, answer]],
                                  columns=['context', 'questions', 'answer'])
@@ -50,13 +50,13 @@ class TestOpenaiWrapperModel(object):
                     "finish_reason": "stop",
                     "message": {
                         "role": "assistant",
-                        "content": ('To convert from 10^9 per liter to ' +
-                                    'liters, you need to find the ' +
-                                    'reciprocal of the given value.' +
-                                    '\n\nReciprocal of 10^9 per ' +
-                                    'liter = 1 / (10^9 per liter)' +
-                                    '\n\nSo, the value in liters ' +
-                                    'is 1 / 10^9 liters, or ' +
+                        "content": ('To convert from 10^9 per liter to '
+                                    'liters, you need to find the '
+                                    'reciprocal of the given value.'
+                                    '\n\nReciprocal of 10^9 per '
+                                    'liter = 1 / (10^9 per liter)'
+                                    '\n\nSo, the value in liters '
+                                    'is 1 / 10^9 liters, or '
                                     '10^(-9) liters.')
                     }
                 }

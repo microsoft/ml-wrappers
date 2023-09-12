@@ -27,7 +27,7 @@ try:
     from torch import Tensor
 except ImportError:
     Tensor = Any
-    module_logger.debug('Could not import torch, required if using a ' +
+    module_logger.debug('Could not import torch, required if using a '
                         'PyTorch model')
 
 try:
@@ -36,21 +36,21 @@ try:
         GeneralObjectDetectionModelWrapper
 except ImportError:
     GeneralObjectDetectionModelWrapper = object
-    module_logger.debug('Could not import vision_explanation_methods, ' +
+    module_logger.debug('Could not import vision_explanation_methods, '
                         'required if using PytorchDRiseWrapper')
 
 try:
     import torchvision
     from torchvision import transforms as T
 except ImportError:
-    module_logger.debug('Could not import torchvision, required if ' +
+    module_logger.debug('Could not import torchvision, required if '
                         'using PytorchDRiseWrapper')
 
 try:
     from mlflow.pyfunc import PyFuncModel
 except ImportError:
     PyFuncModel = Any
-    module_logger.debug('Could not import mlflow, required if using an ' +
+    module_logger.debug('Could not import mlflow, required if using an '
                         'mlflow model')
 
 FASTAI_MODEL_SUFFIX = "fastai.learner.Learner'>"
@@ -275,7 +275,7 @@ def _wrap_image_model(model, examples, model_task, is_function,
             _wrapped_model = WrappedFastAIImageClassificationModel(model)
         elif hasattr(model, '_model_impl'):
             if str(type(model._model_impl.python_model)).endswith(
-                ("azureml.automl.dnn.vision.common.mlflow." +
+                ("azureml.automl.dnn.vision.common.mlflow."
                     "mlflow_model_wrapper.MLFlowImagesModelWrapper'>")
             ):
                 _wrapped_model = WrappedMlflowAutomlImagesClassificationModel(
@@ -290,7 +290,7 @@ def _wrap_image_model(model, examples, model_task, is_function,
     elif model_task == ModelTask.OBJECT_DETECTION:
         if hasattr(model, '_model_impl'):
             if str(type(model._model_impl.python_model)).endswith(
-                ("azureml.automl.dnn.vision.common.mlflow." +
+                ("azureml.automl.dnn.vision.common.mlflow."
                     "mlflow_model_wrapper.MLFlowImagesModelWrapper'>")
             ):
                 _wrapped_model = WrappedMlflowAutomlObjectDetectionModel(
@@ -313,10 +313,7 @@ def _get_device(device: str) -> str:
     :return: selected device to run computations on
     :rtype: str
     """
-    if (device in [member.value for member in Device]
-       or type(device) is int
-       or device.isdigit()
-       or device is None):
+    if (device in [member.value for member in Device] or type(device) is int or device.isdigit() or device is None):
         if device == Device.AUTO.value:
             if torch.cuda.is_available():
                 return Device.CUDA.value
@@ -581,7 +578,7 @@ class WrappedMlflowAutomlObjectDetectionModel:
         self._classes = classes
         try:
             if type(classes[0] == str):
-                self._label_dict = {label: (i+1)
+                self._label_dict = {label: (i + 1)
                                     for i, label in enumerate(classes)}
         except KeyError:
             raise KeyError("classes parameter not a list of class labels")
@@ -635,7 +632,7 @@ class WrappedMlflowAutomlObjectDetectionModel:
 
         predictions = self._mlflow_predict(dataset)
         if not len(predictions['boxes']) == len(image_sizes):
-            raise ValueError("Internal Error: Number of predictions " +
+            raise ValueError("Internal Error: Number of predictions "
                              "does not match number of images")
 
         detections = []
@@ -775,7 +772,7 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
                         bounding_boxes=raw_detection[BOXES],
                         class_scores=expanded_class_scores,
                         objectness_scores=torch.tensor(
-                            [1.0]*raw_detection[BOXES].shape[0]),
+                            [1.0] * raw_detection[BOXES].shape[0]),
                     )
                 )
 
@@ -806,7 +803,7 @@ class MLflowDRiseWrapper():
         self._model = model
         self._classes = classes
         self._number_of_classes = len(classes)
-        self._label_dict = {label: (i+1) for i, label in enumerate(classes)}
+        self._label_dict = {label: (i + 1) for i, label in enumerate(classes)}
 
     def _mlflow_predict(self, dataset: pd.DataFrame) -> pd.DataFrame:
         """Perform the inference using the wrapped MLflow model.
@@ -841,7 +838,7 @@ class MLflowDRiseWrapper():
 
         predictions = self._mlflow_predict(dataset)
         if not len(predictions['boxes']) == len(image_sizes):
-            raise ValueError("Internal Error: Number of predictions " +
+            raise ValueError("Internal Error: Number of predictions "
                              "does not match number of images")
 
         if not len(predictions['boxes']) == 1:
@@ -879,7 +876,7 @@ class MLflowDRiseWrapper():
                     bounding_boxes=raw_detections[BOXES],
                     class_scores=expanded_class_scores,
                     objectness_scores=torch.tensor(
-                        [1.0]*raw_detections[BOXES].shape[0]),
+                        [1.0] * raw_detections[BOXES].shape[0]),
                 ))
 
         return detections

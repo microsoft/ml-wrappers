@@ -213,9 +213,9 @@ class EndpointWrapperModel(PythonModel):
                 label = row[LABEL]
                 score = row[SCORE]
                 if label == self._class_names[0]:
-                    array_result.append([score, 1-score])
+                    array_result.append([score, 1 - score])
                 else:
-                    array_result.append([1-score, score])
+                    array_result.append([1 - score, score])
             result = np.array(array_result)
         return result
 

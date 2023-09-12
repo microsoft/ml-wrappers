@@ -85,7 +85,7 @@ def wrap_model(model, examples, model_task: str = ModelTask.UNKNOWN,
         return _wrap_text_model(model, examples, model_task, False)[0]
     if model_task in image_model_tasks:
         return _wrap_image_model(model, examples, model_task,
-                                 False,  num_classes, classes,
+                                 False, num_classes, classes,
                                  device)[0]
     return _wrap_model(model, examples, model_task, False)[0]
 
@@ -139,7 +139,7 @@ def _wrap_model(model, examples, model_task, is_function):
         eval_function, eval_ml_domain = _eval_model(
             model, examples, model_task)
         if eval_ml_domain == ModelTask.CLASSIFICATION:
-            return WrappedClassificationModel(model, eval_function, examples),\
+            return WrappedClassificationModel(model, eval_function, examples), \
                 eval_ml_domain
         else:
             return WrappedRegressionModel(model, eval_function, examples), \

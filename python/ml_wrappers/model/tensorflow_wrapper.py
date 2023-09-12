@@ -31,8 +31,7 @@ def is_sequential(model):
     # the sequential namespace changed in tensorflow 2.13
     old_sequential_ns = "keras.engine.sequential.Sequential'>"
     new_sequential_ns = "keras.src.engine.sequential.Sequential'>"
-    return (model_type.endswith(old_sequential_ns) or
-            model_type.endswith(new_sequential_ns))
+    return (model_type.endswith(old_sequential_ns) or model_type.endswith(new_sequential_ns))
 
 
 class WrappedTensorflowModel(object):

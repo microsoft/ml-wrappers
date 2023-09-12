@@ -21,7 +21,7 @@ except ImportError:
 try:
     from torchvision.transforms import ToTensor
 except ImportError:
-    module_logger.debug('Could not import torchvision, required if using' +
+    module_logger.debug('Could not import torchvision, required if using'
                         ' a vision PyTorch model')
 
 
