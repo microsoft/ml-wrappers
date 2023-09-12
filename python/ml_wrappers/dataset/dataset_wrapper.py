@@ -50,7 +50,7 @@ class DatasetWrapper(object):
                 not str(type(dataset)).endswith(".DenseData'>") and \
                 not str(type(dataset)).endswith("torch.Tensor'>") and \
                 not str(type(dataset)).endswith("BatchDataset'>"):
-            raise TypeError("Got type {0} which is not not supported in DatasetWrapper".format(
+            raise TypeError("Got type {0} which is not supported in DatasetWrapper".format(
                 type(dataset))
             )
         self._features = None

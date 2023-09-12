@@ -23,9 +23,9 @@ class TestTimestampFeaturizer(object):
         featurizer = CustomTimestampFeaturizer(iris[DatasetConstants.FEATURES]).fit(x_train)
         result = featurizer.transform(x_test)
         # Assert result is same as before, pandas dataframe
-        assert (isinstance(result, pd.DataFrame))
+        assert isinstance(result, pd.DataFrame)
         # Assert the result is the same as the original passed in data (no featurization was done)
-        assert (result.equals(x_test))
+        assert result.equals(x_test)
 
     @pytest.mark.parametrize(("sample_cnt_per_grain", "grains_dict"), [
         (240, {}),
