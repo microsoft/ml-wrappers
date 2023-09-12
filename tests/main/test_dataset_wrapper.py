@@ -70,5 +70,5 @@ class TestDatasetWrapper(object):
 
         with pytest.raises(
                 TypeError,
-                match='Got type <class \'list\'> which is not not supported in DatasetWrapper'):
+                match='Got type <class \'list\'> which is not supported in DatasetWrapper'):
             DatasetWrapper(test_list)
