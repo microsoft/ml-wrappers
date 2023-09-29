@@ -41,7 +41,8 @@ class EndpointWrapperModel(PythonModel):
     def __init__(self, api_key, url, allow_self_signed_https=False,
                  extra_headers=None, transform_output_dict=False,
                  class_names=None, wrap_input_data_dict=False,
-                 batch_size=DEFAULT_BATCH_SIZE):
+                 batch_size=DEFAULT_BATCH_SIZE,
+                 api_key_auto_refresh_callable=None):
         """Initialize the EndpointWrapperModel.
 
         :param api_key: The API key to use when invoking the endpoint.
@@ -64,6 +65,9 @@ class EndpointWrapperModel(PythonModel):
             Calls on full dataset if less than 1.
             This parameter can be used to get around endpoint timeouts.
         :type batch_size: int
+        :param api_key_auto_refresh_callable: The method to call to refresh the
+            API key.
+        :type api_key_auto_refresh_callable: callable
         """
         if not mlflow_installed:
             raise ImportError(ERR_MSG)
@@ -79,6 +83,28 @@ class EndpointWrapperModel(PythonModel):
         self._class_names = class_names
         self._wrap_input_data_dict = wrap_input_data_dict
         self._batch_size = batch_size
+        self._api_key_auto_refresh_callable = api_key_auto_refresh_callable
+
+    @staticmethod
+    def from_auto_refresh_callable(api_key_auto_refresh_callable, url, **kwargs):
+        """Create an EndpointWrapperModel from an auto refresh callable.
+
+        The callable method should return the latest API key.
+
+        :param api_key_auto_refresh_callable: The method to call to refresh the
+            API key.
+        :type api_key_auto_refresh_callable: callable
+        :param kwargs: The keyword arguments.
+        :type kwargs: dict
+        :return: The EndpointWrapperModel.
+        :rtype: ml_wrappers.model.EndpointWrapperModel
+        """
+        api_key = api_key_auto_refresh_callable()
+        return EndpointWrapperModel(
+            api_key,
+            url,
+            api_key_auto_refresh_callable=api_key_auto_refresh_callable,
+            **kwargs)
 
     def load_context(self, context):
         """Load the context.
@@ -101,6 +127,33 @@ class EndpointWrapperModel(PythonModel):
         if allowed and not verify and ssl_verified:
             ssl._create_default_https_context = ssl._create_unverified_context
 
+    def _get_response_with_retry(self, body, timeout, num_retries=3):
+        try:
+            headers = {'Content-Type': 'application/json',
+                       'Authorization': ('Bearer ' + self._api_key)}
+            if self._extra_headers:
+                headers.update(self._extra_headers)
+            req = urllib.request.Request(self._url, body, headers)
+            response = urllib.request.urlopen(req, timeout=TIMEOUT)
+            json_data = response.read()
+        except urllib.error.HTTPError as e:
+            print("The request failed with status code: " + str(e.code))
+            print("Request body: " + str(body))
+
+            # Print the headers - they include the request ID
+            # and the timestamp, which are useful for debugging
+            # the failure
+            print(e.info())
+            # Retry request and refresh API key if refresh method provided
+            if num_retries > 0:
+                if self._api_key_auto_refresh_callable:
+                    self._api_key = self._api_key_auto_refresh_callable()
+                return self._get_response_with_retry(
+                    body, timeout, num_retries - 1)
+            raise ValueError(
+                "Request failed with error. " + str(e))
+        return json_data
+
     def _make_request(self, data):
         """Make a request to the endpoint.
 
@@ -113,26 +166,7 @@ class EndpointWrapperModel(PythonModel):
             data = {'input_data': data}
         json_input_data = json.dumps(data)
         body = str.encode(json_input_data)
-
-        headers = {'Content-Type': 'application/json',
-                   'Authorization': ('Bearer ' + self._api_key)}
-        if self._extra_headers:
-            headers.update(self._extra_headers)
-
-        req = urllib.request.Request(self._url, body, headers)
-
-        try:
-            response = urllib.request.urlopen(req, timeout=TIMEOUT)
-            json_data = response.read()
-        except urllib.error.HTTPError as error:
-            print("The request failed with status code: " + str(error.code))
-            print("Request body: " + json_input_data)
-
-            # Print the headers - they include the request ID
-            # and the timestamp, which are useful for debugging
-            # the failure
-            print(error.info())
-            print(error.read().decode(UTF8, IGNORE))
+        json_data = self._get_response_with_retry(body, TIMEOUT)
         try:
             result = np.array(json.loads(json_data))
         except Exception as e:
