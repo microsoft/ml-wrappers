@@ -1,4 +1,13 @@
 # Machine Learning Wrappers
+![PyPI](https://img.shields.io/pypi/v/ml-wrappers)
+![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)
+![versions](https://img.shields.io/pypi/pyversions/ml-wrappers)
+[![Downloads](https://static.pepy.tech/badge/ml-wrappers)](https://pepy.tech/project/ml-wrappers)
+
+[![CI Python minimal environment](https://github.com/microsoft/ml-wrappers/actions/workflows/CI-python-minimal.yml/badge.svg)](https://github.com/microsoft/ml-wrappers/actions/workflows/CI-python-minimal.yml)
+[![CI Python](https://github.com/microsoft/ml-wrappers/actions/workflows/CI-python.yml/badge.svg)](https://github.com/microsoft/ml-wrappers/actions/workflows/CI-python.yml)
+[![CI Python AutoML](https://github.com/microsoft/ml-wrappers/actions/workflows/CI-python-AutoML.yml/badge.svg)](https://github.com/microsoft/ml-wrappers/actions/workflows/CI-python-AutoML.yml)
+
 
 ## Overview and Motivation
 Responsible AI tools should be able to work with a broad spectrum of machine learning models and datasets. Much of this functionality is based on the ability to call predict or predict_proba on a model and get back the predicted values or probabilities in a specific format.
