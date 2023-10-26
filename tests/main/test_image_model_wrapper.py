@@ -242,7 +242,7 @@ class TestImageModelWrapper(object):
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                     reason='Older versions of pytorch not supported')
     @pytest.mark.parametrize(("boxes", "scores", "labels", "iou_threshold", "expected_boxes", "expected_scores",
-                         "expected_labels"), [
+                              "expected_labels"), [
         (torch.empty((0, 4)), torch.tensor([]), torch.tensor([]), 0.5,
          torch.empty((0, 4)), torch.tensor([]), torch.tensor([])),
         (torch.tensor([[0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1]]), torch.tensor([0.9, 0.8, 0.7]),
@@ -252,7 +252,7 @@ class TestImageModelWrapper(object):
          torch.tensor([1, 2, 3]), 0.5, torch.tensor([[0, 0, 1, 1], [1, 1, 2, 2]]), torch.tensor([0.9, 0.7]),
          torch.tensor([1, 3])),
     ])
-    def test_apply_nms(boxes, scores, labels, iou_threshold, expected_boxes, expected_scores, expected_labels):
+    def test_apply_nms(self, boxes, scores, labels, iou_threshold, expected_boxes, expected_scores, expected_labels):
         # Create the input dictionary
         orig_prediction = {
             'boxes': boxes.float(),
