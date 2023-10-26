@@ -22,8 +22,7 @@ from ml_wrappers import wrap_model
 from ml_wrappers.common.constants import ModelTask
 from ml_wrappers.model.image_model_wrapper import (PytorchDRiseWrapper,
                                                    WrappedObjectDetectionModel,
-                                                   _apply_nms,
-                                                   _get_device)
+                                                   _apply_nms, _get_device)
 from wrapper_validator import (validate_wrapped_classification_model,
                                validate_wrapped_multilabel_model,
                                validate_wrapped_object_detection_custom_model,
@@ -247,7 +246,7 @@ class TestImageModelWrapper(object):
         (torch.tensor([[0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1]]), torch.tensor([0.9, 0.8, 0.7]), torch.tensor([1, 2, 3]), 0.5, torch.tensor([[0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1]]), torch.tensor([0.9, 0.8, 0.7]), torch.tensor([1, 2, 3])),
         (torch.tensor([[0, 0, 1, 1], [0.5, 0.5, 1.5, 1.5], [1, 1, 2, 2]]), torch.tensor([0.9, 0.8, 0.7]), torch.tensor([1, 2, 3]), 0.5, torch.tensor([[0, 0, 1, 1], [1, 1, 2, 2]]), torch.tensor([0.9, 0.7]), torch.tensor([1, 3])),
     ])
-    def test_apply_nms(boxes, scores, labels, iou_threshold, expected_boxes, expected_scores, expected_labels):
+    def test_apply_nms(self, boxes, scores, labels, iou_threshold, expected_boxes, expected_scores, expected_labels):
         # Create the input dictionary
         orig_prediction = {
             'boxes': boxes,
