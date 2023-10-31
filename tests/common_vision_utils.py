@@ -13,6 +13,7 @@ from zipfile import ZipFile
 import numpy as np
 import pandas as pd
 import shap
+from constants import UTF8
 from PIL import Image
 
 try:
@@ -48,6 +49,7 @@ LEARNING_RATE = 1e-4
 IM_SIZE = 300
 BATCH_SIZE = 16
 IMAGE = 'image'
+IMAGE_SIZE = 'image_size'
 LABEL = 'label'
 FRIDGE_MODEL_NAME = 'fridge_model'
 FRIDGE_MODEL_WINDOWS_NAME = 'fridge_model_windows'
@@ -151,7 +153,7 @@ def get_base64_string_from_path(img_path: str,
     imgio = BytesIO()
     img.save(imgio, img.format)
     img_str = base64.b64encode(imgio.getvalue())
-    decoded_img = img_str.decode("utf-8")
+    decoded_img = img_str.decode(UTF8)
     if return_image_size:
         return decoded_img, img.size
     return decoded_img
@@ -175,7 +177,7 @@ def load_base64_images(data: pd.DataFrame, return_image_size: bool = False) \
             data=[[x for x in get_base64_string_from_path(
                 img_path, return_image_size=True)] for img_path in
                 data.loc[:, IMAGE]],
-            columns=[IMAGE, "image_size"],
+            columns=[IMAGE, IMAGE_SIZE],
         )
         return dataset
     data.loc[:, IMAGE] = data.loc[:, IMAGE].map(
