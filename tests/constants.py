@@ -2,6 +2,10 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # ---------------------------------------------------------
 
+
+UTF8 = 'utf-8'
+
+
 class DatasetConstants(object):
     """Dataset related constants."""
     CATEGORICAL = 'categorical'
