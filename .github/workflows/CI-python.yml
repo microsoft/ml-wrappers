@@ -29,31 +29,21 @@ jobs:
       shell: bash -l {0}
       run: |
         brew install libomp
-    - if: ${{ matrix.operatingSystem == 'windows-latest' && matrix.pythonVersion != '3.6' }}
-      name: Install pytorch on windows for python 3.7 to 3.10
+    - if: ${{ matrix.operatingSystem == 'windows-latest' }}
+      name: Install pytorch on windows for python 3.8 to 3.10
       shell: bash -l {0}
       run: |
         conda install --yes --quiet "pytorch<2.0.0" torchvision captum cpuonly "libtiff<4.5.0" -c pytorch -c conda-forge --strict-channel-priority
-    - if: ${{ matrix.operatingSystem == 'ubuntu-latest' && matrix.pythonVersion != '3.6' }}
-      name: Install pytorch on ubuntu for python 3.7 to 3.10
+    - if: ${{ matrix.operatingSystem == 'ubuntu-latest' }}
+      name: Install pytorch on ubuntu for python 3.8 to 3.10
       shell: bash -l {0}
       run: |
         conda install --yes --quiet "pytorch<2.0.0" torchvision captum cpuonly -c pytorch -c conda-forge --strict-channel-priority
-    - if: ${{ matrix.operatingSystem != 'macos-latest' && matrix.pythonVersion == '3.6' }}
-      name: Install pytorch on non-MacOS for python 3.6
-      shell: bash -l {0}
-      run: |
-        conda install --yes --quiet "pytorch<1.11.0" torchvision captum cpuonly -c pytorch --strict-channel-priority
-    - if: ${{ matrix.operatingSystem == 'macos-latest' && matrix.pythonVersion != '3.6' }}
-      name: Install pytorch on MacOS for python 3.7 to 3.10
+    - if: ${{ matrix.operatingSystem == 'macos-latest' }}
+      name: Install pytorch on MacOS for python 3.8 to 3.10
       shell: bash -l {0}
       run: |
         conda install --yes --quiet "pytorch<2.0.0" torchvision captum -c pytorch -c conda-forge --strict-channel-priority
-    - if: ${{ matrix.operatingSystem == 'macos-latest' && matrix.pythonVersion == '3.6' }}
-      name: Install pytorch on MacOS for python 3.6
-      shell: bash -l {0}
-      run: |
-        conda install --yes --quiet "pytorch<1.11.0" torchvision captum -c pytorch --strict-channel-priority
     - if: ${{ matrix.operatingSystem == 'macos-latest' }}
       name: Install lightgbm from conda on MacOS
       shell: bash -l {0}

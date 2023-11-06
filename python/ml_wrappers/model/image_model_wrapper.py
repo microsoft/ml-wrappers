@@ -100,18 +100,17 @@ def _apply_nms(orig_prediction: dict, iou_threshold: float = 0.5):
     :return: Model prediction after nms is applied
     :rtype: dict
     """
-    # if no boxes, return empty prediction
-    if orig_prediction[BOXES].numel() == 0:
-        orig_prediction[BOXES] = torch.empty((0, 4))
-        orig_prediction[SCORES] = torch.empty(0)
-    keep = torchvision.ops.nms(orig_prediction[BOXES],
-                               orig_prediction[SCORES],
-                               iou_threshold)
-
     nms_prediction = orig_prediction
-    nms_prediction[BOXES] = nms_prediction[BOXES][keep]
-    nms_prediction[SCORES] = nms_prediction[SCORES][keep]
-    nms_prediction[LABELS] = nms_prediction[LABELS][keep]
+    boxes = orig_prediction[BOXES]
+    scores = orig_prediction[SCORES]
+    if boxes.numel() != 0:
+        keep = torchvision.ops.nms(boxes,
+                                   scores,
+                                   iou_threshold)
+
+        nms_prediction[BOXES] = boxes[keep]
+        nms_prediction[SCORES] = scores[keep]
+        nms_prediction[LABELS] = nms_prediction[LABELS][keep]
     return nms_prediction
 
 

@@ -246,11 +246,11 @@ class TestImageModelWrapper(object):
         (torch.empty((0, 4)), torch.tensor([]), torch.tensor([]), 0.5,
          torch.empty((0, 4)), torch.tensor([]), torch.tensor([])),
         (torch.tensor([[0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1]]), torch.tensor([0.9, 0.8, 0.7]),
-         torch.tensor([1, 2, 3]), 0.5, torch.tensor([[0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1]]),
-         torch.tensor([0.9, 0.8, 0.7]), torch.tensor([1, 2, 3])),
+         torch.tensor([1, 2, 3]), 0.5, torch.tensor([[0, 0, 1, 1]]), torch.tensor([0.9]),
+         torch.tensor([1])),
         (torch.tensor([[0, 0, 1, 1], [0.5, 0.5, 1.5, 1.5], [1, 1, 2, 2]]), torch.tensor([0.9, 0.8, 0.7]),
-         torch.tensor([1, 2, 3]), 0.5, torch.tensor([[0, 0, 1, 1], [1, 1, 2, 2]]), torch.tensor([0.9, 0.7]),
-         torch.tensor([1, 3])),
+         torch.tensor([1, 2, 3]), 0.5, torch.tensor([[0, 0, 1, 1], [0.5, 0.5, 1.5, 1.5], [1, 1, 2, 2]]),
+         torch.tensor([0.9, 0.8, 0.7]), torch.tensor([1, 2, 3])),
     ])
     def test_apply_nms(self, boxes, scores, labels, iou_threshold, expected_boxes, expected_scores, expected_labels):
         # Create the input dictionary
