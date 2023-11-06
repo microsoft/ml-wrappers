@@ -240,7 +240,7 @@ class TestImageModelWrapper(object):
                 wrapped_model = WrappedObjectDetectionModel(model, 1, 'cuda')
 
     @pytest.mark.skipif(sys.version_info.minor <= 6,
-                    reason='Older versions of pytorch not supported')
+                        reason='Older versions of pytorch not supported')
     @pytest.mark.parametrize(("boxes", "scores", "labels", "iou_threshold", "expected_boxes", "expected_scores",
                               "expected_labels"), [
         (torch.empty((0, 4)), torch.tensor([]), torch.tensor([]), 0.5,
