@@ -12,13 +12,21 @@ try:
 except ImportError:
     openai_installed = False
 try:
+    from openai import AzureOpenAI, OpenAI
+except ImportError:
+    # Ignore the error, only used by new openai version
+    pass
+try:
     from raiutils.common.retries import retry_function
     rai_utils_installed = True
 except ImportError:
     rai_utils_installed = False
 
 
+AZURE = 'azure'
+CHAT_COMPLETION = 'ChatCompletion'
 CONTENT = 'content'
+OPENAI = 'OpenAI'
 
 
 def replace_backtick_chars(message):
@@ -37,7 +45,7 @@ class ChatCompletion(object):
 
     def __init__(self, messages, engine, temperature,
                  max_tokens, top_p, frequency_penalty,
-                 presence_penalty, stop):
+                 presence_penalty, stop, client=None):
         """Initialize the class.
 
         :param messages: The messages.
@@ -56,6 +64,8 @@ class ChatCompletion(object):
         :type presence_penalty: float
         :param stop: The stop.
         :type stop: list
+        :param client: The client, if using openai>1.0.0.
+        :type client: openai.OpenAI
         """
         self.messages = messages
         self.engine = engine
@@ -65,6 +75,7 @@ class ChatCompletion(object):
         self.frequency_penalty = frequency_penalty
         self.presence_penalty = presence_penalty
         self.stop = stop
+        self.client = client
 
     def fetch(self):
         """Call the openai chat completion endpoint.
@@ -72,15 +83,26 @@ class ChatCompletion(object):
         :return: The response.
         :rtype: dict
         """
-        return openai.ChatCompletion.create(
-            engine=self.engine,
-            messages=self.messages,
-            temperature=self.temperature,
-            max_tokens=self.max_tokens,
-            top_p=self.top_p,
-            frequency_penalty=self.frequency_penalty,
-            presence_penalty=self.presence_penalty,
-            stop=self.stop)
+        if hasattr(openai, CHAT_COMPLETION):
+            return openai.ChatCompletion.create(
+                engine=self.engine,
+                messages=self.messages,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+                top_p=self.top_p,
+                frequency_penalty=self.frequency_penalty,
+                presence_penalty=self.presence_penalty,
+                stop=self.stop)
+        else:
+            return self.client.chat.completions.create(
+                model=self.engine,
+                messages=self.messages,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+                top_p=self.top_p,
+                frequency_penalty=self.frequency_penalty,
+                presence_penalty=self.presence_penalty,
+                stop=self.stop)
 
 
 class OpenaiWrapperModel(object):
@@ -146,10 +168,17 @@ class OpenaiWrapperModel(object):
                 data = data.tolist()
             else:
                 data = data.values.tolist()
-        openai.api_type = self.api_type
-        openai.api_base = self.api_base
-        openai.api_version = self.api_version
-        openai.api_key = self.api_key
+        if hasattr(openai, OPENAI):
+            if self.api_type == AZURE:
+                client = AzureOpenAI(api_key=self.api_key, azure_endpoint=self.api_base,
+                                     api_version=self.api_version)
+            else:
+                client = OpenAI(api_key=self.api_key)
+        else:
+            openai.api_key = self.api_key
+            openai.api_base = self.api_base
+            openai.api_type = self.api_type
+            openai.api_version = self.api_version
         answers = []
         for doc in data:
             messages = []
@@ -157,7 +186,7 @@ class OpenaiWrapperModel(object):
             fetcher = ChatCompletion(messages, self.engine, self.temperature,
                                      self.max_tokens, self.top_p,
                                      self.frequency_penalty,
-                                     self.presence_penalty, self.stop)
+                                     self.presence_penalty, self.stop, client)
             action_name = "Call openai chat completion"
             err_msg = "Failed to call openai endpoint"
             max_retries = 4
@@ -165,7 +194,10 @@ class OpenaiWrapperModel(object):
             response = retry_function(fetcher.fetch, action_name, err_msg,
                                       max_retries=max_retries,
                                       retry_delay=retry_delay)
-            answers.append(replace_backtick_chars(response['choices'][0]['message'][CONTENT]))
+            if isinstance(response, dict):
+                answers.append(replace_backtick_chars(response['choices'][0]['message'][CONTENT]))
+            else:
+                answers.append(replace_backtick_chars(response.choices[0].message.content))
         return np.array(answers)
 
     def predict(self, context, model_input=None):
