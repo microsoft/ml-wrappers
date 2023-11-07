@@ -182,9 +182,9 @@ def _process_automl_detections_to_raw_detections(
         labels = [label_dict[x] for x in labels]
 
     return {
-        "boxes": Tensor(boxes),
-        "labels": Tensor(labels),
-        "scores": Tensor(scores)}
+        BOXES: Tensor(boxes),
+        LABELS: Tensor(labels),
+        SCORES: Tensor(scores)}
 
 
 def expand_class_scores(
@@ -535,10 +535,10 @@ class WrappedObjectDetectionModel:
             for raw_detection in raw_detections:
                 raw_detection = _apply_nms(raw_detection, .5)
                 raw_detection = _filter_score(raw_detection)
-                image_predictions = torch.cat((raw_detection["labels"]
+                image_predictions = torch.cat((raw_detection[LABELS]
                                                .unsqueeze(1),
-                                               raw_detection["boxes"],
-                                               raw_detection["scores"]
+                                               raw_detection[BOXES],
+                                               raw_detection[SCORES]
                                                .unsqueeze(1)), dim=1)
 
                 detections.append(image_predictions.detach().cpu().numpy()
@@ -650,9 +650,9 @@ class WrappedMlflowAutomlObjectDetectionModel:
             raw_detections = _filter_score(raw_detections, score_threshold)
 
             image_predictions = torch.cat((
-                raw_detections["labels"].unsqueeze(1),
-                raw_detections["boxes"],
-                raw_detections["scores"].unsqueeze(1)
+                raw_detections[LABELS].unsqueeze(1),
+                raw_detections[BOXES],
+                raw_detections[SCORES].unsqueeze(1)
             ),
                 dim=1
             )

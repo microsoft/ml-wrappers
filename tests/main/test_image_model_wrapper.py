@@ -22,7 +22,7 @@ from ml_wrappers import wrap_model
 from ml_wrappers.common.constants import ModelTask
 from ml_wrappers.model.image_model_wrapper import (PytorchDRiseWrapper,
                                                    WrappedObjectDetectionModel,
-                                                   _get_device)
+                                                   _apply_nms, _get_device)
 from wrapper_validator import (validate_wrapped_classification_model,
                                validate_wrapped_multilabel_model,
                                validate_wrapped_object_detection_custom_model,
@@ -238,6 +238,36 @@ class TestImageModelWrapper(object):
             with pytest.raises(AssertionError,
                                match="Torch not compiled with CUDA enabled"):
                 wrapped_model = WrappedObjectDetectionModel(model, 1, 'cuda')
+
+    @pytest.mark.skipif(sys.version_info.minor <= 6,
+                        reason='Older versions of pytorch not supported')
+    @pytest.mark.parametrize(("boxes", "scores", "labels", "iou_threshold", "expected_boxes", "expected_scores",
+                              "expected_labels"), [
+        (torch.empty((0, 4)), torch.tensor([]), torch.tensor([]), 0.5,
+         torch.empty((0, 4)), torch.tensor([]), torch.tensor([])),
+        (torch.tensor([[0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1]]), torch.tensor([0.9, 0.8, 0.7]),
+         torch.tensor([1, 2, 3]), 0.5, torch.tensor([[0, 0, 1, 1]]), torch.tensor([0.9]),
+         torch.tensor([1])),
+        (torch.tensor([[0, 0, 1, 1], [0.5, 0.5, 1.5, 1.5], [1, 1, 2, 2]]), torch.tensor([0.9, 0.8, 0.7]),
+         torch.tensor([1, 2, 3]), 0.5, torch.tensor([[0, 0, 1, 1], [0.5, 0.5, 1.5, 1.5], [1, 1, 2, 2]]),
+         torch.tensor([0.9, 0.8, 0.7]), torch.tensor([1, 2, 3])),
+    ])
+    def test_apply_nms(self, boxes, scores, labels, iou_threshold, expected_boxes, expected_scores, expected_labels):
+        # Create the input dictionary
+        orig_prediction = {
+            'boxes': boxes.float(),
+            'scores': scores.float(),
+            'labels': labels
+        }
+
+        # Call the function being tested
+        nms_prediction = _apply_nms(orig_prediction, iou_threshold)
+
+        # Check that the output is as expected
+        assert nms_prediction['boxes'].shape == expected_boxes.shape
+        assert torch.all(torch.eq(nms_prediction['boxes'], expected_boxes))
+        assert torch.all(torch.eq(nms_prediction['scores'], expected_scores))
+        assert torch.all(torch.eq(nms_prediction['labels'], expected_labels))
 
     def test_get_device(self):
         # test default invocation of _get_device as it would be during the
