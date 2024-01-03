@@ -168,6 +168,7 @@ class OpenaiWrapperModel(object):
                 data = data.tolist()
             else:
                 data = data.values.tolist()
+        client = None
         if hasattr(openai, OPENAI):
             if self.api_type == AZURE:
                 client = AzureOpenAI(api_key=self.api_key, azure_endpoint=self.api_base,
