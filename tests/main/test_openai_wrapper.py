@@ -11,9 +11,14 @@ import openai
 import pandas as pd
 import pytest
 from ml_wrappers.model import OpenaiWrapperModel
-from openai.types.chat.chat_completion import (ChatCompletion,
-                                               ChatCompletionMessage, Choice,
-                                               CompletionUsage)
+
+try:
+    from openai.types.chat.chat_completion import (ChatCompletion,
+                                                   ChatCompletionMessage,
+                                                   Choice, CompletionUsage)
+except ImportError:
+    # Ignore the error, only used by new openai version
+    pass
 
 CHOICES = 'choices'
 MESSAGE = 'message'
