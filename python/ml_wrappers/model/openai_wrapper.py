@@ -104,7 +104,6 @@ class ChatCompletion(object):
                 presence_penalty=self.presence_penalty,
                 stop=self.stop)
 
-
 class OpenaiWrapperModel(object):
     """A model wrapper for an openai model endpoint."""
 
@@ -149,7 +148,7 @@ class OpenaiWrapperModel(object):
         self.presence_penalty = presence_penalty
         self.stop = stop
 
-    def _call_webservice(self, data):
+    def _call_webservice(self, data, history=None, sys_prompt=None):
         """Common code to call the webservice.
 
         :param data: The data to send to the webservice.
@@ -181,8 +180,12 @@ class OpenaiWrapperModel(object):
             openai.api_type = self.api_type
             openai.api_version = self.api_version
         answers = []
-        for doc in data:
+        for i, doc in enumerate(data):
             messages = []
+            if sys_prompt is not None:
+                messages.append({'role': 'system', CONTENT: sys_prompt.iloc[i]})
+            if history is not None:
+                messages.extend(history.iloc[i])
             messages.append({'role': 'user', CONTENT: doc})
             fetcher = ChatCompletion(messages, self.engine, self.temperature,
                                      self.max_tokens, self.top_p,
@@ -217,7 +220,9 @@ class OpenaiWrapperModel(object):
         if model_input is None:
             model_input = context
         questions = model_input['questions']
+        history = model_input.get('history')
+        sys_prompt = model_input.get('sys_prompt')
         if isinstance(questions, str):
             questions = [questions]
-        result = self._call_webservice(questions)
+        result = self._call_webservice(questions, history, sys_prompt)
         return result
