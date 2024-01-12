@@ -83,7 +83,7 @@ class ChatCompletion(object):
         :return: The response.
         :rtype: dict
         """
-        if self.client is None:
+        if not hasattr(openai, OPENAI):
             # openai<1.0.0
             return openai.ChatCompletion.create(
                 engine=self.engine,
