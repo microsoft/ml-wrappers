@@ -39,7 +39,7 @@ class TestOpenaiWrapperModel(object):
         context = ''
         questions = 'How to convert 10^9/l to liter?'
         is_openai_1_0 = False
-        if hasattr(openai, 'ChatCompletion'):
+        if not hasattr(openai, 'OpenAI'):
             mock_function = 'openai.ChatCompletion.create'
         else:
             mock_function = 'openai.resources.chat.completions.Completions.create'

@@ -83,7 +83,8 @@ class ChatCompletion(object):
         :return: The response.
         :rtype: dict
         """
-        if hasattr(openai, CHAT_COMPLETION):
+        if not hasattr(openai, OPENAI):
+            # openai<1.0.0
             return openai.ChatCompletion.create(
                 engine=self.engine,
                 messages=self.messages,
@@ -93,7 +94,9 @@ class ChatCompletion(object):
                 frequency_penalty=self.frequency_penalty,
                 presence_penalty=self.presence_penalty,
                 stop=self.stop)
+
         else:
+            # openai>=1.0.0
             return self.client.chat.completions.create(
                 model=self.engine,
                 messages=self.messages,
