@@ -6,6 +6,7 @@
 
 import numpy as np
 import pandas as pd
+
 try:
     import openai
     openai_installed = True
