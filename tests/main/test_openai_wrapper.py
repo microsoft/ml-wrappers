@@ -27,6 +27,28 @@ CONTENT = 'content'
 
 @pytest.mark.usefixtures('_clean_dir')
 class TestOpenaiWrapperModel(object):
+    QUESTION = 'How to convert 10^9/l to liter?'
+    ANSWER = (' It seems there is some confusion with the units being'
+              ' used in your question. The symbol `10^9/l` is often'
+              ' used to represent a concentration of 10^9 molecules'
+              ' or particles per liter of a solution. However, it is'
+              ' not a unit of volume and cannot be directly converted'
+              ' to liters. If you are trying to convert a concentration'
+              ' from one unit to another, such as from micrograms per'
+              ' liter (µg/L) to milligrams per liter (mg/L), you can'
+              ' use the appropriate conversion factor. For example,'
+              ' 1 µg/L is equal to 0.001 mg/L. If you need help'
+              ' with a specific conversion, please provide more'
+              ' details and I will do my best to assist you.')
+    EXPECTED_ANSWER = ('To convert from 10^9 per liter to '
+                       'liters, you need to find the '
+                       'reciprocal of the given value.'
+                       '\n\nReciprocal of 10^9 per '
+                       'liter = 1 / (10^9 per liter)'
+                       '\n\nSo, the value in liters '
+                       'is 1 / 10^9 liters, or '
+                       '10^(-9) liters.')
+
     def create_mock_result(self, expected_content, is_openai_1_0: bool):
         expected_model = 'gpt-4-32k'
         expected_id = 'chatcmpl-XYZ'
@@ -77,145 +99,104 @@ class TestOpenaiWrapperModel(object):
             }
         return mock_result
 
-    @pytest.mark.skipif(sys.version_info.minor <= 6,
-                        reason='Openai not supported for older versions')
-    def test_predict_call(self):
-        # test creating the OpenaiWrapperModel and
-        # calling the predict function
+    def get_model_params(self):
+        ret = {
+            'context': '',
+            'expected_model': 'gpt-4-32k'
+        }
         api_type = 'azure'
         api_base = 'https://mock.openai.azure.com/'
         api_version = '2023-03-15-preview'
         api_key = 'mock'
-        context = ''
-        questions = 'How to convert 10^9/l to liter?'
+        ret['openai_model'] = OpenaiWrapperModel(
+            api_type, api_base, api_version, api_key)
         is_openai_1_0 = False
         if not hasattr(openai, 'OpenAI'):
             mock_function = 'openai.ChatCompletion.create'
         else:
             mock_function = 'openai.resources.chat.completions.Completions.create'
             is_openai_1_0 = True
-        answer = (' It seems there is some confusion with the units being'
-                  ' used in your question. The symbol `10^9/l` is often'
-                  ' used to represent a concentration of 10^9 molecules'
-                  ' or particles per liter of a solution. However, it is'
-                  ' not a unit of volume and cannot be directly converted'
-                  ' to liters. If you are trying to convert a concentration'
-                  ' from one unit to another, such as from micrograms per'
-                  ' liter (µg/L) to milligrams per liter (mg/L), you can'
-                  ' use the appropriate conversion factor. For example,'
-                  ' 1 µg/L is equal to 0.001 mg/L. If you need help'
-                  ' with a specific conversion, please provide more'
-                  ' details and I will do my best to assist you.')
-        test_data = pd.DataFrame(data=[[context, questions, answer]],
-                                 columns=['context', 'questions', 'answer'])
-        expected_content = ('To convert from 10^9 per liter to '
-                            'liters, you need to find the '
-                            'reciprocal of the given value.'
-                            '\n\nReciprocal of 10^9 per '
-                            'liter = 1 / (10^9 per liter)'
-                            '\n\nSo, the value in liters '
-                            'is 1 / 10^9 liters, or '
-                            '10^(-9) liters.')
-        mock_result = self.create_mock_result(expected_content, is_openai_1_0)
-        openai_model = OpenaiWrapperModel(
-            api_type, api_base, api_version, api_key)
+        ret['is_openai_1_0'] = is_openai_1_0
+        ret['mock_function'] = mock_function
+        return ret
+
+    def assert_result(self, params, mock_result, test_data):
         # mock the openai create function
-        with patch(mock_function) as mock_create:
+        with patch(params['mock_function']) as mock_create:
             # wrap return value in mock class with read method
             mock_create.return_value = mock_result
             context = {}
-            result = openai_model.predict(context, test_data)
-            if is_openai_1_0:
+            result = params['openai_model'].predict(context, test_data)
+            if params['is_openai_1_0']:
                 expected_result = mock_result.choices[0].message.content
             else:
                 expected_result = mock_result[CHOICES][0][MESSAGE][CONTENT]
             assert len(result) == 1
             assert result[0] == expected_result
 
-    @pytest.mark.skipif(sys.version_info.minor <= 6,
-                        reason='Openai not supported for older versions')
-    def test_predict_call_with_sys_prompt(self):
-        # test creating the OpenaiWrapperModel and
-        # calling the predict function
-        api_type = 'azure'
-        api_base = 'https://mock.openai.azure.com/'
-        api_version = '2023-03-15-preview'
-        api_key = 'mock'
-        context = ''
-        questions = 'How to convert 10^9/l to liter?'
-        sys_prompt = 'You are a helpful assistant.'
-        is_openai_1_0 = False
-        if not hasattr(openai, 'OpenAI'):
-            mock_function = 'openai.ChatCompletion.create'
-        else:
-            mock_function = 'openai.resources.chat.completions.Completions.create'
-            is_openai_1_0 = True
-        answer = (' It seems there is some confusion with the units being'
-                  ' used in your question. The symbol `10^9/l` is often'
-                  ' used to represent a concentration of 10^9 molecules'
-                  ' or particles per liter of a solution. However, it is'
-                  ' not a unit of volume and cannot be directly converted'
-                  ' to liters. If you are trying to convert a concentration'
-                  ' from one unit to another, such as from micrograms per'
-                  ' liter (µg/L) to milligrams per liter (mg/L), you can'
-                  ' use the appropriate conversion factor. For example,'
-                  ' 1 µg/L is equal to 0.001 mg/L. If you need help'
-                  ' with a specific conversion, please provide more'
-                  ' details and I will do my best to assist you.')
-        test_data = pd.DataFrame(data=[[context, questions, answer, sys_prompt]],
-                                 columns=['context', 'questions', 'answer', 'sys_prompt'])
-        expected_content = ('To convert from 10^9 per liter to '
-                            'liters, you need to find the '
-                            'reciprocal of the given value.'
-                            '\n\nReciprocal of 10^9 per '
-                            'liter = 1 / (10^9 per liter)'
-                            '\n\nSo, the value in liters '
-                            'is 1 / 10^9 liters, or '
-                            '10^(-9) liters.')
-        expected_model = 'gpt-4-32k'
-        mock_result = self.create_mock_result(expected_content, is_openai_1_0)
-        openai_model = OpenaiWrapperModel(
-            api_type, api_base, api_version, api_key)
+    def assert_called_with(self, params,
+            mock_result,test_data, **kwargs):
         # mock the openai create function
-        with patch(mock_function) as mock_create:
+        with patch(params['mock_function']) as mock_create:
             # wrap return value in mock class with read method
             mock_create.return_value = mock_result
             context = {}
-            result = openai_model.predict(context, test_data)
-            if is_openai_1_0:
+            params['openai_model'].predict(context, test_data)
+            messages = []
+            if 'sys_prompt' in kwargs:
+                messages.append({'role': 'system', 'content': kwargs['sys_prompt']})
+            if 'history' in kwargs:
+                messages.extend(kwargs['history'])
+            messages.append({'role': 'user', 'content': kwargs['questions']})
+            if params['is_openai_1_0']:
                 mock_create.assert_called_with(
-                    model=expected_model,
-                    messages=[
-                        {'role': 'system', 'content': sys_prompt},
-                        {'role': 'user', 'content': questions}
-                    ],
-                    temperature=openai_model.temperature,
-                    max_tokens=openai_model.max_tokens,
-                    top_p=openai_model.top_p,
-                    frequency_penalty=openai_model.frequency_penalty,
-                    presence_penalty=openai_model.presence_penalty,
-                    stop=openai_model.stop
+                    model=params['expected_model'],
+                    messages=messages,
+                    temperature=params['openai_model'].temperature,
+                    max_tokens=params['openai_model'].max_tokens,
+                    top_p=params['openai_model'].top_p,
+                    frequency_penalty=params['openai_model'].frequency_penalty,
+                    presence_penalty=params['openai_model'].presence_penalty,
+                    stop=params['openai_model'].stop
                 )
             else:
                 mock_create.assert_called_with(
-                    engine=expected_model,
-                    messages=[
-                        {'role': 'system', 'content': sys_prompt},
-                        {'role': 'user', 'content': questions}
-                    ],
-                    temperature=openai_model.temperature,
-                    max_tokens=openai_model.max_tokens,
-                    top_p=openai_model.top_p,
-                    frequency_penalty=openai_model.frequency_penalty,
-                    presence_penalty=openai_model.presence_penalty,
-                    stop=openai_model.stop
+                    engine=params['expected_model'],
+                    messages=messages,
+                    temperature=params['openai_model'].temperature,
+                    max_tokens=params['openai_model'].max_tokens,
+                    top_p=params['openai_model'].top_p,
+                    frequency_penalty=params['openai_model'].frequency_penalty,
+                    presence_penalty=params['openai_model'].presence_penalty,
+                    stop=params['openai_model'].stop
                 )
-            if is_openai_1_0:
-                expected_result = mock_result.choices[0].message.content
-            else:
-                expected_result = mock_result[CHOICES][0][MESSAGE][CONTENT]
-            assert len(result) == 1
-            assert result[0] == expected_result
+
+    @pytest.mark.skipif(sys.version_info.minor <= 6,
+                        reason='Openai not supported for older versions')
+    def test_predict_call(self):
+        params = self.get_model_params()
+        questions = self.QUESTION
+        answer = self.ANSWER
+        test_data = pd.DataFrame(data=[[params['context'], questions, answer]],
+                                 columns=['context', 'questions', 'answer'])
+        expected_content = self.EXPECTED_ANSWER
+        mock_result = self.create_mock_result(expected_content, params['is_openai_1_0'])
+
+        self.assert_result(params, mock_result, test_data)
+
+    @pytest.mark.skipif(sys.version_info.minor <= 6,
+                        reason='Openai not supported for older versions')
+    def test_predict_call_with_sys_prompt(self):
+        params = self.get_model_params()
+        questions = self.QUESTION
+        sys_prompt = 'You are a helpful assistant.'
+        answer = self.ANSWER
+        test_data = pd.DataFrame(data=[[params['context'], questions, answer, sys_prompt]],
+                                 columns=['context', 'questions', 'answer', 'sys_prompt'])
+        expected_content = self.EXPECTED_ANSWER
+        mock_result = self.create_mock_result(expected_content, params['is_openai_1_0'])
+        self.assert_result(params, mock_result, test_data)
+        self.assert_called_with(params, mock_result, test_data, sys_prompt=sys_prompt, questions=questions)
 
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Openai not supported for older versions')
