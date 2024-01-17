@@ -5,6 +5,7 @@
 """Defines a model wrapper for an openai model endpoint."""
 
 import numpy as np
+import pandas as pd
 
 try:
     import openai
@@ -152,11 +153,15 @@ class OpenaiWrapperModel(object):
         self.presence_penalty = presence_penalty
         self.stop = stop
 
-    def _call_webservice(self, data):
+    def _call_webservice(self, data, history=None, sys_prompt=None):
         """Common code to call the webservice.
 
         :param data: The data to send to the webservice.
-        :type data: pandas.DataFrame or list
+        :type data: pandas.Series
+        :param history: The history.
+        :type history: pandas.Series
+        :param sys_prompt: The system prompt.
+        :type sys_prompt: pandas.Series
         :return: The result.
         :rtype: numpy.ndarray
         """
@@ -184,8 +189,12 @@ class OpenaiWrapperModel(object):
             openai.api_type = self.api_type
             openai.api_version = self.api_version
         answers = []
-        for doc in data:
+        for i, doc in enumerate(data):
             messages = []
+            if sys_prompt is not None:
+                messages.append({'role': 'system', CONTENT: sys_prompt.iloc[i]})
+            if history is not None:
+                messages.extend(history.iloc[i])
             messages.append({'role': 'user', CONTENT: doc})
             fetcher = ChatCompletion(messages, self.engine, self.temperature,
                                      self.max_tokens, self.top_p,
@@ -211,7 +220,8 @@ class OpenaiWrapperModel(object):
         :type context: mlflow.pyfunc.model.PythonModelContext or
             pandas.DataFrame
         :param model_input: The input to the model.
-        :type model_input: pandas.DataFrame
+        :type model_input: pandas.DataFrame or dict or list[str]
+            pandas.Series or str
         :return: The predictions.
         :rtype: numpy.ndarray
         """
@@ -219,8 +229,33 @@ class OpenaiWrapperModel(object):
         # which MLFlow does not follow
         if model_input is None:
             model_input = context
-        questions = model_input['questions']
-        if isinstance(questions, str):
-            questions = [questions]
-        result = self._call_webservice(questions)
+
+        if isinstance(model_input, str):
+            model_input = [model_input]
+        if isinstance(model_input, (list, pd.Series)):
+            questions = pd.Series(model_input)
+            history = None
+            sys_prompt = None
+        elif isinstance(model_input, dict):
+            questions = pd.Series(model_input['questions'])
+            if 'history' in model_input:
+                if isinstance(model_input['questions'], str):
+                    history = pd.Series([model_input['history']])
+                else:
+                    history = pd.Series(model_input['history'])
+            else:
+                history = None
+            if 'sys_prompt' in model_input:
+                sys_prompt = pd.Series(model_input['sys_prompt'])
+            else:
+                sys_prompt = None
+        else:
+            questions = model_input['questions']
+            history = model_input.get('history')
+            sys_prompt = model_input.get('sys_prompt')
+
+        result = self._call_webservice(
+            questions,
+            history=history,
+            sys_prompt=sys_prompt)
         return result
