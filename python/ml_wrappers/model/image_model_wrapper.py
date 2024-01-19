@@ -178,7 +178,7 @@ def _process_automl_detections_to_raw_detections(
         boxes.append([x_min_scaled, y_min_scaled, x_max_scaled, y_max_scaled])
     try:
         labels = [int(x) for x in labels]
-    except BaseException:
+    except Exception:
         labels = [label_dict[x] for x in labels]
 
     return {
