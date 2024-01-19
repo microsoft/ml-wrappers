@@ -14,7 +14,7 @@ with shap_warnings_suppressor():
     try:
         from shap import models
         shap_installed = True
-    except BaseException:
+    except BaseException:  # noqa: B036
         shap_installed = False
 
 
