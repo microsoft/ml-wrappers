@@ -104,7 +104,7 @@ class TestOpenaiWrapperModel(object):
             }
         return mock_result
 
-    def get_model_params(self):
+    def get_model_params(self, **kwargs):
         ret = {
             'context': '',
             'expected_model': 'gpt-4-32k'
@@ -114,7 +114,7 @@ class TestOpenaiWrapperModel(object):
         api_version = '2023-03-15-preview'
         api_key = 'mock'
         ret['openai_model'] = OpenaiWrapperModel(
-            api_type, api_base, api_version, api_key)
+            api_type, api_base, api_version, api_key, **kwargs)
         is_openai_1_0 = False
         if not hasattr(openai, 'OpenAI'):
             mock_function = 'openai.ChatCompletion.create'
@@ -270,6 +270,19 @@ class TestOpenaiWrapperModel(object):
                                 sys_prompt=sys_prompt, history=history,
                                 questions=questions)
 
+        # Prompt with new input column name
+        test_data = pd.DataFrame(data=[[params['context'], questions]],
+                                 columns=['context', 'prompt'])
+        self.assert_called_with(params, mock_result, test_data,
+                                questions=questions)
+
+        # Prompt with custom input column name
+        params = self.get_model_params(input_col='custom_prompt')
+        test_data = pd.DataFrame(data=[[params['context'], questions]],
+                                 columns=['context', 'custom_prompt'])
+        self.assert_called_with(params, mock_result, test_data,
+                                questions=questions)
+
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Openai not supported for older versions')
     def test_predict_call_dict(self):
@@ -317,6 +330,23 @@ class TestOpenaiWrapperModel(object):
                                 sys_prompt=sys_prompt, history=history,
                                 questions=questions)
 
+        # Prompt with new input column name
+        test_data = test_data = {
+            'context': [params['context']],
+            'prompt': [questions]
+        }
+        self.assert_called_with(params, mock_result, test_data,
+                                questions=questions)
+
+        # Prompt with custom input column name
+        params = self.get_model_params(input_col='custom_prompt')
+        test_data = test_data = {
+            'context': [params['context']],
+            'custom_prompt': [questions]
+        }
+        self.assert_called_with(params, mock_result, test_data,
+                                questions=questions)
+
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Openai not supported for older versions')
     def test_predict_call_dict_of_str(self):
@@ -362,6 +392,23 @@ class TestOpenaiWrapperModel(object):
         }
         self.assert_called_with(params, mock_result, test_data,
                                 sys_prompt=sys_prompt, history=history,
+                                questions=questions)
+
+        # Prompt with new input column name
+        test_data = test_data = {
+            'context': [params['context']],
+            'prompt': questions
+        }
+        self.assert_called_with(params, mock_result, test_data,
+                                questions=questions)
+
+        # Prompt with custom input column name
+        params = self.get_model_params(input_col='custom_prompt')
+        test_data = test_data = {
+            'context': [params['context']],
+            'custom_prompt': questions
+        }
+        self.assert_called_with(params, mock_result, test_data,
                                 questions=questions)
 
     @pytest.mark.skipif(sys.version_info.minor <= 6,
