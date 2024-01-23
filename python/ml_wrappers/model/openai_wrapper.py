@@ -28,6 +28,8 @@ AZURE = 'azure'
 CHAT_COMPLETION = 'ChatCompletion'
 CONTENT = 'content'
 OPENAI = 'OpenAI'
+HISTORY = 'history'
+SYS_PROMPT = 'sys_prompt'
 
 
 def replace_backtick_chars(message):
@@ -219,21 +221,21 @@ class OpenaiWrapperModel(object):
     def _get_input_data(self, model_input, input_col):
         if isinstance(model_input, dict):
             prompts = pd.Series(model_input[input_col])
-            if 'history' in model_input:
+            if HISTORY in model_input:
                 if isinstance(model_input[input_col], str):
-                    history = pd.Series([model_input['history']])
+                    history = pd.Series([model_input[HISTORY]])
                 else:
-                    history = pd.Series(model_input['history'])
+                    history = pd.Series(model_input[HISTORY])
             else:
                 history = None
-            if 'sys_prompt' in model_input:
-                sys_prompt = pd.Series(model_input['sys_prompt'])
+            if SYS_PROMPT in model_input:
+                sys_prompt = pd.Series(model_input[SYS_PROMPT])
             else:
                 sys_prompt = None
         else:
             prompts = model_input[input_col]
-            history = model_input.get('history')
-            sys_prompt = model_input.get('sys_prompt')
+            history = model_input.get(HISTORY)
+            sys_prompt = model_input.get(SYS_PROMPT)
 
         return prompts, history, sys_prompt
 
