@@ -28,6 +28,8 @@ AZURE = 'azure'
 CHAT_COMPLETION = 'ChatCompletion'
 CONTENT = 'content'
 OPENAI = 'OpenAI'
+HISTORY = 'history'
+SYS_PROMPT = 'sys_prompt'
 
 
 def replace_backtick_chars(message):
@@ -115,7 +117,7 @@ class OpenaiWrapperModel(object):
     def __init__(self, api_type, api_base, api_version, api_key,
                  engine="gpt-4-32k", temperature=0.7, max_tokens=800,
                  top_p=0.95, frequency_penalty=0, presence_penalty=0,
-                 stop=None):
+                 stop=None, input_col='prompt'):
         """Initialize the model.
 
         :param api_type: The type of the API.
@@ -140,6 +142,8 @@ class OpenaiWrapperModel(object):
         :type presence_penalty: float
         :param stop: The stop.
         :type stop: list
+        :param input_col: The name of the input column.
+        :type input_col: str
         """
         self.api_type = api_type
         self.api_base = api_base
@@ -152,6 +156,7 @@ class OpenaiWrapperModel(object):
         self.frequency_penalty = frequency_penalty
         self.presence_penalty = presence_penalty
         self.stop = stop
+        self.input_col = input_col
 
     def _call_webservice(self, data, history=None, sys_prompt=None):
         """Common code to call the webservice.
@@ -213,6 +218,27 @@ class OpenaiWrapperModel(object):
                 answers.append(replace_backtick_chars(response.choices[0].message.content))
         return np.array(answers)
 
+    def _get_input_data(self, model_input, input_col):
+        if isinstance(model_input, dict):
+            prompts = pd.Series(model_input[input_col])
+            if HISTORY in model_input:
+                if isinstance(model_input[input_col], str):
+                    history = pd.Series([model_input[HISTORY]])
+                else:
+                    history = pd.Series(model_input[HISTORY])
+            else:
+                history = None
+            if SYS_PROMPT in model_input:
+                sys_prompt = pd.Series(model_input[SYS_PROMPT])
+            else:
+                sys_prompt = None
+        else:
+            prompts = model_input[input_col]
+            history = model_input.get(HISTORY)
+            sys_prompt = model_input.get(SYS_PROMPT)
+
+        return prompts, history, sys_prompt
+
     def predict(self, context, model_input=None):
         """Predict using the model.
 
@@ -236,23 +262,12 @@ class OpenaiWrapperModel(object):
             questions = pd.Series(model_input)
             history = None
             sys_prompt = None
-        elif isinstance(model_input, dict):
-            questions = pd.Series(model_input['questions'])
-            if 'history' in model_input:
-                if isinstance(model_input['questions'], str):
-                    history = pd.Series([model_input['history']])
-                else:
-                    history = pd.Series(model_input['history'])
-            else:
-                history = None
-            if 'sys_prompt' in model_input:
-                sys_prompt = pd.Series(model_input['sys_prompt'])
-            else:
-                sys_prompt = None
         else:
-            questions = model_input['questions']
-            history = model_input.get('history')
-            sys_prompt = model_input.get('sys_prompt')
+            try:
+                questions, history, sys_prompt = self._get_input_data(model_input, self.input_col)
+            except KeyError:
+                # Fallback option keep support for older versions
+                questions, history, sys_prompt = self._get_input_data(model_input, 'questions')
 
         result = self._call_webservice(
             questions,
