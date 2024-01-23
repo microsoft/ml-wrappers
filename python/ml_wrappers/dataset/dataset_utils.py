@@ -19,7 +19,7 @@ with shap_warnings_suppressor():
     try:
         import shap
         shap_installed = True
-    except BaseException:
+    except BaseException:  # noqa: B036
         shap_installed = False
 
 module_logger = logging.getLogger(__name__)

@@ -10,7 +10,7 @@ with shap_warnings_suppressor():
     try:
         from shap.utils import safe_isinstance
         shap_installed = True
-    except BaseException:
+    except BaseException:  # noqa: B036
         shap_installed = False
 
 
