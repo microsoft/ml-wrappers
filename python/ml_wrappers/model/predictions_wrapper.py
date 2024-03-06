@@ -40,6 +40,7 @@ class PredictionsModelWrapper:
             raise DataValidationException(
                 "The number of instances in test data "
                 "do not match with number of predictions")
+        self._feature_names = list(test_data.columns)
         self._combined_data = test_data.copy()
         self._combined_data[TARGET] = y_pred
         self._should_construct_pandas_query = should_construct_pandas_query
@@ -60,7 +61,18 @@ class PredictionsModelWrapper:
                     data_copy = data_copy[data_copy[column_name].isna()]
                 else:
                     data_copy = data_copy[data_copy[column_name] == column_data]
-            filtered_df = data_copy
+
+                if len(data_copy) == 1 or len(data_copy) == 0:
+                    # Stop the search if we have found a possible exact match or no match
+                    break
+
+            if len(data_copy) == 1:
+                if query_test_data_row.equals(data_copy.filter(self._feature_names)):
+                    filtered_df = data_copy
+                else:
+                    filtered_df = pd.DataFrame(columns=self._combined_data.columns)
+            else:
+                filtered_df = data_copy
         else:
             queries = []
             for column_name, column_data in query_test_data_row.squeeze().items():
@@ -111,6 +123,7 @@ class PredictionsModelWrapper:
         """
         self._combined_data = state["_combined_data"]
         self._should_construct_pandas_query = state["_should_construct_pandas_query"]
+        self._feature_names = state["_feature_names"]
 
     def __getstate__(self):
         """Return the state so that the wrapped model is
@@ -122,6 +135,7 @@ class PredictionsModelWrapper:
         state = {}
         state["_combined_data"] = self._combined_data
         state["_should_construct_pandas_query"] = self._should_construct_pandas_query
+        state["_feature_names"] = self._feature_names
         return state
 
 
