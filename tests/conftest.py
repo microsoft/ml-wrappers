@@ -25,7 +25,7 @@ test_logger = logging.getLogger(__name__)
 test_logger.setLevel(logging.DEBUG)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _clean_dir():
     new_path = tempfile.mkdtemp()
     print("tmp test directory: " + new_path)
