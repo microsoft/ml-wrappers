@@ -9,6 +9,8 @@ import warnings
 
 import numpy as np
 import pandas as pd
+import sklearn
+from packaging import version
 from scipy.sparse import issparse
 
 from ..common.constants import Defaults
@@ -316,7 +318,11 @@ class DatasetWrapper(object):
             from sklearn.preprocessing import OneHotEncoder
         except ImportError:
             return None
-        one_hot_encoder = OneHotEncoder(handle_unknown='ignore', sparse=False)
+        if version.parse(sklearn.__version__) < version.parse('1.2'):
+            ohe_params = {"sparse": False}
+        else:
+            ohe_params = {"sparse_output": False}
+        one_hot_encoder = OneHotEncoder(handle_unknown='ignore', **ohe_params)
         self._one_hot_encoder = ColumnTransformer([('ord', one_hot_encoder, columns)], remainder='passthrough')
         # Note this will change column order, the one hot encoded columns will be at the start and the
         # rest of the columns at the end

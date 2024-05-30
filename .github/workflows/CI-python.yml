@@ -14,7 +14,7 @@ jobs:
       matrix:
         packageDirectory: ["ml_wrappers"]
         operatingSystem: [ubuntu-latest, macos-latest, windows-latest]
-        pythonVersion: ['3.8', '3.9', '3.10']
+        pythonVersion: ['3.9', '3.10']
         openaiVersion: ['0.28.1', 'openai-latest']
         exclude:
           - openaiVersion: '0.28.1'
@@ -59,6 +59,11 @@ jobs:
       shell: bash -l {0}
       run: |
         conda install --yes -c conda-forge lightgbm
+    - name: Install backwards-compatible keras for transformers
+      shell: bash -l {0}
+      run: |
+        pip install tf-keras
+        pip install keras==2.15
     - name: Install package
       shell: bash -l {0}
       run: |

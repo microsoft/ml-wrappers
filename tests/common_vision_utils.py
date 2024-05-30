@@ -29,6 +29,7 @@ except (ImportError, SyntaxError):
     # Skip for older versions of python due to breaking changes in fastai
     pass
 from raiutils.common.retries import retry_function
+from tensorflow import keras
 from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
 from torch import Tensor
 
@@ -88,8 +89,8 @@ def load_fridge_dataset():
     os.makedirs("data", exist_ok=True)
 
     # download data
-    download_url = "https://cvbp-secondary.z19.web.core.windows.net/datasets/"
-    download_url_end = "image_classification/fridgeObjects.zip"
+    download_url = "https://publictestdatasets.blob.core.windows.net/"
+    download_url_end = "computervision/fridgeObjects.zip"
     data_file = "./data/fridgeObjects.zip"
     retrieve_unzip_file(download_url + download_url_end, data_file)
 
@@ -110,9 +111,8 @@ def load_multilabel_fridge_dataset():
     os.makedirs("data", exist_ok=True)
 
     # download data
-    download_url = ("https://cvbp-secondary.z19.web.core.windows.net/"
-                    "datasets/image_classification/"
-                    "multilabelFridgeObjects.zip")
+    download_url = ("https://publictestdatasets.blob.core.windows.net/"
+                    "computervision/multilabelFridgeObjects.zip")
     folder_path = './data/multilabelFridgeObjects'
     data_file = folder_path + '.zip'
     retrieve_unzip_file(download_url, data_file)
@@ -201,6 +201,7 @@ def create_image_classification_pipeline():
     :return: pipeline
     :rtype: ResNetPipeline
     """
+    keras.utils.disable_interactive_logging()
     return ResNetPipeline()
 
 
@@ -239,6 +240,7 @@ def create_scikit_classification_pipeline():
     :return: scikit-learn compatible pipeline
     :rtype: ScikitResNetPipeline
     """
+    keras.utils.disable_interactive_logging()
     return ScikitResNetPipeline()
 
 
@@ -393,8 +395,8 @@ def load_object_fridge_dataset():
     os.makedirs("data", exist_ok=True)
 
     # download data
-    download_url = ("https://cvbp-secondary.z19.web.core.windows.net/"
-                    "datasets/object_detection/odFridgeObjects.zip")
+    download_url = ("https://publictestdatasets.blob.core.windows.net/"
+                    "computervision/odFridgeObjects.zip")
     data_file = "./odFridgeObjects.zip"
     urlretrieve(download_url, filename=data_file)
 

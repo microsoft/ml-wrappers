@@ -273,7 +273,7 @@ def create_keras_regressor(X, y):
     epochs = 12
     model = _common_model_generator(X.shape[1])
     model.add(Activation('linear'))
-    model.compile(loss=keras.losses.mean_squared_error,
+    model.compile(loss=keras.losses.MeanSquaredError,
                   optimizer=keras.optimizers.Adadelta(),
                   metrics=['accuracy'])
     model.fit(X, y,
@@ -307,6 +307,7 @@ def create_scikit_keras_model_func(feature_number, num_classes=None):
 
 
 def create_scikit_keras_regressor(X, y):
+    keras.utils.disable_interactive_logging()
     # create simple (dummy) Keras DNN model for regression
     batch_size = 500
     epochs = 10
@@ -317,6 +318,7 @@ def create_scikit_keras_regressor(X, y):
 
 
 def create_scikit_keras_binary_classifier(X, y):
+    keras.utils.disable_interactive_logging()
     # create simple (dummy) Keras DNN model for classification
     batch_size = 500
     epochs = 10
@@ -327,6 +329,7 @@ def create_scikit_keras_binary_classifier(X, y):
 
 
 def create_scikit_keras_multiclass_classifier(X, y):
+    keras.utils.disable_interactive_logging()
     # create simple (dummy) Keras DNN model for classification
     batch_size = 500
     epochs = 10
@@ -479,6 +482,7 @@ def create_tf_model(inp_ds, val_ds, feature_names):
 
 
 def create_keras_classifier(X, y):
+    keras.utils.disable_interactive_logging()
     # create simple (dummy) Keras DNN model for binary classification
     batch_size = 128
     epochs = 12
