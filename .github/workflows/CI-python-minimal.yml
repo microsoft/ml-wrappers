@@ -24,6 +24,11 @@ jobs:
       with:
         auto-update-conda: true
         python-version: ${{ matrix.pythonVersion }}
+    - if: ${{ matrix.operatingSystem == 'macos-latest' }}
+      name: Use Homebrew to install libomp on MacOS
+      shell: bash -l {0}
+      run: |
+        brew install libomp
     - name: Install package
       shell: bash -l {0}
       run: |
