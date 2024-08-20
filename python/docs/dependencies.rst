@@ -45,7 +45,7 @@ requirements-dev.txt
 - catboost<1.2
 - tensorflow
 - shap
-- transformers<4.20.0
+- transformers<4.40.0
 - datasets
 - raiutils
 - fastai
@@ -59,7 +59,6 @@ requirements-automl.txt
 -----------------------
 
 - mlflow
-- azureml-automl-core
 - azureml-automl-dnn-vision
 - vision_explanation_methods
 

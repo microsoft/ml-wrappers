@@ -36,7 +36,8 @@ CLASSIFIERS = [
 ]
 
 DEPENDENCIES = [
-    'numpy',
+    'numpy<2.0.0',
+    'packaging',
     'pandas<2.0.0',
     'scipy',
     'scikit-learn'
