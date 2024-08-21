@@ -28,10 +28,14 @@ def is_sequential(model):
     :rtype: bool
     """
     model_type = str(type(model))
-    # the sequential namespace changed in tensorflow 2.13
     old_sequential_ns = "keras.engine.sequential.Sequential'>"
-    new_sequential_ns = "keras.src.engine.sequential.Sequential'>"
-    return (model_type.endswith(old_sequential_ns) or model_type.endswith(new_sequential_ns))
+    # the sequential namespace changed in tensorflow 2.13
+    new_sequential_ns1 = "keras.src.engine.sequential.Sequential'>"
+    # it changed again in tensorflow 2.17
+    new_sequential_ns2 = "keras.src.models.sequential.Sequential'>"
+    return any([model_type.endswith(old_sequential_ns),
+                model_type.endswith(new_sequential_ns1),
+                model_type.endswith(new_sequential_ns2)])
 
 
 class WrappedTensorflowModel(object):

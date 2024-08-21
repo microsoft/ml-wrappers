@@ -131,12 +131,10 @@ class TestModelWrapper(object):
         train_regression_model_numpy(create_lightgbm_regressor, housing)
         train_regression_model_pandas(create_lightgbm_regressor, housing)
 
-    @pytest.mark.skip("Keras API failing in tests with latest tensorflow")
     def test_wrap_keras_regression_model(self, housing):
         train_regression_model_numpy(create_keras_regressor, housing)
         train_regression_model_pandas(create_keras_regressor, housing)
 
-    @pytest.mark.skip("Keras API failing in tests with latest tensorflow")
     def test_wrap_scikit_keras_regression_model(self, housing):
         train_regression_model_numpy(create_scikit_keras_regressor, housing)
         train_regression_model_pandas(create_scikit_keras_regressor, housing)
