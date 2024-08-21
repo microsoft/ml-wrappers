@@ -30,6 +30,13 @@ try:
     import tensorflow as tf
 except ImportError:
     module_logger.debug('Could not import tensorflow, required if using a Tensorflow model')
+except TypeError as te:
+    # handle issues with protobuf version mismatch on some environments
+    module_logger.debug(
+        "Could not import tensorflow in ml-wrappers due to"
+        "TypeError, required if using a Tensorflow model. "
+        "Inner exception: {0}".format(te))
+
 
 SAMPLED_STRING_ROWS = 10
 
