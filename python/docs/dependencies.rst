@@ -42,7 +42,7 @@ requirements-dev.txt
 
 - lightgbm
 - xgboost
-- catboost<1.2
+- catboost
 - tensorflow
 - shap
 - transformers<4.40.0

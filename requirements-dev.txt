@@ -1,7 +1,9 @@
 lightgbm
 xgboost
-catboost<1.2
+catboost
 tensorflow
+# due to macos errors with old absl-py, remove with next absl-py release
+protobuf<5.26.0; platform_system == 'Darwin'
 shap
 transformers<4.40.0
 datasets
