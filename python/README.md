@@ -1,6 +1,6 @@
 # Machine Learning Wrappers SDK for Python
 
-### This package has been tested with Python 3.8, 3.9 and 3.10
+### This package has been tested with Python 3.9, 3.10 and 3.11
 
 The Machine Learning Wrappers SDK provides a unified wrapper for various ML frameworks - to have one uniform scikit-learn format predict and predict_proba functions.
 

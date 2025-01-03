@@ -14,7 +14,7 @@ jobs:
       matrix:
         packageDirectory: ["ml_wrappers"]
         operatingSystem: [ubuntu-latest, macos-latest, windows-latest]
-        pythonVersion: ['3.9', '3.10']
+        pythonVersion: ['3.9', '3.10', '3.11']
         openaiVersion: ['0.28.1', 'openai-latest']
         exclude:
           - openaiVersion: '0.28.1'
@@ -34,6 +34,7 @@ jobs:
       with:
         auto-update-conda: true
         python-version: ${{ matrix.pythonVersion }}
+        channels: conda-forge
 
     - if: ${{ matrix.operatingSystem == 'macos-latest' }}
       name: Use Homebrew to install libomp on MacOS
@@ -42,28 +43,28 @@ jobs:
         brew install libomp
 
     - if: ${{ matrix.operatingSystem == 'windows-latest' }}
-      name: Install pytorch on windows for python 3.8 to 3.10
+      name: Install pytorch on windows for python 3.9 to 3.11
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet "pytorch<2.0.0" torchvision captum cpuonly "libtiff<4.5.0" -c pytorch -c conda-forge --strict-channel-priority
+        conda install --yes --quiet pytorch torchvision captum cpuonly "libtiff<4.5.0" -c pytorch -c conda-forge --strict-channel-priority
 
     - if: ${{ matrix.operatingSystem == 'ubuntu-latest' }}
-      name: Install pytorch on ubuntu for python 3.8 to 3.10
+      name: Install pytorch on ubuntu for python 3.9 to 3.11
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet "pytorch<2.0.0" torchvision captum cpuonly -c pytorch -c conda-forge --strict-channel-priority
+        conda install --yes --quiet pytorch torchvision captum cpuonly -c pytorch -c conda-forge --strict-channel-priority
 
     - if: ${{ matrix.operatingSystem == 'macos-latest' }}
-      name: Install pytorch on MacOS for python 3.8 to 3.10
+      name: Install pytorch on MacOS for python 3.9 to 3.11
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet "pytorch<2.0.0" torchvision captum -c pytorch -c conda-forge --strict-channel-priority
+        conda install --yes --quiet pytorch torchvision captum "protobuf<5.26.0" -c pytorch -c conda-forge
 
     - if: ${{ matrix.operatingSystem == 'macos-latest' }}
       name: Install lightgbm from conda on MacOS
       shell: bash -l {0}
       run: |
-        conda install --yes -c conda-forge lightgbm
+        conda install --yes lightgbm -c conda-forge
 
     - name: Install backwards-compatible tf-keras for transformers
       shell: bash -l {0}
@@ -104,7 +105,7 @@ jobs:
       # Use always() to always run this step to publish test results when there are test failures
       if: ${{ always() }}
 
-    - if: ${{ (matrix.operatingSystem == 'windows-latest') && (matrix.pythonVersion == '3.8') }}
+    - if: ${{ (matrix.operatingSystem == 'windows-latest') && (matrix.pythonVersion == '3.9') }}
       name: Upload to codecov
       id: codecovupload1
       uses: codecov/codecov-action@v3
@@ -118,7 +119,7 @@ jobs:
         name: codecov-umbrella
         verbose: true
 
-    - if: ${{ (steps.codecovupload1.outcome == 'failure') && (matrix.pythonVersion == '3.8') && (matrix.operatingSystem == 'windows-latest') }}
+    - if: ${{ (steps.codecovupload1.outcome == 'failure') && (matrix.pythonVersion == '3.9') && (matrix.operatingSystem == 'windows-latest') }}
       name: Retry upload to codecov
       id: codecovupload2
       uses: codecov/codecov-action@v3
@@ -133,7 +134,7 @@ jobs:
         verbose: true
 
     - name: Set codecov status
-      if: ${{ (matrix.pythonVersion == '3.8') && (matrix.operatingSystem == 'windows-latest') }}
+      if: ${{ (matrix.pythonVersion == '3.9') && (matrix.operatingSystem == 'windows-latest') }}
       shell: bash
       run: |
         if ${{ (steps.codecovupload1.outcome == 'success') || (steps.codecovupload2.outcome == 'success') }} ; then
