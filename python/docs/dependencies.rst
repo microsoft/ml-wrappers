@@ -33,7 +33,7 @@ python/ml_wrappers.egg-info/requires.txt
 ----------------------------------------
 
 - numpy
-- pandas<2.0.0
+- pandas
 - scipy
 - scikit-learn
 
