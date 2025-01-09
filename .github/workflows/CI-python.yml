@@ -98,9 +98,9 @@ jobs:
         pytest ./tests/main -s -v --durations=10 --cov='ml_wrappers' --cov-report=xml --cov-report=html
 
     - name: Upload code coverage results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.packageDirectory }}-code-coverage-results
+        name: ${{ matrix.packageDirectory }}-${{ matrix.openaiVersion }}-${{ matrix.pythonVersion }}-${{ matrix.operatingSystem }}-code-coverage-results
         path: htmlcov
       # Use always() to always run this step to publish test results when there are test failures
       if: ${{ always() }}

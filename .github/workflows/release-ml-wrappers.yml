@@ -27,17 +27,10 @@ jobs:
           auto-update-conda: true
           python-version: 3.9
 
-      - if: ${{ matrix.operatingSystem != 'macos-latest' }}
-        name: Install pytorch on non-MacOS
+      - name: Install pytorch on non-MacOS
         shell: bash -l {0}
         run: |
           conda install --yes --quiet pytorch torchvision captum cpuonly -c pytorch -c conda-forge --strict-channel-priority
-
-      - if: ${{ matrix.operatingSystem == 'macos-latest' }}
-        name: Install Anaconda packages on MacOS, which should not include cpuonly according to official docs
-        shell: bash -l {0}
-        run: |
-          conda install --yes --quiet pytorch torchvision captum -c pytorch
 
       - name: update and upgrade pip, setuptools, wheel, and twine
         shell: bash -l {0}
@@ -80,9 +73,9 @@ jobs:
         run: pytest ./tests/main
 
       - name: Upload a ml-wrappers build result
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
-          name: ml_wrappers
+          name: ml_wrappers-${{ github.event.inputs.releaseType }}
           path: python/dist/
 
       # publish to PyPI
