@@ -95,15 +95,12 @@ def load_fridge_dataset():
     retrieve_unzip_file(download_url + download_url_end, data_file)
 
     # get all file names into a pandas dataframe with the labels
-    data = pd.DataFrame(columns=[IMAGE,
-                                 LABEL])
+    rows = []
     for folder in os.listdir("./data/fridgeObjects"):
         for file in os.listdir("./data/fridgeObjects/" + folder):
             image_path = "./data/fridgeObjects/" + folder + "/" + file
-            data = data.append({IMAGE: image_path,
-                                LABEL: folder},
-                               ignore_index=True)
-    return data
+            rows.append({IMAGE: image_path, LABEL: folder})
+    return pd.DataFrame(rows, columns=[IMAGE, LABEL])
 
 
 def load_multilabel_fridge_dataset():
@@ -410,9 +407,9 @@ def load_object_fridge_dataset():
     labels = load_object_fridge_dataset_labels()
 
     # get all file names into a pandas dataframe with the labels
-    data = pd.DataFrame(columns=["image", "label"])
+    rows = []
     for i, file in enumerate(os.listdir("./data/odFridgeObjects/" + "images")):
         image_path = "./data/odFridgeObjects/" + "images" + "/" + file
-        data = data.append({"image": image_path,
-                            "label": labels[i]}, ignore_index=True)
+        rows.append({IMAGE: image_path, LABEL: labels[i]})
+    data = pd.DataFrame(rows, columns=[IMAGE, LABEL])
     return data
