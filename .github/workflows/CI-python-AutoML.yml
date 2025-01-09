@@ -66,7 +66,7 @@ jobs:
       run: |
         pytest ./tests/automl -s -v --durations=10 --cov='ml_wrappers' --cov-report=xml --cov-report=html
     - name: Upload code coverage results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.packageDirectory }}-code-coverage-results
         path: htmlcov
