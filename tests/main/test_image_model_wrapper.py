@@ -114,6 +114,8 @@ class TestImageModelWrapper(object):
     # Skip for older versions of pytorch due to missing classes
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Older versions of pytorch not supported')
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='PyTorch segfaults on macOS in torchvision transforms')
     def test_pytorch_image_classification_model(self):
         data = load_imagenet_dataset()[:3]
         data = preprocess_imagenet_dataset(data)
@@ -124,6 +126,8 @@ class TestImageModelWrapper(object):
     # Skip for older versions of pytorch due to missing classes
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Older versions of pytorch not supported')
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='PyTorch segfaults on macOS in torchvision transforms')
     def test_pytorch_image_classification_model_pandas(self):
         data = load_imagenet_dataset()[:3]
         data = preprocess_imagenet_dataset(data)
@@ -165,6 +169,8 @@ class TestImageModelWrapper(object):
     # Skip for older versions of pytorch due to missing classes
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Older versions of pytorch not supported')
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='PyTorch segfaults on macOS')
     def test_pytorch_object_detection_model_pandas(self):
         model, data = _set_up_OD_model_data(NUM_TEST_IMAGES)
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -176,6 +182,8 @@ class TestImageModelWrapper(object):
     # Skip for older versions of pytorch due to missing classes
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Older versions of pytorch not supported')
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='PyTorch segfaults on macOS')
     def test_pytorch_object_detection_custom_model_pandas(self):
         model, data = _set_up_OD_model_data()
         wrapped_model = PytorchDRiseWrapper(model, 1)
@@ -187,6 +195,8 @@ class TestImageModelWrapper(object):
     # Skip for older versions of pytorch due to missing classes
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Older versions of pytorch not supported')
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='PyTorch segfaults on macOS')
     def test_custom_object_detection_wrapper(self):
         data = _set_up_OD_data(NUM_TEST_IMAGES)
         model = CustomObjectDetectionWrapper()
@@ -199,6 +209,8 @@ class TestImageModelWrapper(object):
     # Skip for older versions of pytorch due to missing classes
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Older versions of pytorch not supported')
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='PyTorch segfaults on macOS')
     def test_PytorchDRiseWrapper_wrapper_device(self):
         model, data = _set_up_OD_model_data()
 
@@ -222,6 +234,8 @@ class TestImageModelWrapper(object):
     # Skip for older versions of pytorch due to missing classes
     @pytest.mark.skipif(sys.version_info.minor <= 6,
                         reason='Older versions of pytorch not supported')
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='PyTorch segfaults on macOS')
     def test_WrappedObjectDetectionModel_wrapper_device(self):
         model, data = _set_up_OD_model_data()
         wrapped_model = WrappedObjectDetectionModel(model, 1, 'cpu')

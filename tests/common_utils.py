@@ -3,6 +3,8 @@
 # ---------------------------------------------------------
 
 # Defines common utilities for explanations
+import sys
+
 import numpy as np
 import pandas as pd
 from catboost import CatBoostClassifier, CatBoostRegressor
@@ -55,10 +57,15 @@ try:
     from fastai.metrics import accuracy
     from fastai.tabular.data import TabularDataLoaders
     from fastai.tabular.learner import tabular_learner
-except (ImportError, SyntaxError):
+except Exception as e:
+    print(f"FastAI tabular import failed: {type(e).__name__}: {e}", file=sys.stderr)
     Callback = object
+    CategoryBlock = None
+    RegressionBlock = None
+    TabularDataLoaders = None
+    tabular_learner = None
+    accuracy = None
     # Skip for older versions of python due to breaking changes in fastai
-    pass
 
 LIGHTGBM_METHOD = 'mimic.lightgbm'
 LINEAR_METHOD = 'mimic.linear'
@@ -260,7 +267,7 @@ def create_sklearn_linear_regressor(X, y, pipeline=False):
 
 
 def create_sklearn_logistic_regressor(X, y, pipeline=False):
-    lin = linear_model.LogisticRegression(solver='liblinear')
+    lin = linear_model.LogisticRegression(solver='lbfgs', max_iter=1000)
     if pipeline:
         lin = Pipeline([('lin', lin)])
     model = lin.fit(X, y)

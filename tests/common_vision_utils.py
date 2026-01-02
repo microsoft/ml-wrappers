@@ -25,9 +25,19 @@ try:
     from fastai.vision.augment import Resize
     from fastai.vision.data import ImageDataLoaders, imagenet_stats
     from fastai.vision.learner import vision_learner
-except (ImportError, SyntaxError):
+except Exception as e:
+    print(f"FastAI vision import failed: {type(e).__name__}: {e}", file=sys.stderr)
     # Skip for older versions of python due to breaking changes in fastai
-    pass
+    Normalize = None
+    load_learner = None
+    BCEWithLogitsLossFlat = None
+    accuracy = None
+    accuracy_multi = None
+    models = None
+    Resize = None
+    ImageDataLoaders = None
+    imagenet_stats = None
+    vision_learner = None
 from raiutils.common.retries import retry_function
 from tensorflow import keras
 from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input

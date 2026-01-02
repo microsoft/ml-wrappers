@@ -126,7 +126,10 @@ def multiclass_classification():
 
 @pytest.fixture(scope='session')
 def housing():
-    x_train, x_test, y_train, y_test, features = create_housing_data()
+    try:
+        x_train, x_test, y_train, y_test, features = create_housing_data()
+    except Exception as e:
+        pytest.skip(f"Could not download housing dataset due to sklearn blocking github action runners: {e}")
     return {
         DatasetConstants.X_TRAIN: x_train,
         DatasetConstants.X_TEST: x_test,
