@@ -67,7 +67,11 @@ class PredictionsModelWrapper:
                     break
 
             if len(data_copy) == 1:
-                if query_test_data_row.equals(data_copy.filter(self._feature_names)):
+                # Compare values only, ignoring index differences
+                # (query data may have reset index after transformations)
+                query_values = query_test_data_row.reset_index(drop=True)
+                matched_values = data_copy.filter(self._feature_names).reset_index(drop=True)
+                if query_values.equals(matched_values):
                     filtered_df = data_copy
                 else:
                     filtered_df = pd.DataFrame(columns=self._combined_data.columns)

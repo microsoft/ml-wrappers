@@ -25,6 +25,10 @@ jobs:
             operatingSystem: 'macos-latest'
           - openaiVersion: '0.28.1'
             operatingSystem: 'windows-latest'
+          # Exclude Windows + Python 3.9 + openai-latest due to blis/spacy/fastai build failures
+          - openaiVersion: 'openai-latest'
+            pythonVersion: '3.9'
+            operatingSystem: 'windows-latest'
 
     runs-on: ${{ matrix.operatingSystem }}
 
@@ -58,7 +62,7 @@ jobs:
       name: Install pytorch on MacOS for python 3.9 to 3.11
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet pytorch torchvision captum "protobuf<5.26.0" -c pytorch -c conda-forge
+        conda install --yes --quiet pytorch torchvision captum -c pytorch -c conda-forge
 
     - if: ${{ matrix.operatingSystem == 'macos-latest' }}
       name: Install lightgbm from conda on MacOS
@@ -85,6 +89,11 @@ jobs:
       shell: bash -l {0}
       run: |
         pip install -r requirements-test.txt
+
+    - name: Upgrade matplotlib for NumPy 2.x compatibility
+      shell: bash -l {0}
+      run: |
+        pip install --upgrade "matplotlib>=3.9.0"
 
     - if: ${{ matrix.openaiVersion != 'openai-latest' }}
       name: Install openai version ${{ matrix.openaiVersion }}
