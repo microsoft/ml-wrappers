@@ -52,6 +52,8 @@ class TestModelWrapper(object):
             create_sklearn_logistic_regressor, iris,
             use_dataset_wrapper=False)
 
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='PyTorch segfaults on macOS')
     def test_wrap_pytorch_classification_model(self, iris):
         train_classification_model_numpy(
             create_pytorch_multiclass_classifier, iris)
@@ -71,10 +73,16 @@ class TestModelWrapper(object):
         train_classification_model_numpy(create_lightgbm_classifier, iris)
         train_classification_model_pandas(create_lightgbm_classifier, iris)
 
+    # Skip on macOS due to TensorFlow/Keras hanging issues
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='TensorFlow/Keras hangs on macOS')
     def test_wrap_keras_classification_model(self, iris):
         train_classification_model_numpy(create_keras_classifier, iris)
         train_classification_model_pandas(create_keras_classifier, iris)
 
+    # Skip on macOS due to TensorFlow/Keras hanging issues
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='TensorFlow/Keras hangs on macOS')
     def test_wrap_scikit_keras_classification_model(self, iris):
         train_classification_model_numpy(create_scikit_keras_multiclass_classifier, iris)
         train_classification_model_pandas(create_scikit_keras_multiclass_classifier, iris)
@@ -115,6 +123,8 @@ class TestModelWrapper(object):
             create_sklearn_linear_regressor, housing,
             use_dataset_wrapper=False)
 
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='PyTorch segfaults on macOS')
     def test_wrap_pytorch_regression_model(self, housing):
         train_regression_model_numpy(
             create_pytorch_regressor, housing)
@@ -131,10 +141,16 @@ class TestModelWrapper(object):
         train_regression_model_numpy(create_lightgbm_regressor, housing)
         train_regression_model_pandas(create_lightgbm_regressor, housing)
 
+    # Skip on macOS due to TensorFlow/Keras hanging issues
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='TensorFlow/Keras hangs on macOS')
     def test_wrap_keras_regression_model(self, housing):
         train_regression_model_numpy(create_keras_regressor, housing)
         train_regression_model_pandas(create_keras_regressor, housing)
 
+    # Skip on macOS due to TensorFlow/Keras hanging issues
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='TensorFlow/Keras hangs on macOS')
     def test_wrap_scikit_keras_regression_model(self, housing):
         train_regression_model_numpy(create_scikit_keras_regressor, housing)
         train_regression_model_pandas(create_scikit_keras_regressor, housing)
@@ -148,6 +164,9 @@ class TestModelWrapper(object):
     def test_wrap_fastai_regression_model(self, iris):
         train_regression_model_pandas(create_fastai_tabular_regressor, iris)
 
+    # Skip on macOS due to TensorFlow batch dataset hanging issues
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='TensorFlow batch dataset hangs on macOS')
     def test_batch_dataset(self, housing):
         X_train = housing[DatasetConstants.X_TRAIN]
         X_test = housing[DatasetConstants.X_TEST]

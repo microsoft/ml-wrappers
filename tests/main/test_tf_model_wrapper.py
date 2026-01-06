@@ -4,6 +4,8 @@
 
 """Tests for WrappedTensorflowModel"""
 
+import sys
+
 import pytest
 import tensorflow as tf
 from common_utils import (create_keras_classifier, create_keras_regressor,
@@ -20,18 +22,27 @@ from wrapper_validator import validate_wrapped_tf_model
 
 @pytest.mark.usefixtures('_clean_dir')
 class TestTensorflowModelWrapper(object):
+    # Skip on macOS due to TensorFlow/Keras hanging and compatibility issues
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='TensorFlow/Keras hangs on macOS')
     def test_wrap_keras_classification_model(self, iris):
         wrapped_init = wrapped_tensorflow_model_initializer(
             create_keras_classifier, model_task=ModelTask.CLASSIFICATION)
         train_classification_model_numpy(wrapped_init, iris)
         train_classification_model_pandas(wrapped_init, iris)
 
+    # Skip on macOS due to TensorFlow/Keras hanging and compatibility issues
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='TensorFlow/Keras hangs on macOS')
     def test_wrap_keras_regression_model(self, housing):
         wrapped_init = wrapped_tensorflow_model_initializer(
             create_keras_regressor, model_task=ModelTask.REGRESSION)
         train_regression_model_numpy(wrapped_init, housing)
         train_regression_model_pandas(wrapped_init, housing)
 
+    # Skip on macOS due to TensorFlow/Keras hanging and compatibility issues
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='TensorFlow/Keras hangs on macOS')
     def test_wrap_scikit_keras_regression_model(self, housing):
         wrapped_init = wrapped_tensorflow_model_initializer(
             create_scikit_keras_regressor, model_task=ModelTask.REGRESSION)

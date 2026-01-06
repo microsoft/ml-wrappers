@@ -2,15 +2,15 @@ lightgbm
 xgboost
 catboost
 tensorflow
-# due to macos errors with old absl-py, remove with next absl-py release
-protobuf<5.26.0; platform_system == 'Darwin'
 shap
 transformers<4.40.0
 datasets
 raiutils
 fastai
+ipython
 vision_explanation_methods
-mlflow
+mlflow>=3.2.0; python_version >= '3.10'
+mlflow>=3.0.0,<=3.2.0; python_version < '3.10'
 joblib<1.3.0; python_version <= '3.7'
 scikeras
 openai; python_version >= '3.7'

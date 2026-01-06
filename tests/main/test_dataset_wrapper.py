@@ -4,6 +4,8 @@
 
 """Tests for DatasetWrapper class"""
 
+import sys
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -57,6 +59,11 @@ class TestDatasetWrapper(object):
         torch_converted = wrapper.typed_dataset
         assert torch.all(torch.eq(torch_converted, torch_input))
 
+    # Skip on macOS due to TensorFlow batch dataset iterator hanging
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='TensorFlow batch dataset hangs on macOS')
+    def test_tf_batch_dataset(self):
+        test_dataframe = pd.DataFrame(data=[[1, 2, 3]], columns=['c1,', 'c2', 'c3'])
         tensor_slices = (dict(test_dataframe), None)
         tf_batch_dataset = tf.data.Dataset.from_tensor_slices(tensor_slices).batch(32)
         wrapper = DatasetWrapper(dataset=tf_batch_dataset)

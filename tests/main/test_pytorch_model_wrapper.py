@@ -4,6 +4,8 @@
 
 """Tests for WrappedPytorchModel"""
 
+import sys
+
 import pytest
 from common_utils import (create_pytorch_multiclass_classifier,
                           create_pytorch_regressor)
@@ -16,6 +18,8 @@ from wrapper_validator import validate_wrapped_pytorch_model
 
 @pytest.mark.usefixtures('_clean_dir')
 class TestPytorchModelWrapper(object):
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='PyTorch hangs on macOS')
     def test_wrap_pytorch_classification_model(self, iris):
         wrapped_init = wrapped_pytorch_model_initializer(
             create_pytorch_multiclass_classifier,
@@ -24,6 +28,8 @@ class TestPytorchModelWrapper(object):
         train_classification_model_numpy(wrapped_init, iris,
                                          use_dataset_wrapper=False)
 
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='PyTorch hangs on macOS')
     def test_wrap_pytorch_regression_model(self, housing):
         wrapped_init = wrapped_pytorch_model_initializer(
             create_pytorch_regressor, model_task=ModelTask.REGRESSION)

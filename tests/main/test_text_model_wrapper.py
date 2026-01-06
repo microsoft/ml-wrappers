@@ -4,6 +4,8 @@
 
 """Tests for wrap_model function on text-based models"""
 
+import sys
+
 import pytest
 from common_text_utils import (EMOTION, create_multilabel_text_pipeline,
                                create_question_answering_pipeline,
@@ -27,6 +29,8 @@ class TestTextModelWrapper(object):
         wrapped_model = wrap_model(pred, docs, ModelTask.TEXT_CLASSIFICATION)
         validate_wrapped_classification_model(wrapped_model, docs)
 
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='Transformers/PyTorch hangs on macOS')
     def test_wrap_question_answering_model(self):
         squad_data = load_squad_dataset()
         docs = squad_data[:10].drop(columns=['answers'])
@@ -34,6 +38,8 @@ class TestTextModelWrapper(object):
         wrapped_model = wrap_model(pred, docs, ModelTask.QUESTION_ANSWERING)
         validate_wrapped_question_answering_model(wrapped_model, docs)
 
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                        reason='Transformers/PyTorch hangs on macOS')
     def test_wrap_multilabel_model(self):
         covid19_data = load_covid19_emergency_event_dataset()
         docs = covid19_data[:10]['text'].values.tolist()

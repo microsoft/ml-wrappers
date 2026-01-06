@@ -25,6 +25,14 @@ jobs:
             operatingSystem: 'macos-latest'
           - openaiVersion: '0.28.1'
             operatingSystem: 'windows-latest'
+          # Exclude Windows + Python 3.9 + openai-latest due to blis/spacy/fastai build failures
+          - openaiVersion: 'openai-latest'
+            pythonVersion: '3.9'
+            operatingSystem: 'windows-latest'
+          # Exclude macOS + Python 3.9 due to gRPC mutex deadlock
+          - openaiVersion: 'openai-latest'
+            pythonVersion: '3.9'
+            operatingSystem: 'macos-latest'
 
     runs-on: ${{ matrix.operatingSystem }}
 
@@ -58,13 +66,13 @@ jobs:
       name: Install pytorch on MacOS for python 3.9 to 3.11
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet pytorch torchvision captum "protobuf<5.26.0" -c pytorch -c conda-forge
+        conda install --yes --quiet pytorch torchvision captum -c pytorch -c conda-forge
 
     - if: ${{ matrix.operatingSystem == 'macos-latest' }}
       name: Install lightgbm from conda on MacOS
       shell: bash -l {0}
       run: |
-        conda install --yes lightgbm -c conda-forge
+        conda install --yes "lightgbm>=4.5.0" -c conda-forge
 
     - name: Install backwards-compatible tf-keras for transformers
       shell: bash -l {0}
@@ -86,11 +94,29 @@ jobs:
       run: |
         pip install -r requirements-test.txt
 
+    - name: Upgrade matplotlib for NumPy 2.x compatibility
+      shell: bash -l {0}
+      run: |
+        pip install --upgrade "matplotlib>=3.9.0"
+
     - if: ${{ matrix.openaiVersion != 'openai-latest' }}
       name: Install openai version ${{ matrix.openaiVersion }}
       shell: bash -l {0}
       run: |
         pip install openai==${{ matrix.openaiVersion }}
+
+    - if: ${{ matrix.operatingSystem == 'macos-latest' }}
+      name: Set macOS environment variables to prevent hangs
+      shell: bash -l {0}
+      run: |
+        # GRPC_POLL_STRATEGY=poll - Forces gRPC to use the poll strategy instead of
+        # platform-specific mechanisms that can deadlock on macOS
+        echo "GRPC_POLL_STRATEGY=poll" >> $GITHUB_ENV
+        # TF_ENABLE_ONEDNN_OPTS=0 - Disables oneDNN optimizations that can cause issues on macOS
+        echo "TF_ENABLE_ONEDNN_OPTS=0" >> $GITHUB_ENV
+        # OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES - Disables the Objective-C fork safety check
+        # that can cause hangs when Python multiprocessing interacts with certain libraries
+        echo "OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES" >> $GITHUB_ENV
 
     - name: Test with pytest
       shell: bash -l {0}
