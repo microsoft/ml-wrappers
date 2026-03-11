@@ -483,7 +483,7 @@ class TestPredictionsWrapperPerformance(TestPredictionsWrapper):
 
         # Query each row individually
         for i in range(len(data)):
-            query = data.iloc[i:i+1].copy()
+            query = data.iloc[i:i + 1].copy()
             result = wrapper.predict(query)
             assert result[0] == predictions[i], f"Row {i}: expected {predictions[i]}, got {result[0]}"
 
@@ -503,7 +503,7 @@ class TestPredictionsWrapperPerformance(TestPredictionsWrapper):
 
         # Query each row
         for i in range(len(data)):
-            query = data.iloc[i:i+1].copy()
+            query = data.iloc[i:i + 1].copy()
             result = wrapper.predict(query)
             assert result[0] == predictions[i], f"Row {i}: expected {predictions[i]}, got {result[0]}"
 
