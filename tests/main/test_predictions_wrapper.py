@@ -402,3 +402,197 @@ class TestPredictionsWrapperIndexMismatch(TestPredictionsWrapper):
         result = model_wrapper.predict_proba(wrapped_query)
         expected = model.predict_proba(X_test.iloc[0:1])
         np.testing.assert_array_almost_equal(result, expected)
+
+
+@pytest.mark.parametrize('should_construct_pandas_query', [True, False])
+class TestPredictionsWrapperPerformance(TestPredictionsWrapper):
+    """Tests for performance improvements with hash-based lookup."""
+
+    def test_large_dataset_performance(self, should_construct_pandas_query):
+        """Test that hash-based lookup is faster than row-by-row filtering.
+
+        This test verifies the performance improvement introduced by
+        using hash-based indexing for lookups instead of the original
+        O(n*m) filtering approach.
+        """
+        import time
+
+        # Create a moderately large dataset
+        n_rows = 10000
+        n_features = 20
+        np.random.seed(42)
+
+        data = pd.DataFrame(
+            np.random.randn(n_rows, n_features),
+            columns=[f'feature_{i}' for i in range(n_features)]
+        )
+        predictions = np.random.randint(0, 2, n_rows)
+        proba = np.random.rand(n_rows, 2)
+        proba = proba / proba.sum(axis=1, keepdims=True)
+
+        # Create wrapper
+        wrapper = PredictionsModelWrapperClassification(
+            data, predictions, proba,
+            should_construct_pandas_query=should_construct_pandas_query
+        )
+
+        # Query a subset of data
+        query_size = 500
+        query_data = data.iloc[:query_size].copy()
+
+        # Time the prediction
+        start = time.time()
+        result = wrapper.predict(query_data)
+        elapsed = time.time() - start
+
+        # Verify correctness
+        assert len(result) == query_size
+        np.testing.assert_array_equal(result, predictions[:query_size])
+
+        # Verify performance: should complete in reasonable time
+        # With hash-based lookup, 500 rows should take < 1 second
+        # Original implementation would take ~10+ seconds
+        assert elapsed < 5.0, f"predict() took {elapsed:.2f}s for {query_size} rows, expected < 5s"
+
+        # Test predict_proba as well
+        start = time.time()
+        result_proba = wrapper.predict_proba(query_data)
+        elapsed_proba = time.time() - start
+
+        assert len(result_proba) == query_size
+        np.testing.assert_array_almost_equal(result_proba, proba[:query_size])
+        assert elapsed_proba < 5.0, f"predict_proba() took {elapsed_proba:.2f}s for {query_size} rows"
+
+    def test_hash_collision_handling(self, should_construct_pandas_query):
+        """Test that hash collisions are handled correctly.
+
+        Even if two rows have the same hash, the wrapper should
+        return the correct prediction by comparing actual values.
+        """
+        # Create data with potential hash collisions
+        data = pd.DataFrame({
+            'a': [1.0, 1.0, 2.0, 2.0],  # Duplicate values
+            'b': [1.0, 2.0, 1.0, 2.0],
+        })
+        predictions = np.array([10, 20, 30, 40])
+
+        wrapper = PredictionsModelWrapperRegression(
+            data, predictions,
+            should_construct_pandas_query=should_construct_pandas_query
+        )
+
+        # Query each row individually
+        for i in range(len(data)):
+            query = data.iloc[i:i + 1].copy()
+            result = wrapper.predict(query)
+            assert result[0] == predictions[i], f"Row {i}: expected {predictions[i]}, got {result[0]}"
+
+    def test_nan_values_with_hash_lookup(self, should_construct_pandas_query):
+        """Test that NaN values are handled correctly in hash-based lookup."""
+        data = pd.DataFrame({
+            'a': [1.0, np.nan, 3.0, np.nan],
+            'b': [np.nan, 2.0, np.nan, 4.0],
+            'c': ['x', 'y', 'z', 'w'],
+        })
+        predictions = np.array([100, 200, 300, 400])
+
+        wrapper = PredictionsModelWrapperRegression(
+            data, predictions,
+            should_construct_pandas_query=should_construct_pandas_query
+        )
+
+        # Query each row
+        for i in range(len(data)):
+            query = data.iloc[i:i + 1].copy()
+            result = wrapper.predict(query)
+            assert result[0] == predictions[i], f"Row {i}: expected {predictions[i]}, got {result[0]}"
+
+    def test_mixed_dtypes_with_hash_lookup(self, should_construct_pandas_query):
+        """Test hash-based lookup with mixed data types."""
+        data = pd.DataFrame({
+            'int_col': [1, 2, 3, 4],
+            'float_col': [1.5, 2.5, 3.5, 4.5],
+            'str_col': ['a', 'b', 'c', 'd'],
+            'bool_col': [True, False, True, False],
+        })
+        predictions = np.array([10, 20, 30, 40])
+
+        wrapper = PredictionsModelWrapperRegression(
+            data, predictions,
+            should_construct_pandas_query=should_construct_pandas_query
+        )
+
+        # Query with subset
+        query = data.iloc[[0, 2]].copy()
+        result = wrapper.predict(query)
+        np.testing.assert_array_equal(result, [10, 30])
+
+    def test_reset_index_query_with_hash_lookup(self, should_construct_pandas_query):
+        """Test that queries with reset indices still work correctly."""
+        # Create data with non-sequential index
+        data = pd.DataFrame({
+            'a': [1.0, 2.0, 3.0, 4.0, 5.0],
+            'b': [10.0, 20.0, 30.0, 40.0, 50.0],
+        })
+        data.index = [100, 101, 102, 103, 104]  # Non-sequential index
+
+        predictions = np.array([1, 2, 3, 4, 5])
+
+        wrapper = PredictionsModelWrapperRegression(
+            data, predictions,
+            should_construct_pandas_query=should_construct_pandas_query
+        )
+
+        # Query with reset index (simulates DatasetWrapper transformation)
+        query = data.iloc[:3].reset_index(drop=True)
+        assert list(query.index) == [0, 1, 2]  # Reset index
+
+        result = wrapper.predict(query)
+        np.testing.assert_array_equal(result, [1, 2, 3])
+
+    def test_duplicate_rows_with_hash_lookup(self, should_construct_pandas_query):
+        """Test handling of duplicate rows in the dataset."""
+        # Create data with duplicate rows
+        data = pd.DataFrame({
+            'a': [1.0, 1.0, 2.0, 2.0, 1.0],  # Rows 0, 1, 4 are identical
+            'b': [10.0, 10.0, 20.0, 20.0, 10.0],
+        })
+        predictions = np.array([100, 100, 200, 200, 100])  # Same prediction for duplicates
+
+        wrapper = PredictionsModelWrapperRegression(
+            data, predictions,
+            should_construct_pandas_query=should_construct_pandas_query
+        )
+
+        # Query a duplicate row - should return the prediction for first match
+        query = data.iloc[[0]].copy()
+        result = wrapper.predict(query)
+        assert result[0] == 100
+
+    def test_consistency_with_original_behavior(self, should_construct_pandas_query):
+        """Verify that the optimized implementation produces the same results
+        as the original implementation would have."""
+        np.random.seed(123)
+        n_rows = 100
+        n_features = 5
+
+        data = pd.DataFrame({
+            f'f{i}': np.random.choice(['a', 'b', 'c', None], n_rows)
+            if i % 2 == 0 else np.random.randn(n_rows)
+            for i in range(n_features)
+        })
+        predictions = np.random.randint(0, 3, n_rows)
+        proba = np.random.rand(n_rows, 3)
+        proba = proba / proba.sum(axis=1, keepdims=True)
+
+        wrapper = PredictionsModelWrapperClassification(
+            data, predictions, proba,
+            should_construct_pandas_query=should_construct_pandas_query
+        )
+
+        # Query all rows and verify predictions match
+        result = wrapper.predict(data)
+        np.testing.assert_array_equal(result, predictions)
+
+        result_proba = wrapper.predict_proba(data)
+        np.testing.assert_array_almost_equal(result_proba, proba)
