@@ -4,7 +4,8 @@
 
 """Defines classes to wrap the training/test data and the corresponding predictions from the model."""
 
-from typing import Optional
+from typing import Optional, Dict, List, Tuple
+import hashlib
 
 import numpy as np
 import pandas as pd
@@ -44,108 +45,58 @@ class PredictionsModelWrapper:
         self._combined_data = test_data.copy()
         self._combined_data[TARGET] = y_pred
         self._should_construct_pandas_query = should_construct_pandas_query
-        # Build hash-based index for O(1) lookups on large datasets
-        self._row_hash_to_idx = self._build_row_hash_index()
 
-    def _compute_row_hash(self, row_values) -> int:
-        """Compute a hash for a row of values.
+        # Pre-compute numpy arrays and hash index for fast lookups
+        self._feature_values = self._combined_data[self._feature_names].values
+        self._predictions = y_pred.copy()
+        self._row_hash_to_indices = self._build_vectorized_hash_index()
 
-        Handles NaN values and various data types consistently.
+    def _compute_row_hash_fast(self, row: np.ndarray) -> str:
+        """Compute a hash for a row using fast string conversion.
 
-        :param row_values: The row values to hash (tuple or array-like).
-        :type row_values: tuple or array-like
-        :return: Hash value for the row.
-        :rtype: int
+        :param row: Row values as numpy array.
+        :return: Hash string for the row.
         """
-        # Convert to tuple, handling NaN values specially
-        hashable_values = []
-        for val in row_values:
-            if pd.isna(val):
-                hashable_values.append(('__NA__', type(val).__name__))
-            elif isinstance(val, (np.floating, float)):
-                # Round floats to avoid floating point precision issues
-                hashable_values.append(round(float(val), 10))
-            elif isinstance(val, np.ndarray):
-                hashable_values.append(tuple(val.flatten()))
-            else:
-                try:
-                    hashable_values.append(val)
-                except TypeError:
-                    # Fallback for unhashable types
-                    hashable_values.append(str(val))
-        return hash(tuple(hashable_values))
+        # Convert to string representation for hashing
+        # This handles NaN, various dtypes consistently
+        row_str = str(row.tolist())
+        return hashlib.md5(row_str.encode()).hexdigest()
 
-    def _build_row_hash_index(self) -> dict:
-        """Build a hash-based index mapping row hashes to DataFrame indices.
+    def _build_vectorized_hash_index(self) -> Dict[str, List[int]]:
+        """Build hash index using numpy arrays for speed.
 
-        This enables O(1) lookups instead of O(n) filtering for each query row.
-
-        :return: Dictionary mapping row hash to list of matching indices.
-        :rtype: dict
+        :return: Dictionary mapping row hash to list of indices.
         """
-        hash_to_idx = {}
-        feature_data = self._combined_data[self._feature_names]
-        for idx in range(len(feature_data)):
-            row_values = tuple(feature_data.iloc[idx].values)
-            row_hash = self._compute_row_hash(row_values)
-            if row_hash not in hash_to_idx:
-                hash_to_idx[row_hash] = []
-            hash_to_idx[row_hash].append(idx)
-        return hash_to_idx
+        hash_to_indices: Dict[str, List[int]] = {}
+        for idx in range(len(self._feature_values)):
+            row_hash = self._compute_row_hash_fast(self._feature_values[idx])
+            if row_hash not in hash_to_indices:
+                hash_to_indices[row_hash] = []
+            hash_to_indices[row_hash].append(idx)
+        return hash_to_indices
 
-    def _lookup_by_hash(self, query_row: pd.DataFrame) -> Optional[int]:
-        """Look up a row using the hash index.
+    def _rows_equal_numpy(self, row1: np.ndarray, row2: np.ndarray) -> bool:
+        """Fast row comparison using numpy.
 
-        :param query_row: Single row DataFrame to look up.
-        :type query_row: pd.DataFrame
-        :return: Index in combined_data if found, None otherwise.
-        :rtype: Optional[int]
-        """
-        row_values = tuple(query_row[self._feature_names].iloc[0].values)
-        row_hash = self._compute_row_hash(row_values)
-
-        if row_hash not in self._row_hash_to_idx:
-            return None
-
-        # Hash collision handling: verify actual match
-        candidate_indices = self._row_hash_to_idx[row_hash]
-        query_values = query_row[self._feature_names].iloc[0]
-
-        for idx in candidate_indices:
-            stored_values = self._combined_data[self._feature_names].iloc[idx]
-            # Compare values, handling NaN equality
-            if self._rows_equal(query_values, stored_values):
-                return idx
-
-        return None
-
-    def _rows_equal(self, row1: pd.Series, row2: pd.Series) -> bool:
-        """Check if two rows are equal, handling NaN values.
-
-        :param row1: First row to compare.
-        :type row1: pd.Series
-        :param row2: Second row to compare.
-        :type row2: pd.Series
+        :param row1: First row values.
+        :param row2: Second row values.
         :return: True if rows are equal.
-        :rtype: bool
         """
-        for col in self._feature_names:
-            val1, val2 = row1[col], row2[col]
-            # Both NaN -> equal
-            if pd.isna(val1) and pd.isna(val2):
-                continue
-            # One NaN -> not equal
-            if pd.isna(val1) or pd.isna(val2):
-                return False
-            # Compare values
-            if val1 != val2:
-                # Handle float comparison with tolerance
-                if isinstance(val1, (float, np.floating)) and isinstance(val2, (float, np.floating)):
-                    if not np.isclose(val1, val2, rtol=1e-9, atol=1e-12):
-                        return False
-                else:
-                    return False
-        return True
+        # Handle NaN: both NaN counts as equal
+        nan1 = pd.isna(row1)
+        nan2 = pd.isna(row2)
+        if not np.array_equal(nan1, nan2):
+            return False
+        # Compare non-NaN values
+        mask = ~nan1
+        if not mask.any():
+            return True  # All NaN
+        # Use array_equal for non-NaN values (handles mixed types)
+        try:
+            return np.array_equal(row1[mask], row2[mask])
+        except (TypeError, ValueError):
+            # Fallback for object arrays
+            return all(v1 == v2 for v1, v2 in zip(row1[mask], row2[mask]))
 
     def _get_filtered_data(
             self, query_test_data_row: pd.DataFrame) -> pd.DataFrame:
@@ -216,21 +167,31 @@ class PredictionsModelWrapper:
             raise DataValidationException(
                 "Expecting a pandas dataframe for query_test_data")
 
-        prediction_output = []
-        for index in range(len(query_test_data)):
-            query_row = query_test_data.iloc[index:index + 1]
+        # Extract query data as numpy array once (avoid repeated DataFrame ops)
+        query_values = query_test_data[self._feature_names].values
+        prediction_output = np.empty(len(query_values), dtype=self._predictions.dtype)
 
-            # Try fast hash-based lookup first
-            matched_idx = self._lookup_by_hash(query_row)
+        for idx in range(len(query_values)):
+            query_row = query_values[idx]
+            row_hash = self._compute_row_hash_fast(query_row)
+
+            matched_idx = None
+            if row_hash in self._row_hash_to_indices:
+                # Check candidates for actual match
+                for candidate_idx in self._row_hash_to_indices[row_hash]:
+                    if self._rows_equal_numpy(query_row, self._feature_values[candidate_idx]):
+                        matched_idx = candidate_idx
+                        break
 
             if matched_idx is not None:
-                prediction_output.append(self._combined_data[TARGET].iloc[matched_idx])
+                prediction_output[idx] = self._predictions[matched_idx]
             else:
                 # Fallback to original filtering method for edge cases
-                filtered_df = self._get_filtered_data(query_row)
-                prediction_output.append(filtered_df[TARGET].values[0])
+                query_row_df = query_test_data.iloc[idx:idx + 1]
+                filtered_df = self._get_filtered_data(query_row_df)
+                prediction_output[idx] = filtered_df[TARGET].values[0]
 
-        return np.array(prediction_output)
+        return prediction_output
 
     def __setstate__(self, state):
         """Set the state of the class object so that the wrapped
@@ -242,15 +203,17 @@ class PredictionsModelWrapper:
         self._combined_data = state["_combined_data"]
         self._should_construct_pandas_query = state["_should_construct_pandas_query"]
         self._feature_names = state["_feature_names"]
-        # Rebuild hash index after deserialization
-        self._row_hash_to_idx = self._build_row_hash_index()
+        # Rebuild numpy arrays and hash index after deserialization
+        self._feature_values = self._combined_data[self._feature_names].values
+        self._predictions = self._combined_data[TARGET].values
+        self._row_hash_to_indices = self._build_vectorized_hash_index()
 
     def __getstate__(self):
         """Return the state so that the wrapped model is
         serializable via pickle.
 
-        Note: The hash index is not serialized as it can be rebuilt
-        from the combined_data. This keeps the pickle size smaller.
+        Note: The hash index and numpy arrays are not serialized as they
+        can be rebuilt from the combined_data. This keeps the pickle size smaller.
 
         :return: The state to be pickled.
         :rtype: Dict
@@ -259,8 +222,6 @@ class PredictionsModelWrapper:
         state["_combined_data"] = self._combined_data
         state["_should_construct_pandas_query"] = self._should_construct_pandas_query
         state["_feature_names"] = self._feature_names
-        # Note: _row_hash_to_idx is intentionally not serialized
-        # as it is rebuilt in __setstate__
         return state
 
 
@@ -322,6 +283,10 @@ class PredictionsModelWrapperClassification(PredictionsModelWrapper):
                 self._combined_data[
                     TARGET + '_' + str(i)] = y_pred_proba[:, i]
             self._num_classes = len(y_pred_proba[0])
+            # Store proba as numpy array for fast access
+            self._predictions_proba = y_pred_proba.copy()
+        else:
+            self._predictions_proba = None
 
     def predict_proba(self, query_test_data: pd.DataFrame) -> np.ndarray:
         """Return the prediction probabilities based on the query data.
@@ -342,29 +307,31 @@ class PredictionsModelWrapperClassification(PredictionsModelWrapper):
                 "Model wrapper configured without prediction probabilities"
             )
 
-        prediction_output = []
-        for index in range(len(query_test_data)):
-            query_row = query_test_data.iloc[index:index + 1]
+        # Extract query data as numpy array once
+        query_values = query_test_data[self._feature_names].values
+        prediction_output = np.empty((len(query_values), self._num_classes), dtype=np.float64)
 
-            # Try fast hash-based lookup first
-            matched_idx = self._lookup_by_hash(query_row)
+        for idx in range(len(query_values)):
+            query_row = query_values[idx]
+            row_hash = self._compute_row_hash_fast(query_row)
+
+            matched_idx = None
+            if row_hash in self._row_hash_to_indices:
+                for candidate_idx in self._row_hash_to_indices[row_hash]:
+                    if self._rows_equal_numpy(query_row, self._feature_values[candidate_idx]):
+                        matched_idx = candidate_idx
+                        break
 
             if matched_idx is not None:
-                classes_output = []
-                for i in range(self._num_classes):
-                    classes_output.append(
-                        self._combined_data[TARGET + '_' + str(i)].iloc[matched_idx])
-                prediction_output.append(classes_output)
+                prediction_output[idx] = self._predictions_proba[matched_idx]
             else:
-                # Fallback to original filtering method for edge cases
-                filtered_df = self._get_filtered_data(query_row)
-                classes_output = []
+                # Fallback to original filtering method
+                query_row_df = query_test_data.iloc[idx:idx + 1]
+                filtered_df = self._get_filtered_data(query_row_df)
                 for i in range(self._num_classes):
-                    classes_output.append(
-                        filtered_df[TARGET + '_' + str(i)].values[0])
-                prediction_output.append(classes_output)
+                    prediction_output[idx, i] = filtered_df[TARGET + '_' + str(i)].values[0]
 
-        return np.array(prediction_output)
+        return prediction_output
 
     def __setstate__(self, state):
         """Set the state of the class object so that the wrapped
@@ -375,6 +342,12 @@ class PredictionsModelWrapperClassification(PredictionsModelWrapper):
         """
         super().__setstate__(state)
         self._num_classes = state["_num_classes"]
+        # Rebuild predictions_proba from combined_data
+        if self._num_classes is not None:
+            proba_cols = [TARGET + '_' + str(i) for i in range(self._num_classes)]
+            self._predictions_proba = self._combined_data[proba_cols].values
+        else:
+            self._predictions_proba = None
 
     def __getstate__(self):
         """Return the state so that the wrapped model is
