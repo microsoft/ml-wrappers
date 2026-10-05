@@ -210,6 +210,8 @@ jobs:
         scipy==1.13.0
         scikit-learn==1.4.2
         EOF
+        else
+          echo "pandas<3" >> "$constraint_file"
         fi
         PIP_CONSTRAINT="$constraint_file" pip install \
           "numpy==${{ matrix.numpyVersion }}" -e ./python pytest
