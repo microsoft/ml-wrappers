@@ -9,6 +9,7 @@ raiutils
 fastai
 captum<0.9; python_version < '3.10'
 captum>=0.9; python_version >= '3.10'
+pandas<3
 spacy<3.8; python_version < '3.10'
 spacy; python_version >= '3.10'
 ipython
