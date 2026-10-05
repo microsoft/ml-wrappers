@@ -36,11 +36,11 @@ CLASSIFIERS = [
 ]
 
 DEPENDENCIES = [
-    'numpy<3',
+    'numpy>=1.26,<3',
     'packaging',
-    'pandas<3',
-    'scipy',
-    'scikit-learn'
+    'pandas>=2.2.2,<3',
+    'scipy>=1.13,<1.15',
+    'scikit-learn>=1.4.2,<=1.5.1'
 ]
 
 with open(README_FILE, 'r', encoding='utf-8') as f:

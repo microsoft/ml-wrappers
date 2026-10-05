@@ -284,7 +284,7 @@ class DatasetWrapper(object):
             tmp_dataset = pd.DataFrame(self._dataset[:SAMPLED_STRING_ROWS, :], dtype=self._dataset.dtype)
         else:
             tmp_dataset = tmp_dataset.iloc[:SAMPLED_STRING_ROWS]
-        if hasattr(tmp_dataset, 'map'):
+        if hasattr(pd.DataFrame, 'map'):
             typed_dataset = tmp_dataset.map(type)
         else:
             typed_dataset = tmp_dataset.applymap(type)
