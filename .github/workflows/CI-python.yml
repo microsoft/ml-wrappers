@@ -57,19 +57,19 @@ jobs:
       name: Install pytorch on windows for python 3.9 to 3.11
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet pytorch torchvision captum cpuonly "pillow>=10" -c pytorch -c conda-forge --strict-channel-priority
+        conda install --yes --quiet pytorch torchvision cpuonly "pillow>=10" -c pytorch -c conda-forge --strict-channel-priority
 
     - if: ${{ matrix.operatingSystem == 'ubuntu-latest' }}
       name: Install pytorch on ubuntu for python 3.9 to 3.11
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet pytorch torchvision captum cpuonly -c pytorch -c conda-forge --strict-channel-priority
+        conda install --yes --quiet pytorch torchvision cpuonly -c pytorch -c conda-forge --strict-channel-priority
 
     - if: ${{ matrix.operatingSystem == 'macos-latest' }}
       name: Install pytorch on MacOS for python 3.9 to 3.11
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet pytorch torchvision captum -c pytorch -c conda-forge
+        conda install --yes --quiet pytorch torchvision -c pytorch -c conda-forge
 
     - if: ${{ matrix.operatingSystem == 'macos-latest' }}
       name: Install lightgbm from conda on MacOS
@@ -107,6 +107,11 @@ jobs:
       shell: bash -l {0}
       run: |
         pip install openai==${{ matrix.openaiVersion }}
+
+    - name: Verify resolved NumPy and Captum versions
+      shell: bash -l {0}
+      run: |
+        python -c "import sys, numpy; from importlib.metadata import version; expected_numpy = 1 if sys.version_info < (3, 10) else 2; actual_numpy = int(numpy.__version__.split('.')[0]); captum_version = tuple(map(int, version('captum').split('.')[:2])); assert actual_numpy == expected_numpy, (numpy.__version__, sys.version); assert (captum_version < (0, 9)) if sys.version_info < (3, 10) else (captum_version >= (0, 9)), captum_version"
 
     - if: ${{ matrix.operatingSystem == 'macos-latest' }}
       name: Set macOS environment variables to prevent hangs
