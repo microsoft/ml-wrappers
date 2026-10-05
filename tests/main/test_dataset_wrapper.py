@@ -79,3 +79,24 @@ class TestDatasetWrapper(object):
                 TypeError,
                 match='Got type <class \'list\'> which is not supported in DatasetWrapper'):
             DatasetWrapper(test_list)
+
+    def test_string_index_supports_pandas_mapping_apis(self, monkeypatch):
+        """Test current and legacy Pandas element-wise mapping APIs."""
+        dataset = np.array([['a', 1], ['b', 2]], dtype=object)
+        wrapper = DatasetWrapper(dataset.copy())
+
+        assert wrapper.string_index() is not None
+        np.testing.assert_array_equal(
+            wrapper.dataset[:, 0], np.array([0.0, 1.0], dtype=object))
+
+        def legacy_applymap(dataframe, function):
+            return dataframe.apply(lambda column: column.map(function))
+
+        monkeypatch.delattr(pd.DataFrame, 'map')
+        monkeypatch.setattr(pd.DataFrame, 'applymap', legacy_applymap)
+        fallback_wrapper = DatasetWrapper(dataset.copy())
+
+        assert fallback_wrapper.string_index() is not None
+        np.testing.assert_array_equal(
+            fallback_wrapper.dataset[:, 0],
+            np.array([0.0, 1.0], dtype=object))

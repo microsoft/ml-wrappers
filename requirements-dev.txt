@@ -7,6 +7,7 @@ transformers<4.40.0
 datasets
 raiutils
 fastai
+spacy<3.8
 ipython
 vision_explanation_methods
 mlflow>=3.2.0; python_version >= '3.10'
