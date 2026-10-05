@@ -92,8 +92,9 @@ class TestDatasetWrapper(object):
         def legacy_applymap(dataframe, function):
             return dataframe.apply(lambda column: column.map(function))
 
-        monkeypatch.delattr(pd.DataFrame, 'map')
-        monkeypatch.setattr(pd.DataFrame, 'applymap', legacy_applymap)
+        monkeypatch.delattr(pd.DataFrame, 'map', raising=False)
+        monkeypatch.setattr(
+            pd.DataFrame, 'applymap', legacy_applymap, raising=False)
         fallback_wrapper = DatasetWrapper(dataset.copy())
 
         assert fallback_wrapper.string_index() is not None
