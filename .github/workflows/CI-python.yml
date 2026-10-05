@@ -57,7 +57,7 @@ jobs:
       name: Install pytorch on windows for python 3.9 to 3.11
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet pytorch torchvision captum cpuonly "libtiff<4.5.0" -c pytorch -c conda-forge --strict-channel-priority
+        conda install --yes --quiet pytorch torchvision captum cpuonly "pillow>=10" -c pytorch -c conda-forge --strict-channel-priority
 
     - if: ${{ matrix.operatingSystem == 'ubuntu-latest' }}
       name: Install pytorch on ubuntu for python 3.9 to 3.11
