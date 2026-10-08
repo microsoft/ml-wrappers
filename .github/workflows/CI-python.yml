@@ -8,6 +8,9 @@ on:
   schedule:
     - cron:  '30 5 * * *'
 
+permissions:
+  contents: read
+
 jobs:
   ci-python:
     strategy:
@@ -54,19 +57,19 @@ jobs:
       name: Install pytorch on windows for python 3.9 to 3.11
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet pytorch torchvision captum cpuonly "libtiff<4.5.0" -c pytorch -c conda-forge --strict-channel-priority
+        conda install --yes --quiet pytorch torchvision cpuonly "pillow>=10" -c pytorch -c conda-forge --strict-channel-priority
 
     - if: ${{ matrix.operatingSystem == 'ubuntu-latest' }}
       name: Install pytorch on ubuntu for python 3.9 to 3.11
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet pytorch torchvision captum cpuonly -c pytorch -c conda-forge --strict-channel-priority
+        conda install --yes --quiet pytorch torchvision cpuonly -c pytorch -c conda-forge --strict-channel-priority
 
     - if: ${{ matrix.operatingSystem == 'macos-latest' }}
       name: Install pytorch on MacOS for python 3.9 to 3.11
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet pytorch torchvision captum -c pytorch -c conda-forge
+        conda install --yes --quiet pytorch torchvision -c pytorch -c conda-forge
 
     - if: ${{ matrix.operatingSystem == 'macos-latest' }}
       name: Install lightgbm from conda on MacOS
@@ -104,6 +107,11 @@ jobs:
       shell: bash -l {0}
       run: |
         pip install openai==${{ matrix.openaiVersion }}
+
+    - name: Verify resolved NumPy and Captum versions
+      shell: bash -l {0}
+      run: |
+        python -c "import sys, numpy; from importlib.metadata import version; expected_numpy = 1 if sys.version_info < (3, 10) else 2; actual_numpy = int(numpy.__version__.split('.')[0]); captum_version = tuple(map(int, version('captum').split('.')[:2])); assert actual_numpy == expected_numpy, (numpy.__version__, sys.version); assert (captum_version < (0, 9)) if sys.version_info < (3, 10) else (captum_version >= (0, 9)), captum_version"
 
     - if: ${{ matrix.operatingSystem == 'macos-latest' }}
       name: Set macOS environment variables to prevent hangs
@@ -168,3 +176,51 @@ jobs:
         else
           exit 1
         fi
+
+  ci-numpy-compatibility:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - numpyVersion: '1.26.4'
+            dependencySet: latest
+          - numpyVersion: '2.0.2'
+            dependencySet: latest
+          - numpyVersion: '2.0.2'
+            dependencySet: minimum
+          - numpyVersion: '2.2.6'
+            dependencySet: latest
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install ${{ matrix.dependencySet }} dependencies with NumPy ${{ matrix.numpyVersion }}
+      run: |
+        python -m pip install --upgrade pip
+        constraint_file="${{ github.workspace }}/numpy-constraints.txt"
+        echo "numpy==${{ matrix.numpyVersion }}" > "$constraint_file"
+        if [[ "${{ matrix.dependencySet }}" == "minimum" ]]; then
+          cat >> "$constraint_file" <<EOF
+        pandas==2.2.2
+        scipy==1.13.0
+        scikit-learn==1.4.2
+        EOF
+        else
+          echo "pandas<3" >> "$constraint_file"
+        fi
+        PIP_CONSTRAINT="$constraint_file" pip install \
+          "numpy==${{ matrix.numpyVersion }}" -e ./python pytest
+
+    - name: Verify dependency consistency
+      run: |
+        python -c "import numpy; assert numpy.__version__ == '${{ matrix.numpyVersion }}'"
+        pip check
+
+    - name: Run NumPy compatibility test
+      run: |
+        pytest numpy_compatibility_tests -v

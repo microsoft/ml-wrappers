@@ -7,6 +7,13 @@ transformers<4.40.0
 datasets
 raiutils
 fastai
+captum<0.9; python_version < '3.10'
+captum>=0.9; python_version >= '3.10'
+numpy<2; python_version < '3.10'
+numpy>=2,<2.3; python_version >= '3.10'
+pandas<3
+spacy<3.8; python_version < '3.10'
+spacy; python_version >= '3.10'
 ipython
 vision_explanation_methods
 mlflow>=3.2.0; python_version >= '3.10'

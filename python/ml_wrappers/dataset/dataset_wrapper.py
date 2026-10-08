@@ -284,7 +284,12 @@ class DatasetWrapper(object):
             tmp_dataset = pd.DataFrame(self._dataset[:SAMPLED_STRING_ROWS, :], dtype=self._dataset.dtype)
         else:
             tmp_dataset = tmp_dataset.iloc[:SAMPLED_STRING_ROWS]
-        categorical_col_names = list(np.array(list(tmp_dataset))[(tmp_dataset.applymap(type) == str).all(0)])
+        if hasattr(pd.DataFrame, 'map'):
+            typed_dataset = tmp_dataset.map(type)
+        else:
+            typed_dataset = tmp_dataset.applymap(type)
+        categorical_col_names = list(
+            np.array(list(tmp_dataset))[(typed_dataset == str).all(0)])
         if categorical_col_names:
             all_columns = tmp_dataset.columns
             if columns is not None:
