@@ -25,7 +25,8 @@ class PredictionsModelWrapper:
 
         :param test_data: The data that was used to train the model.
         :type test_data: pd.DataFrame
-        :param y_pred: Predictions of the model.
+        :param y_pred: Predictions of the model as a one-dimensional array
+            or a two-dimensional array with one column.
         :type y_pred: np.ndarray
         :param should_construct_pandas_query: Whether to use pandas query()
             function to filter the data. If set to False, the data will
@@ -38,6 +39,12 @@ class PredictionsModelWrapper:
         if not isinstance(y_pred, np.ndarray):
             raise DataValidationException(
                 "Expecting a numpy array for y_pred")
+        if y_pred.ndim == 2 and y_pred.shape[1] == 1:
+            y_pred = y_pred[:, 0]
+        elif y_pred.ndim != 1:
+            raise DataValidationException(
+                "Expecting y_pred to be one-dimensional or a "
+                "two-dimensional array with one column")
         if len(test_data) != len(y_pred):
             raise DataValidationException(
                 "The number of instances in test data "
@@ -253,7 +260,8 @@ class PredictionsModelWrapperRegression(PredictionsModelWrapper):
 
         :param test_data: The data that was used to train the model.
         :type test_data: pd.DataFrame
-        :param y_pred: Predictions of the model.
+        :param y_pred: Predictions of the model as a one-dimensional array
+            or a two-dimensional array with one column.
         :type y_pred: np.ndarray
         :param should_construct_pandas_query: Whether to use pandas query()
             function to filter the data. If set to False, the data will
@@ -275,7 +283,8 @@ class PredictionsModelWrapperClassification(PredictionsModelWrapper):
 
         :param test_data: The data that was used to train the model.
         :type test_data: pd.DataFrame
-        :param y_pred: Predictions of the model.
+        :param y_pred: Predictions of the model as a one-dimensional array
+            or a two-dimensional array with one column.
         :type y_pred: np.ndarray
         :param y_pred_proba: Prediction probabilities of the model.
         :type y_pred_proba: np.ndarray
