@@ -9,12 +9,9 @@ import pickle
 import numpy as np
 import pandas as pd
 import pytest
-
 from ml_wrappers.model.predictions_wrapper import (
-    DataValidationException,
-    PredictionsModelWrapperClassification,
-    PredictionsModelWrapperRegression,
-)
+    DataValidationException, PredictionsModelWrapperClassification,
+    PredictionsModelWrapperRegression)
 
 
 @pytest.mark.parametrize('should_construct_pandas_query', [True, False])
