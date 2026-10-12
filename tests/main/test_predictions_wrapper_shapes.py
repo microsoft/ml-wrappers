@@ -20,8 +20,9 @@ from ml_wrappers.model.predictions_wrapper import (
     [
         np.array([[False], [True], [False]]),
         np.array([['class-a'], ['class-b'], ['class-c']]),
+        np.array([['class-a'], ['class-b'], ['class-c']], dtype=object),
     ],
-    ids=['boolean', 'string'],
+    ids=['boolean', 'string', 'object'],
 )
 def test_classification_normalizes_single_column_predictions(
         model_predict, should_construct_pandas_query):
@@ -35,6 +36,8 @@ def test_classification_normalizes_single_column_predictions(
     result = model_wrapper.predict(test_data)
     assert result.shape == (len(test_data),)
     np.testing.assert_array_equal(result, expected)
+    assert all(not isinstance(value, np.ndarray) for value in result)
+    assert all(hash(value) is not None for value in result)
 
     deserialized_wrapper = pickle.loads(pickle.dumps(model_wrapper))
     np.testing.assert_array_equal(
