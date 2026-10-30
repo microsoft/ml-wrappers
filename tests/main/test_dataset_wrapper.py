@@ -65,6 +65,8 @@ class TestDatasetWrapper(object):
     # Skip on macOS due to TensorFlow batch dataset iterator hanging
     @pytest.mark.skipif(sys.platform == 'darwin',
                         reason='TensorFlow batch dataset hangs on macOS')
+    @pytest.mark.skipif(sys.version_info >= (3, 14),
+                        reason='TensorFlow does not support Python 3.14')
     def test_tf_batch_dataset(self):
         test_dataframe = pd.DataFrame(data=[[1, 2, 3]], columns=['c1,', 'c2', 'c3'])
         tensor_slices = (dict(test_dataframe), None)
