@@ -105,7 +105,7 @@ def load_mlflow_model(class_names, model_settings=None):
         conda_env = {
             'channels': ['conda-forge', 'pytorch'],
             'dependencies': [
-                'python=3.9',
+                'python=3.10',
                 'numpy==1.26.4',
                 'pytorch==2.2.0',
                 'torchvision==0.17.2',
@@ -134,17 +134,10 @@ def load_mlflow_model(class_names, model_settings=None):
 
 
 @pytest.mark.usefixtures('_clean_dir')
+@pytest.mark.skipif(
+    sys.version_info < (3, 8) or sys.version_info >= (3, 12),
+    reason='azureml-automl-dnn-vision supports Python 3.8 through 3.11')
 class TestImageModelWrapper(object):
-    # Skip for older versions of python as azureml-automl-dnn-vision
-    # works with 3.9 only
-    @pytest.mark.skipif(
-        sys.version_info < (3, 9),
-        reason=('azureml-automl-dnn-vision not supported '
-                'for older versions of python'))
-    @pytest.mark.skipif(
-        sys.version_info >= (3, 10),
-        reason=('azureml-automl-dnn-vision not supported '
-                'for newer versions of python'))
     def test_wrap_automl_object_detection_model(self):
         data = load_object_fridge_dataset()[1:4]
         class_names = ['can', 'carton', 'milk_bottle', 'water_bottle']
@@ -167,16 +160,6 @@ class TestImageModelWrapper(object):
                        ModelTask.OBJECT_DETECTION,
                        classes=label_dict)
 
-    # Skip for older versions of python as azureml-automl-dnn-vision
-    # works with 3.9 only
-    @pytest.mark.skipif(
-        sys.version_info < (3, 9),
-        reason=('azureml-automl-dnn-vision not supported '
-                'for older versions of python'))
-    @pytest.mark.skipif(
-        sys.version_info >= (3, 10),
-        reason=('azureml-automl-dnn-vision not supported '
-                'for newer versions of python'))
     def test_automl_object_detection_empty_predictions(self):
         data = load_object_fridge_dataset()[1:2]
         class_names = ['can', 'carton', 'milk_bottle', 'water_bottle']
@@ -207,14 +190,6 @@ class TestImageModelWrapper(object):
             classes=class_names)
         validate_wrapped_object_detection_model(wrapped_model, data, 1)
 
-    @pytest.mark.skipif(
-        sys.version_info < (3, 9),
-        reason=('azureml-automl-dnn-vision not supported '
-                'for older versions of python'))
-    @pytest.mark.skipif(
-        sys.version_info >= (3, 10),
-        reason=('azureml-automl-dnn-vision not supported '
-                'for newer versions of python'))
     @pytest.mark.parametrize('extract_raw_model',
                              [True, False])
     def test_drise_wrap_automl_object_detection_model(self, extract_raw_model):

@@ -76,6 +76,8 @@ class TestModelWrapper(object):
     # Skip on macOS due to TensorFlow/Keras hanging issues
     @pytest.mark.skipif(sys.platform == 'darwin',
                         reason='TensorFlow/Keras hangs on macOS')
+    @pytest.mark.skipif(sys.version_info >= (3, 14),
+                        reason='TensorFlow does not support Python 3.14')
     def test_wrap_keras_classification_model(self, iris):
         train_classification_model_numpy(create_keras_classifier, iris)
         train_classification_model_pandas(create_keras_classifier, iris)
@@ -83,6 +85,8 @@ class TestModelWrapper(object):
     # Skip on macOS due to TensorFlow/Keras hanging issues
     @pytest.mark.skipif(sys.platform == 'darwin',
                         reason='TensorFlow/Keras hangs on macOS')
+    @pytest.mark.skipif(sys.version_info >= (3, 14),
+                        reason='TensorFlow does not support Python 3.14')
     def test_wrap_scikit_keras_classification_model(self, iris):
         train_classification_model_numpy(create_scikit_keras_multiclass_classifier, iris)
         train_classification_model_pandas(create_scikit_keras_multiclass_classifier, iris)
@@ -144,6 +148,8 @@ class TestModelWrapper(object):
     # Skip on macOS due to TensorFlow/Keras hanging issues
     @pytest.mark.skipif(sys.platform == 'darwin',
                         reason='TensorFlow/Keras hangs on macOS')
+    @pytest.mark.skipif(sys.version_info >= (3, 14),
+                        reason='TensorFlow does not support Python 3.14')
     def test_wrap_keras_regression_model(self, housing):
         train_regression_model_numpy(create_keras_regressor, housing)
         train_regression_model_pandas(create_keras_regressor, housing)
@@ -151,6 +157,8 @@ class TestModelWrapper(object):
     # Skip on macOS due to TensorFlow/Keras hanging issues
     @pytest.mark.skipif(sys.platform == 'darwin',
                         reason='TensorFlow/Keras hangs on macOS')
+    @pytest.mark.skipif(sys.version_info >= (3, 14),
+                        reason='TensorFlow does not support Python 3.14')
     def test_wrap_scikit_keras_regression_model(self, housing):
         train_regression_model_numpy(create_scikit_keras_regressor, housing)
         train_regression_model_pandas(create_scikit_keras_regressor, housing)
@@ -167,6 +175,8 @@ class TestModelWrapper(object):
     # Skip on macOS due to TensorFlow batch dataset hanging issues
     @pytest.mark.skipif(sys.platform == 'darwin',
                         reason='TensorFlow batch dataset hangs on macOS')
+    @pytest.mark.skipif(sys.version_info >= (3, 14),
+                        reason='TensorFlow does not support Python 3.14')
     def test_batch_dataset(self, housing):
         X_train = housing[DatasetConstants.X_TRAIN]
         X_test = housing[DatasetConstants.X_TEST]

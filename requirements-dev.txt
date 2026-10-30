@@ -1,23 +1,27 @@
 lightgbm
 xgboost
 catboost
-tensorflow
+tensorflow; python_version < '3.14'
 shap
-transformers<4.40.0
+transformers<4.40.0; python_version < '3.13'
+transformers>=4.53,<5; python_version >= '3.13'
 datasets
 raiutils
 fastai
 captum<0.9; python_version < '3.10'
 captum>=0.9; python_version >= '3.10'
 numpy<2; python_version < '3.10'
-numpy>=2,<2.3; python_version >= '3.10'
+numpy>=2,<2.3; python_version >= '3.10' and python_version < '3.14'
+numpy>=2.3,<3; python_version >= '3.14'
 pandas<3
 spacy<3.8; python_version < '3.10'
 spacy; python_version >= '3.10'
 ipython
-vision_explanation_methods
+# 0.1.x pins matplotlib below 3.7, which cannot run with NumPy 2.
+vision_explanation_methods==0.0.2; python_version >= '3.10'
+vision_explanation_methods; python_version < '3.10'
 mlflow>=3.2.0; python_version >= '3.10'
 mlflow>=3.0.0,<=3.2.0; python_version < '3.10'
 joblib<1.3.0; python_version <= '3.7'
-scikeras
+scikeras; python_version < '3.14'
 openai; python_version >= '3.7'

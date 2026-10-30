@@ -7,7 +7,6 @@
 import sys
 
 import pytest
-import tensorflow as tf
 from common_utils import (create_keras_classifier, create_keras_regressor,
                           create_scikit_keras_regressor)
 from ml_wrappers.common.constants import ModelTask
@@ -18,6 +17,13 @@ from train_wrapper_utils import (train_classification_model_numpy,
                                  train_regression_model_numpy,
                                  train_regression_model_pandas)
 from wrapper_validator import validate_wrapped_tf_model
+
+if sys.version_info < (3, 14):
+    import tensorflow as tf
+
+pytestmark = pytest.mark.skipif(
+    sys.version_info >= (3, 14),
+    reason='TensorFlow does not support Python 3.14')
 
 
 @pytest.mark.usefixtures('_clean_dir')
