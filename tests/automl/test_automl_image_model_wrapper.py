@@ -28,17 +28,10 @@ from wrapper_validator import validate_wrapped_classification_model
 
 
 @pytest.mark.usefixtures('_clean_dir')
+@pytest.mark.skipif(
+    sys.version_info < (3, 8) or sys.version_info >= (3, 12),
+    reason='azureml-automl-dnn-vision supports Python 3.8 through 3.11')
 class TestImageModelWrapper(object):
-    # Skip for older versions of python as azureml-automl-dnn-vision
-    # works with 3.9 only
-    @pytest.mark.skipif(
-        sys.version_info < (3, 9),
-        reason=('azureml-automl-dnn-vision not supported '
-                'for newer versions of python'))
-    @pytest.mark.skipif(
-        sys.version_info >= (3, 10),
-        reason=('azureml-automl-dnn-vision not supported '
-                'for newer versions of python'))
     def test_wrap_automl_image_classification_model(self):
         data = load_fridge_dataset()
         model_name = ModelNames.SERESNEXT
@@ -79,7 +72,7 @@ class TestImageModelWrapper(object):
             conda_env = {
                 'channels': ['conda-forge', 'pytorch'],
                 'dependencies': [
-                    'python=3.9',
+                    'python=3.10',
                     'numpy==1.26.4',
                     'pytorch==2.2.0',
                     'torchvision==0.17.2',
