@@ -2,7 +2,7 @@
 ![PyPI](https://img.shields.io/pypi/v/ml-wrappers)
 ![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)
 ![versions](https://img.shields.io/pypi/pyversions/ml-wrappers)
-[![Downloads](https://static.pepy.tech/badge/ml-wrappers)](https://pepy.tech/project/ml-wrappers)
+[![Monthly downloads](https://img.shields.io/pypi/dm/ml-wrappers)](https://pypistats.org/packages/ml-wrappers)
 
 [![CI Python minimal environment](https://github.com/microsoft/ml-wrappers/actions/workflows/CI-python-minimal.yml/badge.svg)](https://github.com/microsoft/ml-wrappers/actions/workflows/CI-python-minimal.yml)
 [![CI Python](https://github.com/microsoft/ml-wrappers/actions/workflows/CI-python.yml/badge.svg)](https://github.com/microsoft/ml-wrappers/actions/workflows/CI-python.yml)
