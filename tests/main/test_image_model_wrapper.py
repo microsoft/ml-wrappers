@@ -80,12 +80,16 @@ def _set_up_OD_model_data(num_images=1):
 
 @pytest.mark.usefixtures('_clean_dir')
 class TestImageModelWrapper(object):
+    @pytest.mark.skipif(sys.version_info >= (3, 14),
+                        reason='TensorFlow does not support Python 3.14')
     def test_wrap_resnet_classification_model(self):
         data = load_imagenet_dataset()
         pred = create_image_classification_pipeline()
         wrapped_model = wrap_model(pred, data, ModelTask.IMAGE_CLASSIFICATION)
         validate_wrapped_classification_model(wrapped_model, data)
 
+    @pytest.mark.skipif(sys.version_info >= (3, 14),
+                        reason='TensorFlow does not support Python 3.14')
     def test_wrap_scikit_classification_model(self):
         data = load_imagenet_dataset()
         pred = create_scikit_classification_pipeline()

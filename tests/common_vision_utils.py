@@ -39,8 +39,6 @@ except Exception as e:
     imagenet_stats = None
     vision_learner = None
 from raiutils.common.retries import retry_function
-from tensorflow import keras
-from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
 from torch import Tensor
 
 try:
@@ -48,6 +46,11 @@ try:
 except ImportError:
     # Skip for older versions of python due to recent torchvision updates
     pass
+
+if sys.version_info < (3, 14):
+    from tensorflow import keras
+    from tensorflow.keras.applications.resnet50 import (ResNet50,
+                                                        preprocess_input)
 
 try:
     from urllib import urlretrieve
