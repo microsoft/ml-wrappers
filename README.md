@@ -1,7 +1,7 @@
 # Machine Learning Wrappers
 ![PyPI](https://img.shields.io/pypi/v/ml-wrappers)
 ![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)
-![versions](https://img.shields.io/pypi/pyversions/ml-wrappers)
+[![Tested Python versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://github.com/microsoft/ml-wrappers/actions/workflows/CI-python.yml)
 [![Monthly downloads](https://img.shields.io/pypi/dm/ml-wrappers)](https://pypistats.org/packages/ml-wrappers)
 
 [![CI Python minimal environment](https://github.com/microsoft/ml-wrappers/actions/workflows/CI-python-minimal.yml/badge.svg)](https://github.com/microsoft/ml-wrappers/actions/workflows/CI-python-minimal.yml)
