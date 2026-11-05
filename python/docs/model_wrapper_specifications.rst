@@ -4,7 +4,10 @@ Model Wrapper Specifications
 ============================
 
 This page describes the implemented public contract, rather than proposed
-future behavior. See :ref:`model_wrapping` for usage and
+future behavior. The detailed
+`repository design specification <https://github.com/microsoft/ml-wrappers/blob/main/docs/WrapperSpecifications.md>`_
+preserves the intended function/model inference rules and identifies
+implementation differences. See :ref:`model_wrapping` for usage and
 :ref:`supported_frameworks` for scenario-specific adapters.
 
 Inputs
