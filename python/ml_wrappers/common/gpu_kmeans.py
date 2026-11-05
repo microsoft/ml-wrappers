@@ -32,8 +32,8 @@ from scipy.sparse import issparse
 
 
 def kmeans(X, k, round_values=True):
-    """ Summarize a dataset with k mean samples weighted by the number of data points they
-    each represent.
+    """Summarize a dataset with weighted k-means samples.
+
     Parameters
     ----------
     X : numpy.ndarray or pandas.DataFrame or any scipy.sparse matrix
@@ -43,9 +43,11 @@ def kmeans(X, k, round_values=True):
     round_values : bool
         For all i, round the ith dimension of each mean sample to match the nearest value
         from X[:,i]. This ensures discrete features always get a valid value.
+
     Returns
     -------
-    DenseData object.
+    DenseData
+        Cluster centers with weights representing the summarized samples.
     """
 
     if not rapids_installed:

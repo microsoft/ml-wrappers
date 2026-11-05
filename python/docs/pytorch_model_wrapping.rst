@@ -1,66 +1,41 @@
 .. _pytorch_model_wrapping:
 
-Pytorch Model Wrapping
-=======================
+PyTorch Model Wrapping
+======================
 
-The ML Wrappers library provides support for wrapping Pytorch models. This is achieved through the use of model wrappers and utilities specifically designed for Pytorch models.
+Install PyTorch separately; the image path also uses torchvision.
+``wrap_model`` recognizes ``torch.nn.Module`` for tabular models and
+uses ``WrappedPytorchModel`` to convert inputs and expose prediction methods.
+Use CPU tensors/models for this tabular adapter: its output conversion
+calls ``Tensor.numpy()`` directly.
+
+For example, the following complete, untrained demonstration produces
+two-class probability output. Replace it with a fitted model for real use:
 
 .. code-block:: python
 
-    import logging
     import numpy as np
-    import pandas as pd
+    import torch
+    from ml_wrappers import wrap_model
 
-    module_logger = logging.getLogger(__name__)
-    module_logger.setLevel(logging.INFO)
+    model = torch.nn.Sequential(
+        torch.nn.Linear(2, 2),
+        torch.nn.Softmax(dim=1),
+    ).cpu()
+    features = np.array([[0., 1.], [1., 0.]], dtype=np.float32)
+    wrapped = wrap_model(model, features, model_task='classification')
+    probabilities = wrapped.predict_proba(features)
+    labels = wrapped.predict(features)
 
-    try:
-        import torch
-    except ImportError:
-        module_logger.debug('Could not import torch, required if using a PyTorch model')
+The adapter calls ``model.eval()`` and runs inference under
+``torch.no_grad()``. ``predict_proba`` returns the model's output; it does
+not add softmax or calibrate logits. Supply probabilities for classification
+or request ``'regression'`` for a suitable single-target numeric model.
 
-    try:
-        from torchvision.transforms import ToTensor
-    except ImportError:
-        module_logger.debug('Could not import torchvision, required if using' +
-                            ' a vision PyTorch model')
+``WrappedPytorchModel`` also exposes ``predict_classes``. Prefer the public
+``wrap_model`` entry point for task/output normalization. Initializer and
+validation helpers in the repository's tests are not library APIs.
 
-The library attempts to import the necessary Pytorch and torchvision modules. If these imports fail, a debug message is logged indicating that these modules are required when using a Pytorch model.
-
-The library provides a WrappedPytorchModel class for wrapping Pytorch models. This class is used in the wrap_model function to wrap the model if it is a Pytorch model.
-
-.. code-block:: python
-
-    class WrappedPytorchModel(object):
-        def __init__(self, model):
-            self._model = model
-
-        def predict(self, dataset):
-            return self._model(dataset)
-
-        def predict_proba(self, dataset):
-            return self._model(dataset)
-
-The WrappedPytorchModel class provides a predict and predict_proba method, which call the model's predict method on the given dataset.
-
-The library also provides a PytorchModelInitializer class for initializing Pytorch models. This class is used in the wrapped_pytorch_model_initializer function to initialize the model.
-
-.. code-block:: python
-
-    class PytorchModelInitializer():
-        def __init__(self, model_initializer, model_task):
-            self._model_initializer = model_initializer
-            self._model_task = model_task
-
-        def __call__(self, X_train, y_train):
-            fitted_model = self._model_initializer(X_train, y_train)
-            wrapped_pytorch_model = WrappedPytorchModel(fitted_model)
-            validate_wrapped_pytorch_model(wrapped_pytorch_model, X_train,
-                                           self._model_task)
-            return wrapped_pytorch_model
-
-The PytorchModelInitializer class provides a __call__ method, which initializes the model and wraps it using the WrappedPytorchModel class.
-
-.. note::
-
-    The ML Wrappers library only supports Pytorch machine learning models.
+See :ref:`image_model_wrapping` for image conversion and
+:ref:`object_detection_model_wrapping` for detection, which uses a
+different adapter.

@@ -46,8 +46,7 @@ except ImportError:
 def wrap_model(model, examples, model_task: str = ModelTask.UNKNOWN,
                num_classes: int = None, classes: Union[list, np.array] = None,
                device=Device.AUTO.value):
-    """If needed, wraps the model in a common API based on model task and
-        prediction function contract.
+    """Wrap a supported model in a common task-specific prediction API.
 
     :param model: The model to evaluate on the examples.
     :type model: model with a predict or predict_proba function.
@@ -55,24 +54,18 @@ def wrap_model(model, examples, model_task: str = ModelTask.UNKNOWN,
         Note the examples will be wrapped in a DatasetWrapper, if not
         wrapped when input.
     :type examples: ml_wrappers.DatasetWrapper or numpy.ndarray
-        or pandas.DataFrame or panads.Series or scipy.sparse.csr_matrix
+        or pandas.DataFrame or pandas.Series or scipy.sparse.csr_matrix
         or shap.DenseData or torch.Tensor
-    :param model_task: Optional parameter to specify whether the model
-                       is a classification or regression model.
-                       In most cases, the type of the model can be inferred
-                       based on the shape of the output, where a classifier
-                       has a predict_proba method and outputs a 2 dimensional
-                       array, while a regressor has a predict method and
-                       outputs a 1 dimensional array.
-    :param classes: optional parameter specifying a list of class names
-        the dataset
+    :param model_task: 'unknown' (default), 'classification', 'regression',
+        or an explicit supported text or image ModelTask value. Wrapping can
+        run inference on examples to determine the output contract.
+    :param classes: Ordered class names for AutoML Images MLflow detection.
     :type classes: list or np.ndarray
-    :param num_classes: optional parameter specifying the number of classes in
-        the dataset
+    :param num_classes: Number of classes for the PyTorch-style detection path.
     :type num_classes: int
     :type model_task: str
-    :param device: optional parameter specifying the device to move the model
-        to. If not specified, then cpu is the default
+    :param device: Vision-path device. 'auto' selects CUDA when available,
+        otherwise CPU.
     :type device: str, for instance: 'cpu', 'cuda'
     :return: The wrapper model.
     :rtype: model
@@ -100,7 +93,7 @@ def _wrap_model(model, examples, model_task, is_function):
         Note the examples will be wrapped in a DatasetWrapper, if not
         wrapped when input.
     :type examples: ml_wrappers.DatasetWrapper or numpy.ndarray
-        or pandas.DataFrame or panads.Series or scipy.sparse.csr_matrix
+        or pandas.DataFrame or pandas.Series or scipy.sparse.csr_matrix
         or shap.DenseData or torch.Tensor
     :param model_task: Optional parameter to specify whether the model
                        is a classification or regression model.

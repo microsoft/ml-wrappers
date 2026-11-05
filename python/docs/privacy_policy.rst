@@ -1,12 +1,23 @@
 .. _privacy_policy:
 
-Privacy Policy
-==============
+Data Processing and Privacy
+===========================
 
-The ml-wrappers project does not collect any personal data. As an open-source project, it is designed to be used locally on your machine. Any data used for model training or prediction remains on your local machine and is not sent or shared with any external entities.
+Where inference runs depends on the model you wrap. Local dataset operations
+and local model inference operate in your environment, but ML Wrappers does
+not make an underlying model, framework or service local or private.
 
-However, please note that if you choose to contribute to the project by submitting pull requests or issues, your username and any information you include in these submissions will be publicly visible. We recommend that you do not include any sensitive personal information in these submissions.
+``EndpointWrapperModel`` sends inputs to the configured endpoint.
+``OpenaiWrapperModel`` sends prompts and inputs through the configured OpenAI
+or Azure OpenAI client. Wrapping can also invoke inference while evaluating
+a model's output contract. Model/framework loading may download assets.
 
-For more information about Microsoft's privacy policies, please visit the `Microsoft Privacy Statement <https://privacy.microsoft.com/en-us/privacystatement>`_.
+Review the underlying framework's behavior and the remote service's privacy,
+retention, authentication and logging policies before passing data.
+Use approved endpoints and datasets, and do not include credentials or
+sensitive data in documentation examples or public issue reports.
 
-If you have any questions or concerns about privacy in relation to the use of ml-wrappers, please contact us at opencode@microsoft.com.
+For project support, see :ref:`support`. Report security vulnerabilities
+through the private reporting process in
+`SECURITY.md <https://github.com/microsoft/ml-wrappers/blob/main/SECURITY.md>`_,
+not through public GitHub issues.

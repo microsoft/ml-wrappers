@@ -3,7 +3,10 @@
 Contributing
 ============
 
-We welcome contributions and suggestions! Please see the `CONTRIBUTING.md <https://github.com/microsoft/ml-wrappers/blob/main/CONTRIBUTING.md>`_ file for more details.
+We welcome contributions and suggestions! Open a pull request against ``main``.
+Most contributions require the `Microsoft Contributor License Agreement
+<https://cla.opensource.microsoft.com/>`_; the CLA bot provides instructions
+on the pull request.
 
 Feature Request
 ---------------
@@ -43,10 +46,17 @@ Build the documentation from the repository root in a Python 3.11 environment:
 .. code-block:: bash
 
     python -m pip install -r requirements-doc.txt ./python
-    python -m sphinx -b html python/docs _build/html
+    python -m sphinx -W --keep-going -b html python/docs _build/html
+    python -m sphinx -W --keep-going -b doctest python/docs _build/doctest
+    python -m sphinx -b linkcheck python/docs _build/linkcheck
 
-The Documentation GitHub Actions workflow checks the HTML build on pull requests
-and pushes to main. Read the Docs publishes the site using ``.readthedocs.yaml``.
+The Documentation GitHub Actions workflow checks warning-free HTML and the
+executable core examples on pull requests and pushes to main. Run the link
+checker when changing links and inspect any network failures rather than
+assuming every failed request means a dead page. Read the Docs publishes
+HTML, PDF and EPUB using ``.readthedocs.yaml``. Local EPUB and LaTeX checks
+can use ``-b epub`` and ``-b latex``; compiling PDF requires a TeX installation.
+See :ref:`versioning` for ``latest`` versus release documentation.
 
 If pushes stop triggering Read the Docs builds, check the repository webhook's
 recent deliveries. A response saying the webhook has no secret requires a
@@ -61,4 +71,4 @@ confirm that it uses the current main commit.
 License
 -------
 
-This project is licensed under the MIT License. For more details, please see the `LICENSE.txt <https://github.com/microsoft/ml-wrappers/blob/main/LICENSE.txt>`_ file.
+This project is licensed under the MIT License. For more details, please see the `LICENSE <https://github.com/microsoft/ml-wrappers/blob/main/LICENSE>`_ file.

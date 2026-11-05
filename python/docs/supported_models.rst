@@ -1,46 +1,35 @@
 .. _supported_models:
 
-Supported Models
-================
+Supported Models and Adapters
+=============================
 
-The ML-Wrappers library supports a variety of machine learning models. The following sections provide an overview of the supported models.
+For the scenario/framework matrix and prerequisites, see
+:ref:`supported_frameworks`. The main entry point is
+``ml_wrappers.wrap_model``; explicit wrappers serve specialized use cases.
 
-Scikit-Learn
-------------
+* :ref:`model_wrapping`: fitted tabular classifiers and regressors, including
+  :ref:`pytorch_model_wrapping` and :ref:`tensorflow_model_wrapping`.
+* :ref:`text_model_wrapping`: supported Transformers classification and
+  question-answering pipelines; public dispatch requires SHAP for both.
+* :ref:`image_model_wrapping`: framework-specific image classification.
+* :ref:`object_detection_model_wrapping`: detection records and D-RISE
+  adapters, with distinct model/input contracts.
 
-Scikit-Learn models are directly supported by our APIs. 
+Stored predictions
+-------------------
 
-LightGBM
---------
+``PredictionsModelWrapper``, ``PredictionsModelWrapperClassification`` and
+``PredictionsModelWrapperRegression`` expose recorded predictions when
+loading the original model is not possible. They match requested rows to
+recorded data; they cannot predict genuinely new feature combinations.
+See their constructors in :ref:`API Reference` for required arrays and
+classification probabilities.
 
-LightGBM models can be wrapped into a scikit-learn compatible wrapper.
-
-XGBoost
--------
-
-XGBoost models can be wrapped into a scikit-learn compatible wrapper.
-
-Catboost
---------
-
-Catboost models can be wrapped into a scikit-learn compatible wrapper.
-
-Keras with Tensorflow backend
------------------------------
-
-Keras models have both a predict_proba and predict function on all models, so it is difficult to know for sure if the model is a classifier or regressor. We can force the user to specify whether the model is a classifier or regressor in case only a single column is output, and then wrap the model in a model wrapper. If the user specifies the model is a regressor we can fix the structure to be 2D.
-
-Pytorch
--------
-
-Pytorch does not have a predict or predict_proba function, but the model can be called on the dataset directly to get probabilities. The probabilities can then be transformed into predicted labels for classifiers. Similarly to Keras, we can force the user to specify whether the model is a classifier or regressor in case only a single column is output, and then wrap the model in a model wrapper. If the user specifies the model is a regressor we can fix the structure to be 2D.
-
-ONNX
-----
-
-ONNX is not yet supported, but we plan to support it in the future. We can use a model wrapper to conform to the predict and predict_proba specifications the SDK requires.
-
-Future Support
+Remote models
 --------------
 
-We would like to support caffe/caffe2 and other ML frameworks in the future as well. Contributions to this repository are welcome.
+``EndpointWrapperModel`` and ``OpenaiWrapperModel`` are explicit adapters
+for supported service contracts, not automatic ``wrap_model`` dispatch
+for arbitrary remote URLs. Install their optional dependencies and
+configure service access separately. Consult their API signatures and
+:ref:`privacy_policy`; do not put credentials in examples or issue reports.

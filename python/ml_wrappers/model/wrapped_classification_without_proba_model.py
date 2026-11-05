@@ -24,7 +24,7 @@ class WrappedClassificationWithoutProbaModel(object):
         self._num_classes = len(self._model.classes_)
 
     def predict(self, dataset):
-        """Predict the output using the wrapped regression model.
+        """Predict the output using the wrapped classification model.
 
         :param dataset: The dataset to predict on.
         :type dataset: ml_wrappers.DatasetWrapper

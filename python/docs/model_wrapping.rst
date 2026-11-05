@@ -3,31 +3,62 @@
 Model Wrapping
 ==============
 
-The ML Wrappers SDK provides a clear understanding of the model type to have a solid contract for users and visualizations. This is particularly important in the machine learning interpretability space for blackbox models. 
+Import ``wrap_model`` from ``ml_wrappers`` and pass a fitted model plus
+representative examples accepted by that model. Wrapping can invoke inference
+to inspect shapes; it does not train the model.
 
-The user can pass in a function from a classifier or regressor, or a model that is a classifier or regressor. For model-specific explainers, the user would pass in the model directly. We can usually infer whether the model is a classifier or regressor in most cases.
+.. testcode::
 
-Functions
----------
+    import numpy as np
+    from sklearn.linear_model import LinearRegression
+    from ml_wrappers import wrap_model
 
-We can evaluate the function on the data and look at the output to understand if the model is a classifier or regressor. In general, if the user passes a function that returns a 1D array, we can infer it is a regressor. If the function returns a 2D array, we can infer it is a classifier. There is a tricky case where the function may return a 2D array of 1 column. In this case, we can throw an exception and force the user to specify model_task=(infer, classifier, regressor), and not allow automatic inferencing. The user can override this behavior if they specify an optional parameter model_task=(infer, classifier, regressor), which will have the value model_task=infer by default.
+    features = np.array([[0.], [1.], [2.]])
+    model = LinearRegression().fit(features, [0., 2., 4.])
+    wrapped = wrap_model(model, features, model_task='regression')
+    assert wrapped.predict(features).shape == (3,)
+    assert np.allclose(wrapped.predict(features), [0., 2., 4.])
 
-Models
-------
+Task selection
+--------------
 
-We can convert the model to a function and then use the specifications listed above. We convert the model to a function by either using the predict_proba function, or, if it is not available, the predict function. In some specific cases, we may be able to get additional information from the model to help us decide which function to use. Specifically, if we know that the model is a Keras model, the model will always have a predict_proba method available. In this case, we can look at the shape of predict_proba, and if it has multiple columns or is a single column with values outside the range of [0, 1], we can by default use predict instead. Otherwise, we can use predict_proba. If the user specified model_task=classifier, this will always override the behavior for Keras models and specify whether to use predict or predict_proba. Also, if the user specifies that model_task=classifier, but the model does not have a predict_proba function, we can wrap the function in a one-hot vector of probabilities. After the model is converted to a function that conforms to our specifications, we can wrap that in our model wrapper, which can contain a reference to the original model in cases where it may be needed or for debugging.
+Tabular tasks are ``'classification'``, ``'regression'`` and ``'unknown'``
+(the default), also available as ``ModelTask`` constants from
+``ml_wrappers.common.constants``. Do not use ``infer``, ``classifier`` or
+``regressor`` as task strings.
 
-Supported Frameworks
---------------------
+For ordinary tabular models, automatic selection prefers ``predict_proba``
+when available; explicit regression selects ``predict``. Ambiguous
+single-column output may require an explicit task. For classification,
+provide class probabilities rather than arbitrary scores or class labels.
+The adapter does not generally calibrate scores.
 
-Our library can directly support the most popular machine learning frameworks. In general, based on the description above, the library can support models and functions in scikit-learn. However, we can extend support to other frameworks with the model wrapper concept. Currently, the list of supported frameworks, or frameworks we plan to support, are:
+PyTorch modules and recognized Keras Sequential models receive framework
+adapters before evaluation. These adapters provide ``predict_proba`` as an
+alias for their prediction output; this does not mean native Keras models
+have that method. Automatic handling of classifiers without ``predict_proba``
+is limited to ``SGDClassifier`` and produces one-hot class indicators, not
+calibrated probabilities. For example, fit ``SVC(probability=True)`` when
+probabilities are needed.
 
-- Scikit-Learn
-- LightGBM
-- XGBoost
-- Catboost
-- Keras with Tensorflow backend
-- Pytorch
-- ONNX (planned)
+Return value and inputs
+-----------------------
 
-We would like to support caffe/caffe2 and other ML frameworks in the future as well.
+The public function returns a single wrapped model. Use ``predict`` for
+regression values or classification labels, and ``predict_proba`` for
+classification probability output. Single-target regression returns a
+one-dimensional array, including when a model originally returns one column.
+See :ref:`model_wrapper_specifications` for the detailed contract.
+
+Ordinary tabular models must expose a supported prediction method; a bare
+prediction callable is not a generally supported public ``wrap_model`` input.
+Use :ref:`dataset_wrapping` to understand pandas reconstruction.
+
+Text and vision
+---------------
+
+Specify the task explicitly for text and image adapters. Supported paths,
+optional dependencies and restrictions are listed in
+:ref:`supported_frameworks`, :ref:`text_model_wrapping` and
+:ref:`image_model_wrapping`. A task constant alone does not guarantee that
+every model or pipeline is supported.

@@ -29,4 +29,6 @@ The ml-wrappers project is licensed under the MIT License. The full license text
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 
-For more information about the license, please refer to the `LICENSE.txt` file in the repository.
+For the authoritative license, see the
+`LICENSE <https://github.com/microsoft/ml-wrappers/blob/main/LICENSE>`_
+file in the repository.

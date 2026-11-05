@@ -1,114 +1,73 @@
-# Release process for ml-wrappers
+# Release process
 
-When ready to release, create a separate PR in ml-wrappers to bump up the version in the version.py file under the python/ml_wrappers directory:
+Releasing requires maintainer authorization and repository publishing secrets.
+A documentation PR does not authorize publishing a package or changing release
+tags. Do not rewrite an existing release tag to repair documentation.
 
-```
-_major = '0'
-_minor = <enter new minor version here>
-_patch = <enter new patch version here>
-```
+## Prepare an approved release
 
-In the notes make sure to mention all of the changes that have been introduced since the last release.  Usually you can take the main description in the PR.
+1. Open a version-bump PR against `main`, updating
+   [version.py](../python/ml_wrappers/version.py). Review the package description,
+   dependency constraints and changelog/release notes for the intended release.
+2. Merge only after required tests and the Documentation workflow pass. Confirm
+   the Read the Docs `latest` build uses the approved `main` commit.
+3. Identify the exact release commit and record its SHA. Run Test publishing
+   against the approved ref before Prod. If using a branch ref, verify it has
+   not moved between runs; a tag ref must point at the same reviewed commit.
 
-After the PR has been merged, checkout the master branch and get the latest code.
+## Use the publishing workflow
 
-## Release notes
+The [Release ml-wrappers to PyPI workflow](../.github/workflows/release-ml-wrappers.yml)
+is manually dispatched from GitHub Actions. Select the approved ref and set
+`releaseType` to **Test** first, then **Prod** only after successful validation.
+It builds the source distribution and wheel on Python 3.11, installs the wheel,
+runs `tests/main`, uploads build artifacts and publishes to the selected index.
+The workflow does not bump the version, create tags or create GitHub Releases.
 
-On the main page, click on releases, and select "Draft a new release".
+Test publishing uses `TEST_PYPI_API_TOKEN_ML_WRAPPERS`; production publishing uses
+`PYPI_API_TOKEN_ML_WRAPPERS`. Maintainers configure those in GitHub Actions
+secrets. Never put tokens, passwords or a populated `.pypirc` in the repository.
 
-In "tag version", enter the version in the format v0.*.*, for example v0.10.0.  Keep the target as master branch.
+After Test succeeds, inspect the workflow artifacts and TestPyPI project page.
+Smoke-test the exact candidate version in a clean environment. For example,
+replace `X.Y.Z` below with the candidate version:
 
-In release title, enter either "Patch release v0.*.*" or "Release v0.*.*".
-
-In the release notes, enter the same release notes as in the PR above for all changes that have been made to the package.
-
-## PyPI release
-
-For a guide on the PyPI release process, please see:
-
-https://packaging.python.org/tutorials/packaging-projects/
-
-### PyPI file
-
-Create a .pypirc file in the users home directory, it should look similar to:
-
-```
-[distutils]
-index-servers =
-  pypi
-  pypitest
-
-[pypi]
-repository: https://upload.pypi.org/legacy/
-username: interpret-community
-password: PASSWORD_REMOVED
-
-[pypitest]
-repository: https://test.pypi.org/legacy/
-username: interpret-community
-password: PASSWORD_REMOVED
+```bash
+python -m pip install numpy packaging pandas scipy scikit-learn
+python -m pip install --no-deps --index-url https://test.pypi.org/simple/ ml-wrappers==X.Y.Z
+python -c "from importlib.metadata import version; from ml_wrappers import DatasetWrapper, wrap_model; print(version('ml-wrappers'))"
 ```
 
-Note interpret-community PyPI user is currently used to publish ml-wrappers to PyPI but this may change in the future.
+Installing dependencies from the normal index first avoids combining a test
+index and production index as competing dependency sources. Use a disposable
+environment and run the documented quickstart as well. After Prod, verify the
+published version and installation from the normal PyPI index.
 
-### Clean repo
+## Tag, release and verify documentation
 
-Make sure the repo is clean prior to release on the master branch, run:
+Create the `vX.Y.Z` tag and GitHub Release only with maintainer approval, pointing
+at the same approved commit used for publishing. Coordinate their timing with
+the release; a GitHub Release alone does not publish to PyPI.
 
-```
-git clean -fdx
-```
+Read the Docs uses configuration from the ref being built:
 
-### Creating wheel
+- `latest` builds `main`, not necessarily the installed PyPI release.
+- `stable` normally follows the newest eligible release tag.
+- `vX.Y.Z` builds that tag when the version is activated in Read the Docs.
 
-Generate the wheel file.  First activate your release environment, this can be any conda environment on the release machine:
-```
-conda activate my_env
-```
-Then update setuptools and wheel, always make sure you have the latest version installed before releasing to PyPI:
-```
-pip install --upgrade setuptools wheel
-```
-Generate the wheel where setup.py is located:
-```
-cd (ml-wrappers location)\python
-python setup.py sdist bdist_wheel
-```
-If using WSL, it may be necessary to use
-```
-python setup.py sdist bdist_wheel --bdist-dir ~/temp/bdistwheel
-```
-You should see the following files in the dist directory:
-```
-dist/
-  ml-wrappers-0.0.1-py3-none-any.whl
-  ml-wrappers-0.0.1.tar.gz
-```
+Before creating a tag, verify that its commit includes a currently supported
+`.readthedocs.yaml`, documentation requirements and warning-free docs.
+After creating/activating the release version, check the `latest`, `stable`
+and `vX.Y.Z` build logs, commit SHAs, displayed version, API content and
+HTML/PDF/EPUB downloads. A successful `latest` build does not prove that
+`stable` or a tag builds successfully.
 
-Upgrade twine before uploading to PyPI:
-```
-pip install --upgrade twine
-```
+Older tags, including `v0.6.4`, retain the retired Ubuntu 20.04 build setting.
+Changing `main` does not repair those immutable tags: `stable` can keep serving
+an older successful build and an unbuilt version URL can return 404. The next
+approved release must include the repaired configuration from `main`.
+Historical-version recovery requires a separate maintainer decision; do not
+silently move tags or advertise missing version URLs as working.
 
-Note: you may need to specify --user on some environments:
-```
-pip install --user --upgrade twine
-```
-
-Run twine upload to the PyPI test repository:
-```
-twine upload --repository pypitest dist/*
-```
-The twine install location may not be on PATH by default; either add it or call twine using its full path.
-
-Validate that the page looks correct on the PyPI release page.
-
-OPTIONAL:
-You can install and validate the package locally:
-
-pip install --index-url https://test.pypi.org/simple/ --no-deps ml-wrappers
-
-Run twine upload to the PyPI repository:
-```
-twine upload --repository pypi dist/*
-```
+If GitHub events no longer trigger builds, use the integration recovery
+instructions in the [contributor guide](../python/docs/contributing.rst).

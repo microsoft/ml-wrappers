@@ -29,11 +29,11 @@ def _wrap_text_model(model, examples, model_task, is_function):
         Note the examples will be wrapped in a DatasetWrapper, if not
         wrapped when input.
     :type examples: ml_wrappers.DatasetWrapper or numpy.ndarray
-        or pandas.DataFrame or panads.Series or scipy.sparse.csr_matrix
+        or pandas.DataFrame or pandas.Series or scipy.sparse.csr_matrix
         or shap.DenseData or torch.Tensor
-    :param model_task: Parameter to specify whether the model is a
-        'text_classification', 'sentiment_analysis', 'question_answering',
-        'entailment' or 'summarizations' text model.
+    :param model_task: 'text_classification',
+        'multilabel_text_classification' or 'question_answering' for the
+        implemented Transformers pipeline adapters.
     :type model_task: str
     :return: The function chosen from given model and chosen domain, or
         model wrapping the function and chosen domain.
