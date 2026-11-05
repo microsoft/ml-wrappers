@@ -31,8 +31,8 @@ def _generate_augmented_data(x, max_num_of_augmentations=np.inf):
 
     :param x: data that has to be augmented, array or sparse matrix of 2 dimensions
     :type x: numpy.ndarray or scipy.sparse.csr_matrix
-    :param max_augment_data_size: number of times we stack permuted x to augment.
-    :type max_augment_data_size: int
+    :param max_num_of_augmentations: Maximum number of shuffled copies to append.
+    :type max_num_of_augmentations: int or float
     :return: augmented data with roughly number of rows that are equal to number of columns
     :rtype: numpy.ndarray or scipy.sparse.csr_matrix
     """

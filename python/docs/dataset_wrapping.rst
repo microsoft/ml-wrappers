@@ -3,43 +3,65 @@
 Dataset Wrapping
 ================
 
-The ``DatasetWrapper`` class in the ``ml_wrappers`` package provides a uniform interface for handling datasets across different explainers. It supports various data types including numpy arrays, pandas DataFrame, pandas Series, scipy sparse matrices, shap.DenseData, torch.Tensor, and tensorflow.python.data.ops.dataset_ops.BatchDataset.
+``DatasetWrapper`` retains input metadata while exposing data for common
+operations. Pandas DataFrames and Series expose their NumPy values through
+``dataset``; NumPy arrays and SciPy sparse inputs are retained.
 
-.. code-block:: python
+Restore a modified array
+------------------------
 
-    from ml_wrappers.dataset import DatasetWrapper
+Use ``typed_wrapper_func(array)`` for a separately modified array.
+``typed_dataset`` instead restores the wrapper's current data and is a
+property, not a callable.
 
-    # Initialize the dataset wrapper
-    wrapper = DatasetWrapper(dataset)
+.. testcode::
 
-Here, ``dataset`` is a matrix of feature vector examples (# examples x # features) for initializing the explainer.
+    import pandas as pd
+    from ml_wrappers import DatasetWrapper
 
-The ``DatasetWrapper`` class also provides methods for operations such as summarizing data, taking the subset or sampling. It also provides an option to clear all references after use in explainers for memory optimization.
+    original = pd.DataFrame({'age': [20, 30], 'income': [100, 200]})
+    wrapper = DatasetWrapper(original)
+    values = wrapper.dataset.copy()
+    values[:, 0] += 1
+    restored = wrapper.typed_wrapper_func(values)
+    assert isinstance(restored, pd.DataFrame)
+    assert restored['age'].tolist() == [21, 31]
+    assert restored.dtypes.equals(original.dtypes)
+    assert wrapper.typed_dataset.equals(original)
 
-.. code-block:: python
+DataFrame reconstruction uses the original column names and dtypes. Keep a
+compatible shape and values: casting back to the original dtype can reject
+or truncate incompatible changes. Arbitrary transformations are not
+automatically reversible. A Series is reconstructed from values; do not
+assume all original Series metadata is retained. Non-default DataFrame
+indexes require the wrapper's index-handling methods; an arbitrary array
+does not carry an index.
 
-    # Initialize the dataset wrapper with clear_references option
-    wrapper = DatasetWrapper(dataset, clear_references=True)
+Sampling and summaries
+----------------------
 
-The ``DatasetWrapper`` class also provides a method for sampling examples from the dataset. If the number of rows in the dataset is less than a lower bound, it returns the full dataset. If the number of rows is more than an upper bound, it samples randomly. It also provides an option to resample based on the optimal number of clusters.
+The public sampling method is ``sample()``, not ``sample_examples()``.
+It returns sampled data and, when sampling takes place, replaces the
+wrapper's stored dataset. Keep the original data separately if needed.
 
-.. code-block:: python
+.. testcode::
 
-    # Sample examples from the dataset
-    sampled_dataset = wrapper.sample_examples()
+    small = DatasetWrapper(original)
+    sampled = small.sample()
+    assert sampled.shape == (2, 2)
 
-The ``DatasetWrapper`` class also provides a method to clear all references for memory optimization.
+Small datasets are returned unchanged. Larger datasets can use HDBSCAN
+(an optional dependency) or the k-means fallback. ``compute_summary`` also
+replaces the stored data with a summary; consult :ref:`API Reference` before
+using transformations that change its shape.
 
-.. code-block:: python
+Framework inputs
+-----------------
 
-    # Clear all references
-    wrapper._clear()
+The wrapper also recognizes SHAP DenseData, PyTorch tensors and certain
+TensorFlow BatchDataset objects. These require their frameworks and are
+not all eagerly converted into NumPy/SciPy by the constructor. TensorFlow
+batch conversion has a framework-specific reconstruction path. Do not
+assume every accepted input has the same conversion or metadata guarantees.
 
-The ``DatasetWrapper`` class is part of the ``ml_wrappers.dataset`` module, which also includes the ``CustomTimestampFeaturizer`` class for timestamp featurization.
-
-.. code-block:: python
-
-    from ml_wrappers.dataset import CustomTimestampFeaturizer
-
-    # Initialize the timestamp featurizer
-    featurizer = CustomTimestampFeaturizer()
+Avoid private lifecycle methods such as ``_clear`` in application code.

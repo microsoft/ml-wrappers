@@ -49,7 +49,7 @@ class DatasetWrapper(object):
 
         :param dataset: A matrix of feature vector examples (# examples x # features) for
             initializing the explainer.
-        :type dataset: numpy.ndarray or pandas.DataFrame or panads.Series or scipy.sparse.csr_matrix
+        :type dataset: numpy.ndarray or pandas.DataFrame or pandas.Series or scipy.sparse.csr_matrix
             or shap.DenseData or torch.Tensor or tensorflow.python.data.ops.dataset_ops.BatchDataset
         :param clear_references: A memory optimization that clears all references after use in explainers.
         :type clear_references: bool
@@ -110,14 +110,14 @@ class DatasetWrapper(object):
         return wrapper_func(self._dataset)
 
     def typed_wrapper_func(self, dataset, keep_index_as_feature=False):
-        """Get a wrapper function to convert the dataset to the original type, pandas DataFrame or Series.
+        """Convert data back to the original type, including pandas DataFrame or Series.
 
         :param dataset: The dataset to convert to original type.
         :type dataset: numpy.ndarray or scipy.sparse.csr_matrix
         :param keep_index_as_feature: Whether to keep the index as a feature when converting back.
             Off by default to convert it back to index.
         :type keep_index_as_feature: bool
-        :return: A wrapper function for a given dataset to convert to original type.
+        :return: The dataset converted to the original type.
         :rtype: numpy.ndarray or scipy.sparse.csr_matrix or pandas.DataFrame or pandas.Series
         """
         if self._dataset_is_df:
@@ -345,7 +345,7 @@ class DatasetWrapper(object):
         """Featurizes the timestamp columns.
 
         :return: The transformation steps to featurize the timestamp columns.
-        :rtype: ml_wrappers.DatasetWrapper
+        :rtype: ml_wrappers.dataset.timestamp_featurizer.CustomTimestampFeaturizer or None
         """
         if self._timestamp_featurized:
             return self._timestamp_featurizer
@@ -412,7 +412,7 @@ class DatasetWrapper(object):
         """Apply timestamp featurization on the dataset.
 
         :param timestamp_featurizer: The transformation steps to featurize timestamps in the given dataset.
-        :type timestamp_featurizer: CustomTimestampFeaturizer
+        :type timestamp_featurizer: ml_wrappers.dataset.timestamp_featurizer.CustomTimestampFeaturizer
         """
         if self._timestamp_featurized or issparse(self._dataset):
             return
@@ -430,8 +430,8 @@ class DatasetWrapper(object):
     def augment_data(self, max_num_of_augmentations=np.inf):
         """Augment the current dataset.
 
-        :param max_augment_data_size: number of times we stack permuted x to augment.
-        :type max_augment_data_size: int
+        :param max_num_of_augmentations: Maximum number of shuffled copies to append.
+        :type max_num_of_augmentations: int or float
         """
         self._dataset = _generate_augmented_data(self._dataset, max_num_of_augmentations=max_num_of_augmentations)
 

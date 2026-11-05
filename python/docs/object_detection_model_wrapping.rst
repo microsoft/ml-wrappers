@@ -3,68 +3,91 @@
 Object Detection Model Wrapping
 ===============================
 
-ML-Wrappers supports model wrapping of Pytorch object detection methods. The model is converted to a function by either using the predict_proba function, or, if it is not available, the predict function. 
+Detection adapters return records per image rather than a tabular
+class-probability matrix. They require PyTorch/torchvision; the AzureML
+AutoML Images MLflow path also requires its framework dependencies.
 
-Schema
-------
-For each image in the dataset, the model is used to generate predictions. Then, the predictions are filtered using non maximal suppression (based on the iuo threshold parameter). 
+Torchvision-style detector
+--------------------------
 
-The predictions is a list of Pytorch tensors. Each tensor is composed of the labels, boxes (bounding boxes), scores. 
-
-Example:
+Given a fitted ``detector`` with ``eval`` and ``to`` methods, whose inference
+returns a list of dictionaries containing ``boxes``, ``labels`` and
+``scores`` tensors:
 
 .. code-block:: python
 
-    detections = [{'boxes': tensor([[ 97.0986, 170.7908, 241.4255, 516.5880]], grad_fn=<StackBackward0>), 'labels': tensor([2]), 'scores': tensor([0.9905], grad_fn=<IndexBackward0>)}]
+    from ml_wrappers import wrap_model
 
-    predict_output = [[[2.0, 97.09860229492188, 170.7908172607422, 241.425537109375, 516.5879516601562, 0.9904877543449402]]]
+    wrapped = wrap_model(
+        detector, images, model_task='object_detection',
+        num_classes=3, device='cpu')
+    detections = wrapped.predict(images)
+    scores = wrapped.predict_proba(images)
 
-Limitations
------------
-This wrapper functionality only supports Pytorch machine learning models.
+Here ``images`` is an iterable of image tensors or images compatible with
+torchvision ``ToTensor``. The adapter invokes the detector one image at a
+time. It is not a universal adapter for arbitrary Transformers detection
+pipeline dictionaries. The public dispatch automatically adapts compatible
+callable detectors without ``predict`` or ``predict_proba`` methods, including
+torchvision ``torch.nn.Module`` detectors.
 
-Model Wrapping
+Alternatively, construct the same adapter explicitly:
+
+.. code-block:: python
+
+    from ml_wrappers.model.image_model_wrapper import WrappedObjectDetectionModel
+
+    wrapped = WrappedObjectDetectionModel(
+        detector, number_of_classes=3, device='cpu')
+
+.. important::
+
+   In the current ``WrappedObjectDetectionModel``, ``predict`` accepts
+   ``iou_threshold`` and ``score_threshold`` but does not honor overrides.
+   NMS and confidence filtering use fixed thresholds of 0.5.
+   ``predict_proba`` also uses that fixed filtering. This limitation does
+   not apply to the AutoML MLflow adapter's ``predict`` threshold parameters.
+
+Record schema
 --------------
-The model wrapping process involves the following steps:
 
-1. Processing the raw detections to generate bounding boxes, class scores, and objectness scores.
-2. Applying non-maximal suppression and score filtering based on the iou threshold and score threshold parameters.
-3. Creating a list of detection records from the image predictions.
+Each detection record is ``[label, x_min, y_min, x_max, y_max, score]``.
+Coordinates are corners, not width and height; the confidence score is
+included in wrapped predictions. For example::
 
-Example:
+    [
+        [[1, 10, 20, 50, 80, 0.9], [2, 30, 40, 70, 90, 0.8]],
+        [[1, 15, 25, 55, 85, 0.95]],
+    ]
+
+The outer sequence corresponds to images. Equal detection counts can produce
+a NumPy array; differing counts produce nested lists. Handle ragged results
+instead of assuming a rectangular array. ``predict_proba`` returns the score
+for each retained detection, not a complete class distribution.
+
+AutoML Images MLflow
+--------------------
+
+Use a recognized AutoML Images MLflow model with ordered ``classes``:
 
 .. code-block:: python
 
-    class WrappedObjectDetectionModel:
-        """A class for wrapping a object detection model in the scikit-learn style."""
+    from ml_wrappers import wrap_model
 
-        def __init__(self, model: Any, number_of_classes: int, device=Device.AUTO.value) -> None:
-            """Initialize the WrappedObjectDetectionModel with the model and evaluation function."""
-            self._device = torch.device(_get_device(device))
-            model.eval()
-            model.to(self._device)
+    wrapped = wrap_model(
+        automl_model, examples, model_task='object_detection',
+        classes=['cat', 'dog'])
+    detections = wrapped.predict(
+        examples, iou_threshold=0.4, score_threshold=0.6)
 
-            self._model = model
-            self._number_of_classes = number_of_classes
+``examples`` must be the AutoML image input DataFrame plus an ``image_size``
+column containing each image's ``(width, height)``. The wrapper removes that
+column before model inference and rescales normalized boxes. If every label
+in an image is integer-convertible, those integer values are preserved.
+Otherwise all labels in that image are mapped through ``classes`` to
+one-based indices in the supplied order. This adapter honors the two
+``predict`` thresholds.
 
-        def predict(self, x, iou_threshold: float = 0.5, score_threshold: float = 0.5):
-            """Create a list of detection records from the image predictions."""
-            detections = []
-            for image in x:
-                if type(image) == Tensor:
-                    raw_detections = self._model(image.to(self._device).unsqueeze(0))
-                else:
-                    raw_detections = self._model(T.ToTensor()(image).to(self._device).unsqueeze(0))
-
-Supported Frameworks
---------------------
-The following machine learning frameworks are supported:
-
-- Scikit-Learn
-- LightGBM
-- XGBoost
-- Catboost
-- Keras with Tensorflow backend
-- Pytorch
-
-ONNX is not yet supported, but there are plans to support it in the future. Other ML frameworks like caffe/caffe2 are also planned to be supported in the future.
+``PytorchDRiseWrapper`` and ``MLflowDRiseWrapper`` expose separate D-RISE
+contracts; they are not interchangeable with these detection-record outputs.
+See :ref:`API Reference` for their signatures and return values.

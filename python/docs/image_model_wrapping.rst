@@ -3,17 +3,42 @@
 Image Model Wrapping
 ====================
 
-The ML-Wrappers SDK supports model wrapping for vision-based models. The wrapping process is handled by the ``wrap_model`` function, which takes in a model, data, and a model task as parameters. The model task can be one of the following: ``ModelTask.IMAGE_CLASSIFICATION``, ``ModelTask.MULTILABEL_IMAGE_CLASSIFICATION``, or ``ModelTask.OBJECT_DETECTION``.
+Pass ``model_task='image_classification'`` to ``wrap_model`` for a supported
+image classifier. The public function returns one model, not a tuple.
+Image data layout, preprocessing and dependencies are framework-specific.
 
-The ``wrap_model`` function determines the type of the model and wraps it accordingly. For instance, if the model is a FastAI model, it is wrapped as a ``WrappedFastAIImageClassificationModel``. If the model is an AutoML model, it is wrapped as a ``WrappedMlflowAutomlImagesClassificationModel`` or a ``WrappedMlflowAutomlObjectDetectionModel`` depending on the model task. If the model is a callable pipeline, it is wrapped as a ``WrappedTransformerImageClassificationModel``.
+The dispatch paths include PyTorch modules, compatible FastAI learners,
+Transformers/callable classification pipelines and recognized AzureML
+AutoML Images MLflow models. An arbitrary callable, MLflow model or image
+framework is not necessarily compatible with these contracts.
 
-For object detection models, the ``wrap_model`` function can also take in an additional parameter, ``classes``, which is a list of class labels. The function returns the wrapped model and the model task.
+For a fitted CPU PyTorch classifier ``model`` producing class probabilities,
+and an array ``images`` of images accepted by its preprocessing:
 
-The wrapped model can then be used for various tasks such as validation and prediction. For instance, the ``validate_wrapped_classification_model`` function can be used to validate a wrapped classification model.
+.. code-block:: python
 
-The ML-Wrappers SDK also provides support for PyTorch models. The ``PytorchDRiseWrapper`` and ``WrappedObjectDetectionModel`` classes are used to wrap PyTorch models for object detection tasks.
+    from ml_wrappers import wrap_model
 
-.. note::
-   The ML-Wrappers SDK currently only supports PyTorch machine learning models for object detection tasks.
+    wrapped = wrap_model(model, images, model_task='image_classification')
+    labels = wrapped.predict(images)
+    probabilities = wrapped.predict_proba(images)
 
-For more information on how to use the ML-Wrappers SDK for image model wrapping, refer to the `tests/main/test_image_model_wrapper.py` file in the repository.
+The PyTorch image adapter uses torchvision tensor conversion for non-tensor
+images. Supply the channel order and value range expected by that conversion
+and the model; normalization and resizing remain the caller's responsibility.
+It does not add softmax. The direct NumPy output conversion requires CPU
+outputs. FastAI also has a multilabel image path selected with
+``model_task='multilabel_image_classification'``.
+
+Object detection
+-----------------
+
+Detection uses a different output schema and adapters. For the AutoML MLflow
+path, ``classes`` supplies ordered class names. ``num_classes`` and ``device``
+apply to the PyTorch-style detection adapter path; ``device='auto'`` chooses
+CUDA when available, otherwise CPU.
+
+Compatible callable detectors without ``predict`` or ``predict_proba``,
+including raw torchvision modules, are automatically adapted by the public
+detection dispatch. Constructing ``WrappedObjectDetectionModel`` explicitly
+is an alternative; see :ref:`object_detection_model_wrapping` for both paths.

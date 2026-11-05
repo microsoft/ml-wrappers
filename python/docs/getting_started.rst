@@ -3,63 +3,72 @@
 Getting Started
 ===============
 
-This documentation provides an overview of the ML Wrappers SDK, which is designed to provide a uniform format for wrapping datasets and models. 
-
-Installation
-------------
-
-The ML Wrappers SDK can be installed via pip:
+Install the published package:
 
 .. code-block:: bash
 
-    pip install ml-wrappers
+    python -m pip install ml-wrappers
 
-Supported Models
-----------------
+The base package installs NumPy, packaging, pandas, SciPy and scikit-learn.
+Other frameworks are optional: install the dependencies for your scenario
+before importing or using its adapter. See :ref:`dependencies` and
+:ref:`supported_frameworks`. There are no framework-specific package extras.
 
-The ML Wrappers SDK supports the following models:
+Wrap a classifier
+-----------------
 
-- Scikit-Learn
-- LightGBM
-- XGBoost
-- Catboost
-- Keras with Tensorflow backend
-- Pytorch
-- ONNX (planned for future support)
+This self-contained example needs only the base package. ``wrap_model``
+evaluates the supplied examples while choosing a prediction contract, so use
+representative, valid model inputs and a fitted model.
 
-For more details, please refer to the :ref:`supported_models` section.
+.. testcode::
 
-Supported Frameworks
---------------------
+    import numpy as np
+    from sklearn.linear_model import LogisticRegression
+    from ml_wrappers import wrap_model
 
-The ML Wrappers SDK supports the following frameworks:
+    features = np.array([[0., 0.], [0., 1.], [1., 0.], [1., 1.]])
+    labels = np.array([0, 0, 1, 1])
+    model = LogisticRegression(random_state=0).fit(features, labels)
+    wrapped = wrap_model(model, features, model_task='classification')
+    predictions = wrapped.predict(features)
+    probabilities = wrapped.predict_proba(features)
+    assert predictions.shape == (4,)
+    assert probabilities.shape == (4, 2)
+    assert np.allclose(probabilities.sum(axis=1), 1)
 
-- Scikit-Learn
-- LightGBM
-- XGBoost
-- Catboost
-- Keras with Tensorflow backend
-- Pytorch
-- ONNX (planned for future support)
+For regression, request ``model_task='regression'`` and call ``predict``.
+The public function returns one model, not a ``(model, task)`` tuple.
+See :ref:`model_wrapping` for task selection and output shapes.
 
-For more details, please refer to the :ref:`supported_frameworks` section.
+Work with pandas data
+---------------------
 
-Model Wrapping
---------------
+``DatasetWrapper`` exposes a DataFrame as a NumPy array and can reconstruct
+its columns and dtypes after compatible modifications:
 
-The ML Wrappers SDK provides a way to wrap models into a uniform format. This is done by either using the predict_proba function, or, if it is not available, the predict function. For more details, please refer to the :ref:`model_wrapping` section.
+.. testcode::
 
-Dataset Wrapping
-----------------
+    import pandas as pd
+    from ml_wrappers import DatasetWrapper
 
-The ML Wrappers SDK provides a way to wrap datasets into a uniform format. This is done using the DatasetWrapper class. For more details, please refer to the :ref:`dataset_wrapping` section.
+    frame = pd.DataFrame({'age': [20, 30], 'income': [100, 200]})
+    dataset = DatasetWrapper(frame)
+    values = dataset.dataset.copy()
+    values[:, 0] += 1
+    restored = dataset.typed_wrapper_func(values)
+    assert restored['age'].tolist() == [21, 31]
+    assert restored.columns.tolist() == frame.columns.tolist()
+    assert restored.dtypes.equals(frame.dtypes)
+    assert dataset.typed_dataset.equals(frame)
 
-License Information
--------------------
+``typed_dataset`` is a property, not a conversion method. See
+:ref:`dataset_wrapping` for sampling, sparse inputs and conversion limitations.
 
-The ML Wrappers SDK is licensed under the MIT License. For more details, please refer to the :ref:`license_information` section.
+Next steps
+----------
 
-Support
--------
-
-Support for this project is limited to the resources listed in the :ref:`support` section.
+Use :ref:`supported_models` to select an adapter, :ref:`API Reference` for
+signatures, and :ref:`support` to report problems. The :ref:`privacy_policy`
+page explains remote inference; the :ref:`license_information` page links
+the MIT license.

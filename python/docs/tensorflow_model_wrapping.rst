@@ -1,66 +1,41 @@
 .. _tensorflow_model_wrapping:
 
-Tensorflow Model Wrapping
-=========================
+TensorFlow and Keras Model Wrapping
+===================================
 
-The ML Wrappers library provides support for wrapping Tensorflow models to conform to the required specifications for model explanations. This is achieved through the ``WrappedTensorflowModel`` class and the ``is_sequential`` function.
+Install a compatible TensorFlow/Keras stack separately.
+``wrap_model`` recognizes supported Keras Sequential class namespaces and
+adds ``WrappedTensorflowModel`` before evaluating the output contract.
+Do not assume automatic recognition of every Keras model subclass.
 
-WrappedTensorflowModel
-----------------------
-
-The ``WrappedTensorflowModel`` class is used to wrap a Tensorflow model. This class is initialized with the model to be wrapped. It provides the ``predict`` method for making predictions using the wrapped Tensorflow model.
-
-.. code-block:: python
-
-    class WrappedTensorflowModel(object):
-        def __init__(self, model):
-            self._model = model
-
-        def predict(self, dataset):
-            if isinstance(dataset, pd.DataFrame):
-                dataset = dataset.values
-            return self._model.predict(dataset)
-
-is_sequential
--------------
-
-The ``is_sequential`` function checks if a given model is a sequential model. It returns True if the model is a sequential model and False otherwise.
+This complete, untrained demonstration uses a two-column softmax output;
+real applications should supply a fitted model:
 
 .. code-block:: python
 
-    def is_sequential(model):
-        return str(type(model)).endswith("keras.engine.sequential.Sequential'>")
+    import numpy as np
+    from tensorflow import keras
+    from ml_wrappers import wrap_model
 
-Tensorflow Model Initializer
-----------------------------
+    model = keras.Sequential([
+        keras.layers.Input(shape=(2,)),
+        keras.layers.Dense(2, activation='softmax'),
+    ])
+    features = np.array([[0., 1.], [1., 0.]], dtype=np.float32)
+    wrapped = wrap_model(model, features, model_task='classification')
+    probabilities = wrapped.predict_proba(features)
+    labels = wrapped.predict(features)
 
-The Tensorflow Model Initializer is a class that initializes a Tensorflow model and wraps it using the ``WrappedTensorflowModel`` class. It also validates the wrapped Tensorflow model.
+Native Keras models need not implement ``predict_proba`` or
+``predict_classes``. The adapter supplies those methods using prediction
+output. Its ``predict_proba`` is an alias for ``predict``, not a probability
+calibration step. Choose a suitable output layer for classification.
 
-.. code-block:: python
+The explicit ``WrappedTensorflowModel`` class is also available for models
+with a compatible ``predict`` contract. Use :ref:`model_wrapping` for task
+selection and normalized outputs; see :ref:`API Reference` for signatures.
+The test suite's initializers and validation helpers are not public APIs.
 
-    class TensorflowModelInitializer():
-        def __init__(self, model_initializer, model_task):
-            self._model_initializer = model_initializer
-            self._model_task = model_task
-
-        def __call__(self, X_train, y_train):
-            fitted_model = self._model_initializer(X_train, y_train)
-            wrapped_tf_model = WrappedTensorflowModel(fitted_model)
-            validate_wrapped_tf_model(wrapped_tf_model, X_train, self._model_task)
-            return wrapped_tf_model
-
-The ``wrapped_tensorflow_model_initializer`` function returns an instance of the TensorflowModelInitializer class.
-
-.. code-block:: python
-
-    def wrapped_tensorflow_model_initializer(model_initializer, model_task):
-        return TensorflowModelInitializer(model_initializer, model_task)
-
-Supported Frameworks
---------------------
-
-The ML Wrappers library supports a variety of machine learning frameworks. For Tensorflow models, the library can wrap the model in a model wrapper if the user specifies whether the model is a classifier or regressor in case only a single column is output. If the user specifies the model is a regressor, the structure can be fixed to be 2D.
-
-.. note::
-
-    The library can directly support the most popular machine learning frameworks. However, support can be extended to other frameworks with the model wrapper concept.
+TensorFlow and SciKeras are excluded from the repository's Python 3.14
+development requirements. The base package's tested Python range is not
+a promise that every optional framework supports every version.
