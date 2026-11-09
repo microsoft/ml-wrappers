@@ -15,7 +15,7 @@ also support stored predictions and remote inference.
 Start with :ref:`getting_started`, select a scenario in
 :ref:`supported_models`, and check the canonical
 :ref:`supported_frameworks` matrix before installing optional dependencies.
-ONNX support is not implemented.
+Tabular ONNX models are supported through ONNX Runtime sessions.
 
 The ``latest`` site describes ``main``. See :ref:`versioning` for installed
 releases, versioned documentation and the known older-tag build limitation.

@@ -122,6 +122,13 @@ ml_wrappers.model.predictions_wrapper
    :undoc-members:
    :show-inheritance:
 
+ml_wrappers.model.onnx_wrapper
+------------------------------
+
+.. automodule:: ml_wrappers.model.onnx_wrapper
+   :members:
+   :show-inheritance:
+
 ml_wrappers.model.pytorch_wrapper
 ---------------------------------
 

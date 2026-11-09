@@ -54,6 +54,58 @@ Ordinary tabular models must expose a supported prediction method; a bare
 prediction callable is not a generally supported public ``wrap_model`` input.
 Use :ref:`dataset_wrapping` to understand pandas reconstruction.
 
+ONNX Runtime
+------------
+
+Install ``onnxruntime>=1.19`` separately and create an ``InferenceSession``
+with your desired execution providers. Pass the session, not a file path or
+an ``onnx.ModelProto``, to ``wrap_model``:
+
+.. code-block:: python
+
+    import onnxruntime as ort
+    from ml_wrappers import wrap_model
+
+    session = ort.InferenceSession(
+        "model.onnx", providers=["CPUExecutionProvider"])
+    wrapped = wrap_model(session, examples, model_task="classification")
+    probabilities = wrapped.predict_proba(examples)
+    labels = wrapped.predict(examples)
+
+The adapter supports tabular sessions with one rank-two dense tensor input.
+Supply NumPy arrays or pandas DataFrames in the exported feature order;
+columns are not matched by name. Inputs are cast to the graph's tensor dtype,
+so prepare integer/string features appropriately before wrapping. A single
+row is accepted as a one-dimensional array. Export a dynamic batch dimension
+to predict arbitrary batch sizes. The session's providers are preserved;
+the ``device`` option does not configure ONNX Runtime.
+
+Supported outputs are:
+
+* One floating-point vector or single-column matrix for single-target
+  regression. Use ``model_task="regression"`` for a single column; the public
+  prediction result is flattened.
+* One floating-point probability matrix for classification, with a column
+  per class (two columns for binary classification). Labels are zero-based
+  column indices. No softmax or calibration is added.
+* An exported label vector plus either a probability matrix or an ONNX-ML
+  ZipMap sequence of class-to-probability dictionaries, as produced by
+  ``skl2onnx`` classifiers. Original numeric or string labels are preserved.
+  ZipMap probability columns are ordered by sorted class keys; tensor
+  columns retain the exported order. A standalone ZipMap output is also
+  accepted and its keys provide class labels.
+
+ONNX classifiers must expose at least two probability columns/classes,
+including ZipMap outputs. Single-key ZipMaps are rejected rather than
+allowing the generic evaluator to expand them into an invented second class.
+
+Multi-input graphs, sparse inputs, label-only classifiers, single-column
+binary probabilities, single-class classifiers, multi-target regression, arbitrary auxiliary outputs,
+and text/vision ONNX adapters are not supported. Such graphs require an
+explicit application-specific adapter or re-export to a supported schema.
+Wrapping runs inference on representative examples and can therefore expose
+runtime/provider errors immediately.
+
 Text and vision
 ---------------
 

@@ -53,4 +53,5 @@ tabular class-probability matrix.
 
 The private ``_wrap_model`` and related evaluator functions may return
 internal ``(model, task)`` tuples. Those are not the public ``wrap_model``
-return value. ONNX is not currently implemented.
+return value. For ONNX Runtime session contracts and limitations, see
+:ref:`model_wrapping`.

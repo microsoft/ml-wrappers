@@ -26,6 +26,11 @@ and CI version constraints.
    * - Tabular learners
      - FastAI
      - A compatible tabular learner; install FastAI and its framework stack.
+   * - Tabular ONNX inference
+     - ONNX Runtime ``InferenceSession``
+     - One dense tensor input; single-target regression or class probabilities
+       with optional exported labels. Install ONNX Runtime separately.
+       See :ref:`model_wrapping` for supported output schemas.
    * - Text classification
      - Hugging Face Transformers pipelines
      - Transformers, a backend and SHAP; explicit ``text_classification`` or
@@ -55,7 +60,7 @@ and CI version constraints.
      - Matching recorded rows and predictions; not inference on arbitrary
        new or perturbed inputs.
 
-ONNX is not currently supported. Other text task names in ``ModelTask`` do
+Other text task names in ``ModelTask`` do
 not imply an implemented pipeline adapter. A generic callable or arbitrary
 MLflow model is not automatically supported merely because a related
 scenario appears here.

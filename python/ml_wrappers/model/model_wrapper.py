@@ -23,6 +23,7 @@ from ..dataset.dataset_wrapper import DatasetWrapper
 from .evaluator import _eval_function, _eval_model
 from .fastai_wrapper import WrappedFastAITabularModel, _is_fastai_tabular_model
 from .image_model_wrapper import _wrap_image_model
+from .onnx_wrapper import WrappedOnnxModel, _is_onnx_model
 from .pytorch_wrapper import WrappedPytorchModel
 from .tensorflow_wrapper import WrappedTensorflowModel, is_sequential
 from .text_model_wrapper import _is_transformers_pipeline, _wrap_text_model
@@ -49,7 +50,8 @@ def wrap_model(model, examples, model_task: str = ModelTask.UNKNOWN,
     """Wrap a supported model in a common task-specific prediction API.
 
     :param model: The model to evaluate on the examples.
-    :type model: model with a predict or predict_proba function.
+    :type model: model with a predict or predict_proba function,
+        or an onnxruntime.InferenceSession.
     :param examples: The model evaluation examples.
         Note the examples will be wrapped in a DatasetWrapper, if not
         wrapped when input.
@@ -112,6 +114,8 @@ def _wrap_model(model, examples, model_task, is_function):
     if is_function:
         return _eval_function(model, examples, model_task)
     else:
+        if _is_onnx_model(model):
+            model = WrappedOnnxModel(model, model_task)
         try:
             if isinstance(model, nn.Module):
                 # Wrap the model in an extra layer that
