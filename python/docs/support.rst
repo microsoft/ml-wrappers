@@ -21,7 +21,10 @@ If you have a feature request related to this project, you can suggest an idea t
 Bug report
 ----------
 
-If you encounter a bug, you can create a report to help us improve. Please provide a clear and concise description of what the bug is. Include steps to reproduce the behavior and what you expected to happen. If applicable, add screenshots to help explain your problem. Also, provide information about your desktop or smartphone, including the OS, browser, and version. Add any other context about the problem.
+Use the repository's bug report template. Include a minimal runnable reproducer,
+expected and actual behavior, the traceback, OS, Python and ml-wrappers versions,
+and relevant framework, NumPy, pandas and scikit-learn versions. Use synthetic
+or sanitized data; never attach credentials or sensitive datasets.
 
 Microsoft Open Source Code of Conduct
 -------------------------------------
@@ -31,4 +34,6 @@ This project has adopted the `Microsoft Open Source Code of Conduct <https://ope
 Security
 --------
 
-Microsoft takes the security of our software products and services seriously, which includes all source code repositories managed through our GitHub organizations. If you believe you have found a security vulnerability in any Microsoft-owned repository, please report it to us as described in the `Microsoft's definition of a security vulnerability <https://docs.microsoft.com/en-us/previous-versions/tn-archive/cc751383(v=technet.10)>`_. Please do not report security vulnerabilities through public GitHub issues. Instead, report them to the Microsoft Security Response Center (MSRC) at `https://msrc.microsoft.com/create-report <https://msrc.microsoft.com/create-report>`_.
+Do not report vulnerabilities through public GitHub issues. Follow
+`SECURITY.md <https://github.com/microsoft/ml-wrappers/blob/main/SECURITY.md>`_
+to report them privately to the Microsoft Security Response Center (MSRC).

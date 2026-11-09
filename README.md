@@ -16,9 +16,9 @@ However, there are many different models outside of scikit-learn and even within
 
 We initially started adding wrappers in the https://github.com/interpretml/interpret-community repository but found that they are needed by other teams as well, including https://github.com/fairlearn/fairlearn and https://github.com/microsoft/responsible-ai-toolbox, hence the code has been moved to this repository.  Anyone is welcome to use or contribute to these model and dataset wrappers.
 
-These wrappers handle a variety of frameworks, including pytorch, tensorflow, keras wrappers on tensorflow, variations on scikit-learn models (such as the SVC classification model that doesn’t have a predict_proba function), lightgbm and xgboost, as well as certain strange pipelines we have encountered from customers and internal users in the past.
+These wrappers handle a variety of frameworks, including PyTorch, TensorFlow/Keras, scikit-learn, LightGBM and XGBoost. Supported adapters depend on the task; see the [framework support guide](https://ml-wrappers.readthedocs.io/en/latest/supported_frameworks.html). For SVC classification, enable `probability=True` before fitting; automatic adaptation of classifiers without `predict_proba` is limited to `SGDClassifier`.
 
-The dataset wrapper handles a variety of different dataset types and converts them to a common numpy or scipy sparse format for internal code to handle in one simple way.  Hence, the code doesn’t have to worry about whether the current input is pandas or some other format, it doesn’t have to include if/else branches everywhere in the code.
+The dataset wrapper exposes pandas inputs as NumPy arrays and retains NumPy and SciPy sparse inputs, allowing common operations without repeatedly branching on the original input type. Framework-specific inputs have additional conversion constraints; see the [dataset guide](https://ml-wrappers.readthedocs.io/en/latest/dataset_wrapping.html).
 
 The dataset wrapper simply converts the input to the common format, and after the common code finishes running, we convert the representation back to the original format, which can be handled by the original model.
 
@@ -32,7 +32,7 @@ Currently supported data types include:
 - torch.Tensor
 - tensorflow.python.data.ops.dataset_ops.BatchDataset
 
-For more information about common format from the wrappers, please see the [Wrapper Specifications](https://github.com/microsoft/ml-wrappers/tree/main/docs/WrapperSpecifications.md) documentation.
+See the [documentation](https://ml-wrappers.readthedocs.io/en/latest/) for runnable quickstarts, [wrapper contracts](https://ml-wrappers.readthedocs.io/en/latest/model_wrapper_specifications.html), framework prerequisites and API reference. `latest` describes `main`; installed releases can differ.
 
 ## Installation
 
@@ -45,22 +45,34 @@ pip install ml-wrappers
 ## Code example of wrap_model
 
 ```python
+import numpy as np
+from sklearn.linear_model import LinearRegression
 from ml_wrappers import wrap_model
-wrapped_model = wrap_model(model, input, model_task='regression')
-# Use wrapped model in any common code
+
+features = np.array([[0.0], [1.0], [2.0]])
+model = LinearRegression().fit(features, [0.0, 2.0, 4.0])
+wrapped_model = wrap_model(model, features, model_task='regression')
+predictions = wrapped_model.predict(features)
+assert predictions.shape == (3,)
 ```
 
 ## Code example of DatasetWrapper
 
 ```python
+import pandas as pd
 from ml_wrappers import DatasetWrapper
-wrapped_dataset = DatasetWrappper(input)
-numpy_or_scipy = wrapped_dataset.dataset
-# Perform some operations on common converted numpy or scipy dataset
-...
-# Get back the original dataset type after modifications
-modified_input = wrapped_dataset.typed_dataset(numpy_or_scipy)
+
+data = pd.DataFrame({'age': [20, 30], 'income': [100, 200]})
+wrapped_dataset = DatasetWrapper(data)
+modified_array = wrapped_dataset.dataset.copy()
+modified_array[:, 0] += 1
+modified_input = wrapped_dataset.typed_wrapper_func(modified_array)
+assert isinstance(modified_input, pd.DataFrame)
+assert modified_input['age'].tolist() == [21, 31]
 ```
+
+`typed_dataset` is a property for restoring the wrapper's current data.
+Use `typed_wrapper_func(array)` to restore a separately modified array.
 
 <!-- markdown-link-check-disable -->
 

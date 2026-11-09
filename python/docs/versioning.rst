@@ -1,30 +1,44 @@
 .. _versioning:
 
-Versioning
-==========
+Versioning and Documentation Versions
+=====================================
 
-The version of the ml-wrappers package is defined in the ``version.py`` file located in the ``python/ml_wrappers`` directory. The version is specified using three variables: ``_major``, ``_minor``, and ``_patch``. 
+The package version is defined in ``python/ml_wrappers/version.py``:
 
-.. code-block:: python
+.. literalinclude:: ../ml_wrappers/version.py
+   :language: python
 
-    name = 'ml_wrappers'
-    _major = '0'
-    _minor = '4'
-    _patch = '12'
-    version = '{}.{}.{}'.format(_major, _minor, _patch)
+The documentation title is derived from installed package metadata during
+the build. To check your installed version:
 
-The version follows the format of ``major.minor.patch``. 
+.. code-block:: bash
 
-- ``major``: This is incremented for major changes or redesigns in the package.
-- ``minor``: This is incremented for minor changes or additions of new features.
-- ``patch``: This is incremented for bug fixes or minor improvements.
+    python -c "from importlib.metadata import version; print(version('ml-wrappers'))"
 
-When ready to release a new version, create a separate PR in ml-wrappers to bump up the version in the ``version.py`` file. In the notes, make sure to mention all of the changes that have been introduced since the last release. 
+Choose the right documentation
+------------------------------
 
-.. code-block:: python
+``latest`` describes the ``main`` branch and may include changes not yet
+released on PyPI. ``stable`` normally tracks the newest eligible release tag;
+named versions build their own tags when activated in Read the Docs.
+A successful build of one version does not prove the others are current.
 
-    _major = '0'
-    _minor = <enter new minor version here>
-    _patch = <enter new patch version here>
+Older tags, including ``v0.6.4``, retain a retired Read the Docs operating
+system setting. Their builds can fail even while ``latest`` succeeds.
+``stable`` may therefore serve an older successful build and an unbuilt
+version URL may return 404. The next approved release containing the fixed
+configuration can restore release documentation. Existing tags should not
+be rewritten as part of a documentation fix.
 
-After the PR has been merged, checkout the master branch and get the latest code. For more details on the release process, refer to the `Release Process <release-process.html>`_ section.
+Python support and releases
+---------------------------
+
+The ``main`` branch is tested on Python 3.10 through 3.14. Optional framework
+coverage varies with Python and platform; see :ref:`dependencies`.
+Published PyPI metadata describes that published artifact and may lag
+unreleased repository changes. A badge is not a guarantee of every optional
+framework's compatibility.
+
+Maintainers should use the
+`release process <https://github.com/microsoft/ml-wrappers/blob/main/docs/release-process.md>`_
+for a version-bump PR, Test/Prod workflow runs, tags and documentation checks.

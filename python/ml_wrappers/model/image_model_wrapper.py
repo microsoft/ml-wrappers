@@ -209,7 +209,7 @@ def expand_class_scores(
     :type number_of_classes: int
     :return: A set of expanded scores, of shape [D, C], where C is number of
         classes
-    :type: torch.Tensor
+    :rtype: torch.Tensor
     """
     number_of_detections = scores.shape[0]
 
@@ -236,7 +236,7 @@ def _wrap_image_model(model, examples, model_task, is_function,
     :type model: function or model to wrap
     :param examples: The model evaluation examples.
     :type examples: ml_wrappers.DatasetWrapper
-    or numpy.ndarray or pandas.DataFrame or panads.Series
+    or numpy.ndarray or pandas.DataFrame or pandas.Series
     or scipy.sparse.csr_matrix or shap.DenseData
     or torch.Tensor.
     :param model_task: Parameter to specify whether the model is an
@@ -482,12 +482,12 @@ class WrappedObjectDetectionModel:
         """Initialize the WrappedObjectDetectionModel with the model
             and evaluation function.
 
-        :param model: mlflow model
+        :param model: Callable torchvision-style detector with eval and to methods.
         :type model: Any
         :param number_of_classes: number of distinct labels
         :type number_of_classes: int
-        :param device: optional parameter specifying the device to move the
-            model to. If not specified, then cpu is the default
+        :param device: Device to move the model to. The default 'auto' selects
+            CUDA when available, otherwise CPU.
         :type device: str
         """
         self._device = torch.device(_get_device(device))
@@ -502,26 +502,19 @@ class WrappedObjectDetectionModel:
 
         :param x: Tensor of the image
         :type x: torch.Tensor
-        :return: Baseline detections to get saliency maps for
-        :rtype: numpy array of Detection Records
+        :param iou_threshold: Accepted but currently ignored; NMS uses 0.5.
+        :type iou_threshold: float
+        :param score_threshold: Accepted but currently ignored; filtering uses 0.5.
+        :type score_threshold: float
+        :return: Records [label, x_min, y_min, x_max, y_max, score] per image.
+        :rtype: numpy.ndarray or list
 
-        Example Label (y) representation for a cohort of 2 images:
-
-        [
+        Example for two images with different detection counts::
 
             [
-            [object_1, x1, y1, b1, h1, (optional) confidence_score],
-            [object_2, x2, y2, b2, h2, (optional) confidence_score],
-            [object_1, x3, y3, b3, h3, (optional) confidence_score]
-        ],
-
-        [
-            [object_1, x4, y4, b4, h4, (optional) confidence_score],
-            [object_2, x5, y5, b5, h5, (optional) confidence_score]
-        ]
-
-        ]
-
+                [[1, 10, 20, 50, 80, 0.9], [2, 30, 40, 70, 90, 0.8]],
+                [[1, 15, 25, 55, 85, 0.95]],
+            ]
         """
         detections = []
         for image in x:
@@ -551,11 +544,13 @@ class WrappedObjectDetectionModel:
     def predict_proba(self, dataset, iou_threshold=0.1):
         """Predict the output probability using the wrapped model.
 
-        :param dataset: The dataset to predict_proba on.
-        :type dataset: ml_wrappers.DatasetWrapper
-        :param iou_threshold: amount of acceptable error.
-            objects with error scores higher than the threshold will be removed
+        :param dataset: Images to predict on, as accepted by predict.
+        :type dataset: iterable
+        :param iou_threshold: Accepted but ignored, including the default 0.1.
+            NMS and confidence filtering both use fixed thresholds of 0.5.
         :type iou_threshold: float
+        :return: Confidence scores for retained detections, grouped by image.
+        :rtype: list
         """
         predictions = self.predict(dataset, iou_threshold)
         prob_scores = [[pred[-1] for pred in image_prediction]
@@ -602,22 +597,16 @@ class WrappedMlflowAutomlObjectDetectionModel:
                 score_threshold: float = 0.5):
         """Create a list of detection records from the image predictions.
 
-        Below is example Label (y) representation for a cohort of 2 images,
-        with 3 objects detected for the first image and 1 for the second image.
+        Example records [label, x_min, y_min, x_max, y_max, score] for two
+        images with different detection counts::
 
-        [
-         [
-            [class, topX, topY, bottomX, bottomY, (optional) confidence_score],
-            [class, topX, topY, bottomX, bottomY, (optional) confidence_score],
-            [class, topX, topY, bottomX, bottomY, (optional) confidence_score],
-         ],
-         [
-            [class, topX, topY, bottomX, bottomY, (optional) confidence_score],
-         ]
+            [
+                [[1, 10, 20, 50, 80, 0.9], [2, 30, 40, 70, 90, 0.8]],
+                [[1, 15, 25, 55, 85, 0.95]],
+            ]
 
-        ]
-
-        :param dataset: The dataset to predict on.
+        :param dataset: AutoML image inputs with an image_size column of
+            (width, height) pairs; image_size is removed before inference.
         :type dataset: pandas.DataFrame
         :param iou_threshold: Intersection-over-Union (IoU) threshold for NMS (or
                            the amount of acceptable error). Objects with error
@@ -627,7 +616,7 @@ class WrappedMlflowAutomlObjectDetectionModel:
                             predicted confidence scores.
         :type score_threshold: float
         :return: Final detections from the object detector
-        :rtype: numpy array of Detection Records
+        :rtype: numpy.ndarray or list
         """
         image_sizes = dataset['image_size']
 
@@ -705,8 +694,8 @@ class PytorchDRiseWrapper(GeneralObjectDetectionModelWrapper):
         :type model: PytorchFasterRCNN model
         :param number_of_classes: Number of classes the model is predicting
         :type number_of_classes: int
-        :param device: Optional parameter specifying the device to move the
-            model to. If not specified, then cpu is the default
+        :param device: Device to move the model to. The default 'auto' selects
+            CUDA when available, otherwise CPU.
         :type device: str
         :param transforms: Optional parameter specifying the transforms to
             apply to the image before passing it to the model
@@ -799,8 +788,8 @@ class MLflowDRiseWrapper():
 
         :param model: mlflow model
         :type model: mlflow.pyfunc.PyFuncModel
-        :param number_of_classes: Number of classes the model is predicting
-        :type number_of_classes: int
+        :param classes: Ordered class names predicted by the model.
+        :type classes: list or numpy.ndarray
         """
 
         self._model = model

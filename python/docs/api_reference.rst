@@ -10,20 +10,14 @@ ml_wrappers
 -----------
 
 .. automodule:: ml_wrappers
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 ml_wrappers.common
 ------------------
 
 .. automodule:: ml_wrappers.common
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 ml_wrappers.common.constants
----------------------------
+----------------------------
 
 .. automodule:: ml_wrappers.common.constants
    :members:
@@ -34,12 +28,9 @@ ml_wrappers.dataset
 -------------------
 
 .. automodule:: ml_wrappers.dataset
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 ml_wrappers.dataset.dataset_utils
---------------------------------
+---------------------------------
 
 .. automodule:: ml_wrappers.dataset.dataset_utils
    :members:
@@ -47,7 +38,7 @@ ml_wrappers.dataset.dataset_utils
    :show-inheritance:
 
 ml_wrappers.dataset.dataset_wrapper
-----------------------------------
+-----------------------------------
 
 .. automodule:: ml_wrappers.dataset.dataset_wrapper
    :members:
@@ -55,7 +46,7 @@ ml_wrappers.dataset.dataset_wrapper
    :show-inheritance:
 
 ml_wrappers.dataset.timestamp_featurizer
----------------------------------------
+----------------------------------------
 
 .. automodule:: ml_wrappers.dataset.timestamp_featurizer
    :members:
@@ -66,12 +57,9 @@ ml_wrappers.model
 -----------------
 
 .. automodule:: ml_wrappers.model
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 ml_wrappers.model.base_wrapped_model
------------------------------------
+------------------------------------
 
 .. automodule:: ml_wrappers.model.base_wrapped_model
    :members:
@@ -87,7 +75,7 @@ ml_wrappers.model.evaluator
    :show-inheritance:
 
 ml_wrappers.model.fastai_wrapper
--------------------------------
+--------------------------------
 
 .. automodule:: ml_wrappers.model.fastai_wrapper
    :members:
@@ -95,7 +83,7 @@ ml_wrappers.model.fastai_wrapper
    :show-inheritance:
 
 ml_wrappers.model.function_wrapper
----------------------------------
+----------------------------------
 
 .. automodule:: ml_wrappers.model.function_wrapper
    :members:
@@ -103,7 +91,7 @@ ml_wrappers.model.function_wrapper
    :show-inheritance:
 
 ml_wrappers.model.image_model_wrapper
-------------------------------------
+-------------------------------------
 
 .. automodule:: ml_wrappers.model.image_model_wrapper
    :members:
@@ -111,7 +99,7 @@ ml_wrappers.model.image_model_wrapper
    :show-inheritance:
 
 ml_wrappers.model.model_utils
-----------------------------
+-----------------------------
 
 .. automodule:: ml_wrappers.model.model_utils
    :members:
@@ -119,7 +107,7 @@ ml_wrappers.model.model_utils
    :show-inheritance:
 
 ml_wrappers.model.model_wrapper
-------------------------------
+-------------------------------
 
 .. automodule:: ml_wrappers.model.model_wrapper
    :members:
@@ -127,7 +115,7 @@ ml_wrappers.model.model_wrapper
    :show-inheritance:
 
 ml_wrappers.model.predictions_wrapper
-------------------------------------
+-------------------------------------
 
 .. automodule:: ml_wrappers.model.predictions_wrapper
    :members:
@@ -135,7 +123,7 @@ ml_wrappers.model.predictions_wrapper
    :show-inheritance:
 
 ml_wrappers.model.pytorch_wrapper
---------------------------------
+---------------------------------
 
 .. automodule:: ml_wrappers.model.pytorch_wrapper
    :members:
@@ -143,7 +131,7 @@ ml_wrappers.model.pytorch_wrapper
    :show-inheritance:
 
 ml_wrappers.model.tensorflow_wrapper
------------------------------------
+------------------------------------
 
 .. automodule:: ml_wrappers.model.tensorflow_wrapper
    :members:
@@ -151,7 +139,7 @@ ml_wrappers.model.tensorflow_wrapper
    :show-inheritance:
 
 ml_wrappers.model.text_model_wrapper
------------------------------------
+------------------------------------
 
 .. automodule:: ml_wrappers.model.text_model_wrapper
    :members:
@@ -159,7 +147,7 @@ ml_wrappers.model.text_model_wrapper
    :show-inheritance:
 
 ml_wrappers.model.wrapped_classification_model
----------------------------------------------
+----------------------------------------------
 
 .. automodule:: ml_wrappers.model.wrapped_classification_model
    :members:
@@ -167,7 +155,7 @@ ml_wrappers.model.wrapped_classification_model
    :show-inheritance:
 
 ml_wrappers.model.wrapped_classification_without_proba_model
------------------------------------------------------------
+------------------------------------------------------------
 
 .. automodule:: ml_wrappers.model.wrapped_classification_without_proba_model
    :members:
@@ -175,7 +163,7 @@ ml_wrappers.model.wrapped_classification_without_proba_model
    :show-inheritance:
 
 ml_wrappers.model.wrapped_regression_model
------------------------------------------
+------------------------------------------
 
 .. automodule:: ml_wrappers.model.wrapped_regression_model
    :members:
@@ -188,4 +176,30 @@ ml_wrappers.version
 .. automodule:: ml_wrappers.version
    :members:
    :undoc-members:
+   :show-inheritance:
+
+ml_wrappers.common.gpu_kmeans
+-----------------------------
+
+.. automodule:: ml_wrappers.common.gpu_kmeans
+   :members:
+
+ml_wrappers.common.warnings_suppressor
+--------------------------------------
+
+.. automodule:: ml_wrappers.common.warnings_suppressor
+   :members:
+
+ml_wrappers.model.endpoint_wrapper
+----------------------------------
+
+.. automodule:: ml_wrappers.model.endpoint_wrapper
+   :members:
+   :show-inheritance:
+
+ml_wrappers.model.openai_wrapper
+--------------------------------
+
+.. automodule:: ml_wrappers.model.openai_wrapper
+   :members:
    :show-inheritance:

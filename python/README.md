@@ -9,5 +9,11 @@ Highlights of the package include:
 - A dataset wrapper to handle scipy sparse, pandas and numpy datasets in a uniform manner.
 - A model wrapper to handle models from various frameworks uniformly, including scikit-learn, tensorflow, pytorch, lightgbm and xgboost
 
-Please see the github website for the documentation and sample notebooks:
-https://github.com/microsoft/ml-wrappers
+Install with `python -m pip install ml-wrappers`. Frameworks such as PyTorch,
+TensorFlow and Transformers require separate optional dependencies.
+
+See the [documentation and quickstart](https://ml-wrappers.readthedocs.io/en/latest/getting_started.html)
+and [source repository](https://github.com/microsoft/ml-wrappers).
+The `latest` documentation describes the `main` branch; consult the
+[versioning guide](https://ml-wrappers.readthedocs.io/en/latest/versioning.html)
+for release documentation and tested Python versions.
