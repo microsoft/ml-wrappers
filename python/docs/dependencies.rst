@@ -12,6 +12,9 @@ Generated ``.egg-info`` files are build artifacts, not maintained requirements.
 Optional frameworks are not installed with the base package. Install the
 frameworks required by your scenario; see :ref:`supported_frameworks`.
 There are no framework-specific installation extras.
+For tabular ONNX inference, install ``onnxruntime>=1.19``. The ``onnx`` and
+``skl2onnx`` packages are only needed to construct or convert models, not
+to wrap an existing runtime session.
 
 Repository environments
 ------------------------

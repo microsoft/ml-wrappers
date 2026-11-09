@@ -1,6 +1,9 @@
 lightgbm
 xgboost
 catboost
+onnx
+onnxruntime>=1.19
+skl2onnx
 tensorflow; python_version < '3.14'
 shap
 transformers<4.40.0; python_version < '3.13'
